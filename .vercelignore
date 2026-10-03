@@ -1,0 +1,10 @@
+backend
+docs
+scripts
+logs
+.git
+**/__pycache__
+**/.venv
+**/node_modules
+**/.pytest_cache
+**/test-artifacts
