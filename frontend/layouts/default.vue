@@ -8,7 +8,7 @@ watch(() => route.fullPath, () => { navOpen.value = false })
 onMounted(() => {
   org.load()
   live.refresh()
-  const t = setInterval(() => live.refresh(), 30_000)
+  const t = setInterval(() => live.refresh(), 15_000)
   onBeforeUnmount(() => clearInterval(t))
 })
 </script>

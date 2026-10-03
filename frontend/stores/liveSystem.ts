@@ -9,6 +9,12 @@ const HEARTBEAT_STALE_MS = 25_000 // server heartbeats every 10s; 2.5 missed tic
 const BACKOFF_MS = [1000, 2000, 4000, 8000, 15000, 30000]
 const SEEN_MAX = 512
 
+/** Vercel same-origin /api proxy → Cloudflare tunnel: REST works; long-lived SSE does not. */
+function pollOnlyLiveFeed(): boolean {
+  if (typeof useRuntimeConfig !== 'function') return false
+  return !!useRuntimeConfig().public.apiSameOrigin
+}
+
 export const useLiveSystemStore = defineStore('liveSystem', () => {
   const health = ref<SystemHealth | null>(null)
   const apiReachable = ref<boolean | null>(null)
@@ -23,6 +29,7 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
       health.value = normHealth(h.status === 'fulfilled' ? h.value : null, c.status === 'fulfilled' ? c.value : null)
       apiReachable.value = true
       error.value = null
+      if (pollOnlyLiveFeed()) onHeartbeat()
     } catch (e) {
       apiReachable.value = false
       error.value = e as ApiErrorInfo
@@ -71,7 +78,7 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
   function onChangeCheckEvent() { changeCheckTick.value++ }
 
   function scheduleReconnect() {
-    if (!wanted) return
+    if (!wanted || pollOnlyLiveFeed()) return
     globalStream.value = 'reconnecting'
     const delay = BACKOFF_MS[Math.min(reconnectAttempt.value, BACKOFF_MS.length - 1)]
     reconnectAttempt.value++
@@ -114,14 +121,24 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
     if (typeof window === 'undefined' || wanted) return
     wanted = true
     reconnectAttempt.value = 0
-    globalStream.value = 'connecting'
-    openGlobal()
     tickTimer = setInterval(() => {
       now.value = Date.now()
-      if (globalStream.value === 'connected' && lastHeartbeatAt.value != null && now.value - lastHeartbeatAt.value > HEARTBEAT_STALE_MS) {
+      if (
+        !pollOnlyLiveFeed()
+        && globalStream.value === 'connected'
+        && lastHeartbeatAt.value != null
+        && now.value - lastHeartbeatAt.value > HEARTBEAT_STALE_MS
+      ) {
         es?.close(); es = null; scheduleReconnect() // connection looks open but is silent
       }
     }, 1000)
+    if (pollOnlyLiveFeed()) {
+      globalStream.value = 'connected'
+      void refresh()
+      return
+    }
+    globalStream.value = 'connecting'
+    openGlobal()
   }
 
   function stopGlobalStream() {
@@ -134,13 +151,14 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
     lastHeartbeatAt.value = null
   }
 
-  /** Live pill: never green unless the API answered and any open event stream is connected. */
+  /** Live pill: REST health on Vercel (poll); SSE when the browser can reach the backend stream directly. */
   const liveState = computed<'live' | 'degraded' | 'reconnecting' | 'disconnected'>(() => {
     if (apiReachable.value !== true) return 'disconnected'
-    if (globalStream.value === 'reconnecting') return 'reconnecting'
-    if (globalStream.value === 'disconnected') return 'disconnected'
     const caps = (health.value?.capabilities ?? []).filter((c) => !c.optional)
     if (caps.some((c) => c.state !== 'healthy')) return 'degraded'
+    if (pollOnlyLiveFeed()) return 'live'
+    if (globalStream.value === 'reconnecting') return 'reconnecting'
+    if (globalStream.value === 'disconnected') return 'disconnected'
     return 'live'
   })
 
