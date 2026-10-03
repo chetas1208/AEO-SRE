@@ -1,9 +1,22 @@
 import type { ApiErrorInfo } from '~/types'
-import { normalizeApiBase } from '~/utils/apiBase'
+import { isLoopbackApiBase, normalizeApiBase } from '~/utils/apiBase'
 import { guardErrorMessage } from '~/utils/guard'
 
+const FALLBACK_TUNNEL = 'https://somehow-air-animals-connectors.trycloudflare.com'
+
 export function useApiBase(): string {
-  return normalizeApiBase(String(useRuntimeConfig().public.apiBaseUrl || ''))
+  const config = useRuntimeConfig()
+  if (config.public.apiSameOrigin) {
+    return ''
+  }
+  const base = normalizeApiBase(String(config.public.apiBaseUrl || ''))
+  // If running in browser on a remote hostname (e.g. *.vercel.app) and base is loopback/empty, route to active tunnel
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    if (!base || isLoopbackApiBase(base)) {
+      return FALLBACK_TUNNEL
+    }
+  }
+  return base
 }
 
 /** Error codes the UI branches on (see docs/UI_API_CONTRACT.md). */

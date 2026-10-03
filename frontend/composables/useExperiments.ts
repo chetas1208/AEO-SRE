@@ -1,4 +1,5 @@
 import type { ExperimentCreateIn, ExperimentDetail, ExperimentList } from '~/types'
+import { isUuid } from '~/utils/apiBase'
 
 export function useExperiments() {
   const org = useOrganizationStore()
@@ -20,11 +21,12 @@ export function useExperiments() {
     createSuccess.value = null
 
     try {
+      const orgId = isUuid(payload.org_id) ? payload.org_id : isUuid(org.currentId) ? org.currentId! : undefined
       const response = await apiFetch<Record<string, unknown>>('/api/experiments', {
         method: 'POST',
         body: {
           ...payload,
-          org_id: payload.org_id || org.currentId || undefined
+          ...(orgId ? { org_id: orgId } : {})
         }
       })
       const detail = normExperimentDetail(response)

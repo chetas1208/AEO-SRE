@@ -194,7 +194,7 @@ def create_app() -> FastAPI:
         description="Incident-response control plane for AI discovery. JSON is snake_case.",
         lifespan=lifespan,
     )
-    origins = {s.app_base_url.rstrip("/"), s.app_public_url.rstrip("/")}
+    origins = {s.app_base_url.rstrip("/"), s.app_public_url.rstrip("/"), "https://aeo-sre.vercel.app"}
     if s.cors_allowed_origins:
         for orig in s.cors_allowed_origins.split(","):
             if orig.strip():

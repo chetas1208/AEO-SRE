@@ -9,16 +9,22 @@ const rootEnv = resolve(here, '..', '.env')
 if (existsSync(rootEnv)) loadDotenv({ path: rootEnv, quiet: true })
 
 const apiFromEnv = (process.env.NUXT_PUBLIC_API_BASE_URL || '').trim()
-/** Override via Vercel env; fallback only for Vercel builds when env missing (see DEPLOYMENT.md). */
+const backendProxy = (process.env.NUXT_BACKEND_PROXY_URL || '').trim().replace(/\/+$/, '')
+const apiSameOrigin =
+  process.env.NUXT_PUBLIC_API_SAME_ORIGIN === '1'
+  || (process.env.VERCEL === '1' && backendProxy.length > 0)
+const isLoopback = (u: string) => /^(https?:\/\/)?(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?/i.test(u)
+/** Fallback to active Cloudflare tunnel when not using same-origin /api proxy. */
 const VERCEL_API_FALLBACK = 'https://somehow-air-animals-connectors.trycloudflare.com'
-const resolvedApiBase =
-  apiFromEnv
-  || (process.env.VERCEL === '1' ? VERCEL_API_FALLBACK : '')
-  || 'http://localhost:8000'
-if (process.env.VERCEL_ENV === 'production' && !apiFromEnv) {
-  console.warn(
-    '[AgentMatch] NUXT_PUBLIC_API_BASE_URL unset on Vercel; using tunnel fallback. Set the env var and redeploy for a stable hostname.'
-  )
+const resolvedApiBase = apiSameOrigin
+  ? ''
+  : (apiFromEnv && !isLoopback(apiFromEnv))
+    ? apiFromEnv
+    : (process.env.NODE_ENV === 'development' && !process.env.VERCEL ? 'http://localhost:8000' : VERCEL_API_FALLBACK)
+
+const routeRules: Record<string, { proxy: string }> = {}
+if (backendProxy) {
+  routeRules['/api/**'] = { proxy: `${backendProxy}/api/**` }
 }
 
 export default defineNuxtConfig({
@@ -28,10 +34,12 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@nuxtjs/tailwindcss'],
   css: ['~/assets/css/main.css'],
   components: [{ path: '~/components', pathPrefix: false }],
+  routeRules,
   runtimeConfig: {
     public: {
-      /** Canonical public API origin (Cloudflare tunnel hostname). Dev-only fallback to localhost. */
-      apiBaseUrl: resolvedApiBase
+      /** Empty when Vercel proxies /api to the backend (same-origin; no CORS). */
+      apiBaseUrl: resolvedApiBase,
+      apiSameOrigin: apiSameOrigin
     }
   },
   app: {
