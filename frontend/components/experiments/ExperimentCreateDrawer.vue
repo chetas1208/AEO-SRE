@@ -76,6 +76,7 @@ watch(
       form.incidentId = props.initialIncidentId || ''
       form.verificationHours = 48
       form.autoActivate = true
+      void loadMixpanelCatalog()
     }
   },
   { immediate: true }
@@ -90,12 +91,29 @@ const ACTION_OPTIONS = [
   { value: 'observe', label: 'Observe Only (Passive Monitoring)' },
 ]
 
-const METRIC_OPTIONS = [
+const PROFOUND_METRICS = [
   { value: 'visibility', label: 'Brand Visibility (Profound Score)', expected: 'increase' },
   { value: 'citation_share', label: 'Official Citation Share (%)', expected: 'increase' },
   { value: 'accuracy', label: 'Perceived Accuracy / Truth Fit', expected: 'increase' },
   { value: 'competitor_share', label: 'Competitor Share of Voice', expected: 'decrease' },
 ]
+
+const mixpanelMetricOptions = ref<Array<{ value: string; label: string; expected: string }>>([])
+
+const METRIC_OPTIONS = computed(() => [...PROFOUND_METRICS, ...mixpanelMetricOptions.value])
+
+async function loadMixpanelCatalog() {
+  try {
+    const cat = await apiFetch<{ metrics?: Array<{ id: string; label: string }> }>('/api/integrations/mixpanel/catalog')
+    mixpanelMetricOptions.value = (cat.metrics ?? []).map((m) => ({
+      value: m.id,
+      label: `Mixpanel · ${m.label}`,
+      expected: 'event count',
+    }))
+  } catch {
+    mixpanelMetricOptions.value = []
+  }
+}
 
 const WINDOW_OPTIONS = [
   { hours: 24, label: '24 Hours (Fast verification)' },
@@ -240,24 +258,27 @@ async function submit() {
           <div class="baseline-preview-card">
             <div class="baseline-header">
               <span class="pulse-indicator">●</span>
-              <span>Observed Baseline Snapshot</span>
+              <span>Baseline at creation (not editable)</span>
             </div>
-            <div class="baseline-grid">
+            <p class="baseline-honesty">
+              On submit, the backend measures pre-window baselines from live Profound signals
+              <template v-if="mixpanelMetricOptions.length"> and Mixpanel event counts</template>.
+              You cannot type fake numbers.
+            </p>
+            <div v-if="form.primaryMetric.startsWith('mixpanel:')" class="baseline-grid">
               <div class="baseline-item">
-                <span class="baseline-label">Brand Visibility</span>
-                <span class="baseline-val">58.0%</span>
+                <span class="baseline-label">Mixpanel metric</span>
+                <span class="baseline-val font-mono">{{ form.primaryMetric }}</span>
+              </div>
+            </div>
+            <div v-else class="baseline-grid">
+              <div class="baseline-item">
+                <span class="baseline-label">Primary metric</span>
+                <span class="baseline-val font-mono">{{ form.primaryMetric }}</span>
               </div>
               <div class="baseline-item">
-                <span class="baseline-label">Citation Share</span>
-                <span class="baseline-val">24.0%</span>
-              </div>
-              <div class="baseline-item">
-                <span class="baseline-label">Perceived Truth Fit</span>
-                <span class="baseline-val">62.0%</span>
-              </div>
-              <div class="baseline-item">
-                <span class="baseline-label">Competitor Share</span>
-                <span class="baseline-val">42.0%</span>
+                <span class="baseline-label">Source</span>
+                <span class="baseline-val">Profound LIVE</span>
               </div>
             </div>
             <p class="baseline-note">Captured live from backend telemetry. Never fabricated or manually inflated.</p>
