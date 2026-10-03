@@ -150,8 +150,8 @@ async def test_profound_requests_log_provider_status_duration_without_secrets(mo
     finally:
         await c.aclose()
     out = capfd.readouterr().out
-    line = next(ln for ln in out.splitlines() if "provider.request" in ln)
-    assert "provider=profound" in line and "duration_ms" in line and "status=200" in line
+    line = next((ln for ln in reversed(out.splitlines()) if "provider.request" in ln and "provider=profound" in ln), "")
+    assert "duration_ms" in line and "status=200" in line
     assert SECRETS["PROFOUND_API_KEY"] not in out
     assert httpx  # (respx mocks httpx)
 
