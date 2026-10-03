@@ -1,0 +1,35 @@
+{
+  "project": "AEO SRE / AgentMatch Control Plane",
+  "deployed_at": "2026-10-03T21:23:00Z",
+  "environment": "production",
+  "frontend": {
+    "framework": "Nuxt 4 / Vue 3",
+    "provider": "Vercel",
+    "root_directory": "frontend"
+  },
+  "backend": {
+    "framework": "FastAPI",
+    "host": "127.0.0.1",
+    "port": 8000,
+    "process_manager": "nohup",
+    "health_endpoint": "/api/health",
+    "status": "healthy"
+  },
+  "tunnel": {
+    "provider": "Cloudflare Tunnel",
+    "public_url": "https://destinations-cams-easily-comparing.trycloudflare.com",
+    "status": "active"
+  },
+  "subsystems": {
+    "database": "PostgreSQL 16 (Alembic 0006)",
+    "redis": "healthy",
+    "profound": "CONNECTED",
+    "model_provider": "READY (Anthropic claude-haiku-4-5)",
+    "neo4j": "READY (Aura Enterprise 5.27)"
+  },
+  "logs": {
+    "policy": "immutable append-only with PID and timestamp",
+    "backend_dir": "logs/backend/",
+    "cloudflare_dir": "logs/cloudflare/"
+  }
+}

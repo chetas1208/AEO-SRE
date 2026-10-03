@@ -1,0 +1,30 @@
+{"claim": "Acme Corp was founded in 1999.", "passage": "Acme Corp is a software company that was founded in 1999 in Denver.", "label": "SUPPORTS", "title": "Acme Corp", "fixture": "hand-written"}
+{"claim": "Acme Corp was founded in 2005.", "passage": "Acme Corp is a software company that was founded in 1999 in Denver.", "label": "REFUTES", "title": "Acme Corp", "fixture": "hand-written"}
+{"claim": "Acme Corp makes toasters.", "passage": "The Denver Broncos play their home games at Empower Field.", "label": "NOT ENOUGH INFO", "title": "Acme Corp", "fixture": "hand-written"}
+{"claim": "The Plus plan costs more than 40 dollars per month.", "passage": "The Plus plan costs 49 dollars per month, billed annually.", "label": "SUPPORTS", "title": "Pricing", "fixture": "hand-written"}
+{"claim": "The Plus plan costs less than 20 dollars per month.", "passage": "The Plus plan costs 49 dollars per month, billed annually.", "label": "REFUTES", "title": "Pricing", "fixture": "hand-written"}
+{"claim": "The Plus plan includes phone support.", "passage": "Our pricing page lists the Basic, Plus and Enterprise tiers.", "label": "NOT ENOUGH INFO", "title": "Pricing", "fixture": "hand-written"}
+{"claim": "Mount Fuji is located in Japan.", "passage": "Mount Fuji is an active volcano located on Honshu island in Japan.", "label": "SUPPORTS", "title": "Mount Fuji", "fixture": "hand-written"}
+{"claim": "Mount Fuji is not located in Japan.", "passage": "Mount Fuji is an active volcano located on Honshu island in Japan.", "label": "REFUTES", "title": "Mount Fuji", "fixture": "hand-written"}
+{"claim": "Mount Fuji is the tallest mountain in Africa.", "passage": "Mount Fuji is an active volcano located on Honshu island in Japan.", "label": "REFUTES", "title": "Mount Fuji", "fixture": "hand-written"}
+{"claim": "The Nile is a river in Egypt.", "passage": "The Nile is a major north-flowing river in northeastern Africa, flowing through Egypt.", "label": "SUPPORTS", "title": "Nile", "fixture": "hand-written"}
+{"claim": "Jane Doe won the 2012 award.", "passage": "Jane Doe won the 2014 award for best documentary.", "label": "REFUTES", "title": "Jane Doe", "fixture": "hand-written"}
+{"claim": "Jane Doe won the 2014 award.", "passage": "Jane Doe won the 2014 award for best documentary.", "label": "SUPPORTS", "title": "Jane Doe", "fixture": "hand-written"}
+{"claim": "Jane Doe has three children.", "passage": "Jane Doe is a documentary filmmaker based in Toronto.", "label": "NOT ENOUGH INFO", "title": "Jane Doe", "fixture": "hand-written"}
+{"claim": "The company employs over 500 people.", "passage": "Headcount grew to 1,200 employees by the end of the year.", "label": "SUPPORTS", "title": "Company", "fixture": "hand-written"}
+{"claim": "The company employs fewer than 100 people.", "passage": "Headcount grew to 1,200 employees by the end of the year.", "label": "REFUTES", "title": "Company", "fixture": "hand-written"}
+{"claim": "Berlin is the capital of Germany.", "passage": "Berlin is the capital and largest city of Germany by both area and population.", "label": "SUPPORTS", "title": "Berlin", "fixture": "hand-written"}
+{"claim": "Berlin is the capital of France.", "passage": "Berlin is the capital and largest city of Germany by both area and population.", "label": "REFUTES", "title": "Berlin", "fixture": "hand-written"}
+{"claim": "The product launched in March 2021.", "passage": "The product launched in March 2021 after a long beta.", "label": "SUPPORTS", "title": "Product", "fixture": "hand-written"}
+{"claim": "The product launched in October 2019.", "passage": "The product launched in March 2021 after a long beta.", "label": "REFUTES", "title": "Product", "fixture": "hand-written"}
+{"claim": "The product supports single sign-on.", "passage": "Release notes: dark mode, new export formats and faster search.", "label": "NOT ENOUGH INFO", "title": "Product", "fixture": "hand-written"}
+{"claim": "The firm never reported a loss.", "passage": "The firm reported a net loss in its first three fiscal years.", "label": "REFUTES", "title": "Firm", "fixture": "hand-written"}
+{"claim": "The firm reported a net loss in its first years.", "passage": "The firm reported a net loss in its first three fiscal years.", "label": "SUPPORTS", "title": "Firm", "fixture": "hand-written"}
+{"claim": "The festival is held in July.", "passage": "The annual festival takes place every July in the old harbor district.", "label": "SUPPORTS", "title": "Festival", "fixture": "hand-written"}
+{"claim": "The festival is held in December.", "passage": "The annual festival takes place every July in the old harbor district.", "label": "REFUTES", "title": "Festival", "fixture": "hand-written"}
+{"claim": "The festival has a food court.", "passage": "Tickets for the annual festival can be bought online or at the gate.", "label": "NOT ENOUGH INFO", "title": "Festival", "fixture": "hand-written"}
+{"claim": "Marie Curie won two Nobel Prizes.", "passage": "Marie Curie was the first person to win Nobel Prizes in two different scientific fields.", "label": "SUPPORTS", "title": "Marie Curie", "fixture": "hand-written"}
+{"claim": "Marie Curie was born in Spain.", "passage": "Marie Curie was born in Warsaw in 1867 and later moved to Paris.", "label": "REFUTES", "title": "Marie Curie", "fixture": "hand-written"}
+{"claim": "The bridge is 300 meters long.", "passage": "The bridge spans 300 meters across the river.", "label": "SUPPORTS", "title": "Bridge", "fixture": "hand-written"}
+{"claim": "The bridge is 900 meters long.", "passage": "The bridge spans 300 meters across the river.", "label": "REFUTES", "title": "Bridge", "fixture": "hand-written"}
+{"claim": "The bridge was designed by a famous architect.", "passage": "Traffic on the river crossing is heaviest on weekdays.", "label": "NOT ENOUGH INFO", "title": "Bridge", "fixture": "hand-written"}

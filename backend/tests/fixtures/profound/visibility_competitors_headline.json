@@ -1,0 +1,129 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "Hand-built from the Profound OpenAPI spec (External API 0.60.2). NOT recorded from the live API; values are invented test data.",
+  "recorded": false
+ },
+ "info": {
+  "total_results": 12,
+  "count": 12,
+  "next_cursor": null,
+  "models": [
+   "ChatGPT",
+   "Perplexity"
+  ],
+  "start_date": "2026-09-20",
+  "end_date": "2026-09-25",
+  "scope": "all"
+ },
+ "data": [
+  {
+   "asset": {
+    "name": "Globex",
+    "owned": false
+   },
+   "date": "2026-09-20",
+   "visibility_score": 0.2,
+   "share_of_voice": 0.21
+  },
+  {
+   "asset": {
+    "name": "Globex",
+    "owned": false
+   },
+   "date": "2026-09-21",
+   "visibility_score": 0.2,
+   "share_of_voice": 0.21
+  },
+  {
+   "asset": {
+    "name": "Globex",
+    "owned": false
+   },
+   "date": "2026-09-22",
+   "visibility_score": 0.2,
+   "share_of_voice": 0.21
+  },
+  {
+   "asset": {
+    "name": "Globex",
+    "owned": false
+   },
+   "date": "2026-09-23",
+   "visibility_score": 0.2,
+   "share_of_voice": 0.21
+  },
+  {
+   "asset": {
+    "name": "Globex",
+    "owned": false
+   },
+   "date": "2026-09-24",
+   "visibility_score": 0.5,
+   "share_of_voice": 0.54
+  },
+  {
+   "asset": {
+    "name": "Globex",
+    "owned": false
+   },
+   "date": "2026-09-25",
+   "visibility_score": 0.5,
+   "share_of_voice": 0.54
+  },
+  {
+   "asset": {
+    "name": "Initech",
+    "owned": false
+   },
+   "date": "2026-09-20",
+   "visibility_score": 0.1,
+   "share_of_voice": 0.08
+  },
+  {
+   "asset": {
+    "name": "Initech",
+    "owned": false
+   },
+   "date": "2026-09-21",
+   "visibility_score": 0.1,
+   "share_of_voice": 0.08
+  },
+  {
+   "asset": {
+    "name": "Initech",
+    "owned": false
+   },
+   "date": "2026-09-22",
+   "visibility_score": 0.1,
+   "share_of_voice": 0.08
+  },
+  {
+   "asset": {
+    "name": "Initech",
+    "owned": false
+   },
+   "date": "2026-09-23",
+   "visibility_score": 0.1,
+   "share_of_voice": 0.08
+  },
+  {
+   "asset": {
+    "name": "Initech",
+    "owned": false
+   },
+   "date": "2026-09-24",
+   "visibility_score": 0.1,
+   "share_of_voice": 0.08
+  },
+  {
+   "asset": {
+    "name": "Initech",
+    "owned": false
+   },
+   "date": "2026-09-25",
+   "visibility_score": 0.1,
+   "share_of_voice": 0.08
+  }
+ ]
+}

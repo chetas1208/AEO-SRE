@@ -1,0 +1,51 @@
+# `docker compose up -d` starts only infra (Postgres+pgvector, Redis) for local dev.
+# `docker compose --profile app up -d --build` also runs api, worker and web in containers.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: aeo
+      POSTGRES_PASSWORD: aeo
+      POSTGRES_DB: aeo
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aeo"]
+      interval: 3s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      retries: 20
+
+  api:
+    profiles: [app]
+    build: { context: ., dockerfile: docker/backend.Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://aeo:aeo@postgres:5432/aeo
+      REDIS_URL: redis://redis:6379/0
+    command: sh -c "alembic upgrade head && uvicorn app.api.main:app --host 0.0.0.0 --port 8000"
+    ports: ["8000:8000"]
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_healthy } }
+  worker:
+    profiles: [app]
+    build: { context: ., dockerfile: docker/backend.Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://aeo:aeo@postgres:5432/aeo
+      REDIS_URL: redis://redis:6379/0
+    command: arq app.workers.worker.WorkerSettings
+    depends_on: { api: { condition: service_started } }
+  web:
+    profiles: [app]
+    build: { context: ., dockerfile: docker/frontend.Dockerfile }
+    environment:
+      NUXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports: ["3000:3000"]
+    depends_on: { api: { condition: service_started } }
+volumes:
+  pgdata:

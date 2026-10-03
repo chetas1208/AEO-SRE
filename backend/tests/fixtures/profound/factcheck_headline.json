@@ -1,0 +1,58 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "Hand-built from the Profound OpenAPI spec (External API 0.60.2). NOT recorded from the live API; values are invented test data.",
+  "recorded": false
+ },
+ "info": {
+  "total_results": 6,
+  "count": 6,
+  "next_cursor": null,
+  "models": [
+   "ChatGPT"
+  ],
+  "start_date": "2026-09-20",
+  "end_date": "2026-09-25",
+  "group_by": [
+   "date"
+  ]
+ },
+ "data": [
+  {
+   "date": "2026-09-20",
+   "accuracy": 0.9,
+   "accurate": 18,
+   "inaccurate": 2
+  },
+  {
+   "date": "2026-09-21",
+   "accuracy": 0.9,
+   "accurate": 18,
+   "inaccurate": 2
+  },
+  {
+   "date": "2026-09-22",
+   "accuracy": 0.85,
+   "accurate": 17,
+   "inaccurate": 3
+  },
+  {
+   "date": "2026-09-23",
+   "accuracy": 0.9,
+   "accurate": 18,
+   "inaccurate": 2
+  },
+  {
+   "date": "2026-09-24",
+   "accuracy": 0.7,
+   "accurate": 14,
+   "inaccurate": 6
+  },
+  {
+   "date": "2026-09-25",
+   "accuracy": 0.65,
+   "accurate": 13,
+   "inaccurate": 7
+  }
+ ]
+}

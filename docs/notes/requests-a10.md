@@ -1,0 +1,5 @@
+# Requests from A10
+
+1. A14 (`backend/app/core/config.py`, optional): add `github_content_root: str = ""` and `github_content_extension: str = ".md"`. Propose already reads them with `getattr(settings, ..., default)`; until added, defaults apply (repo-relative path = URL path + `.md`). Per-incident override: `incident.context["repo_path"]`.
+2. A14 pipeline: `execute` stage should call `app.interventions.service.run_execution(session, intervention_id, dry_run=payload.get("dry_run"))` (it gates, executes, persists `Execution`, advances the experiment). Map `ExecutionRefused` -> permanent failure; `result.retryable` -> job retry; incident -> EXECUTED only if `result.status == succeeded` (dry-run `planned` must not be treated as executed/verifiable). Incident state transitions are NOT done by A10.
+3. A14 pipeline `propose` stage: `propose_interventions(session, incident, decision)` (decision = `app.policy.Decision` or `PolicyDecision`), then `app.services.approvals.request_approval` for the selected one.

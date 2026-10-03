@@ -1,0 +1,81 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "Hand-built from the Profound OpenAPI spec (External API 0.60.2). NOT recorded from the live API; values are invented test data.",
+  "recorded": false
+ },
+ "info": {
+  "total_results": 6,
+  "count": 6,
+  "next_cursor": null,
+  "models": [
+   "ChatGPT",
+   "Perplexity"
+  ],
+  "start_date": "2026-09-20",
+  "end_date": "2026-09-25",
+  "scope": "owned"
+ },
+ "data": [
+  {
+   "asset": {
+    "name": "Acme",
+    "owned": true
+   },
+   "date": "2026-09-20",
+   "visibility_score": 0.6,
+   "share_of_voice": 0.3,
+   "average_position": 2.0
+  },
+  {
+   "asset": {
+    "name": "Acme",
+    "owned": true
+   },
+   "date": "2026-09-21",
+   "visibility_score": 0.62,
+   "share_of_voice": 0.31,
+   "average_position": 2.0
+  },
+  {
+   "asset": {
+    "name": "Acme",
+    "owned": true
+   },
+   "date": "2026-09-22",
+   "visibility_score": 0.61,
+   "share_of_voice": 0.305,
+   "average_position": 2.0
+  },
+  {
+   "asset": {
+    "name": "Acme",
+    "owned": true
+   },
+   "date": "2026-09-23",
+   "visibility_score": 0.6,
+   "share_of_voice": 0.3,
+   "average_position": 2.0
+  },
+  {
+   "asset": {
+    "name": "Acme",
+    "owned": true
+   },
+   "date": "2026-09-24",
+   "visibility_score": 0.38,
+   "share_of_voice": 0.19,
+   "average_position": 5.0
+  },
+  {
+   "asset": {
+    "name": "Acme",
+    "owned": true
+   },
+   "date": "2026-09-25",
+   "visibility_score": 0.37,
+   "share_of_voice": 0.185,
+   "average_position": 5.0
+  }
+ ]
+}

@@ -1,0 +1,100 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "Hand-built from the Profound OpenAPI spec (External API 0.60.2). NOT recorded from the live API; values are invented test data.",
+  "recorded": false
+ },
+ "info": {
+  "total_rows": 3,
+  "limit": 1000,
+  "next_cursor": null
+ },
+ "data": [
+  {
+   "id": "p1",
+   "analysis_types": [
+    "visibility"
+   ],
+   "prompt_type": "visibility",
+   "prompt": "best SSO provider for enterprise",
+   "language": "en",
+   "status": "active",
+   "topic": {
+    "id": "t1",
+    "name": "Enterprise SSO"
+   },
+   "tags": [],
+   "regions": [
+    {
+     "id": "r1",
+     "name": "US"
+    }
+   ],
+   "platforms": [
+    {
+     "id": "m1",
+     "name": "ChatGPT"
+    }
+   ],
+   "personas": [
+    {
+     "id": "ps1",
+     "name": "CISO"
+    }
+   ],
+   "created_at": "2026-01-01T00:00:00Z",
+   "updated_at": "2026-01-02T00:00:00Z"
+  },
+  {
+   "id": "p2",
+   "analysis_types": [
+    "visibility",
+    "accuracy"
+   ],
+   "prompt_type": "visibility",
+   "prompt": "acme saml sso setup",
+   "language": "en",
+   "status": "active",
+   "topic": {
+    "id": "t1",
+    "name": "Enterprise SSO"
+   },
+   "tags": [],
+   "regions": [
+    {
+     "id": "r1",
+     "name": "US"
+    }
+   ],
+   "platforms": [],
+   "personas": [],
+   "created_at": "2026-01-01T00:00:00Z",
+   "updated_at": "2026-01-02T00:00:00Z"
+  },
+  {
+   "id": "p3",
+   "analysis_types": [
+    "visibility"
+   ],
+   "prompt_type": "visibility",
+   "prompt": "acme pricing tiers",
+   "language": "en",
+   "status": "active",
+   "topic": {
+    "id": "t2",
+    "name": "Pricing"
+   },
+   "tags": [],
+   "regions": [
+    {
+     "id": "r1",
+     "name": "US"
+    }
+   ],
+   "platforms": [],
+   "personas": [],
+   "created_at": "2026-01-01T00:00:00Z",
+   "updated_at": "2026-01-02T00:00:00Z"
+  }
+ ]
+}

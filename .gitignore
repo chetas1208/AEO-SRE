@@ -1,0 +1,48 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Third party reference code & research
+references/
+
+# Logs and runtime PIDs (strict append-only, never tracked)
+logs/
+*.log
+*.pid
+
+# Test results and browser traces
+.playwright/
+test-results/
+playwright-report/
+frontend/test-artifacts/
+frontend/test-results/
+
+# Frontend build outputs & dependencies
+.nuxt/
+.output/
+node_modules/
+
+# Python cache & virtual environments
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+backend/.venv/
+*.egg-info/
+
+# Artifacts & Local Data
+data/*
+!data/.gitkeep
+backend/ml/artifacts/*
+!backend/ml/artifacts/.gitkeep
+!backend/ml/artifacts/evidence_ranker/
+backend/ml/datasets/raw/
+experiments/evals/
+.hacp/
+
+# Cloudflare credentials and certificates
+cloudflared/
+*.pem

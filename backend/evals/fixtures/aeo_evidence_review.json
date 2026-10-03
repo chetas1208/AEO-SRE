@@ -1,0 +1,50 @@
+[
+  {
+    "id": "saml-docs-support",
+    "claim": "The product documentation says SAML SSO is available on the Enterprise plan.",
+    "passage": "Enterprise plan: SAML single sign-on is supported. Setup steps are in the security guide.",
+    "source": "hand-written stand-in for an official documentation page",
+    "label": "SUPPORT",
+    "scored_by_ranker": false
+  },
+  {
+    "id": "saml-old-comparison",
+    "claim": "The product documentation says SAML SSO is available on the Enterprise plan.",
+    "passage": "As of 2023 this product does not offer SAML. Customers must use password login.",
+    "source": "hand-written stand-in for a stale comparison article",
+    "label": "CONTRADICT",
+    "scored_by_ranker": false
+  },
+  {
+    "id": "pricing-page-irrelevant",
+    "claim": "The product documentation says SAML SSO is available on the Enterprise plan.",
+    "passage": "The status page lists no incidents in the last 90 days. All regions are operational.",
+    "source": "hand-written stand-in for an unrelated status page",
+    "label": "INSUFFICIENT",
+    "scored_by_ranker": false
+  },
+  {
+    "id": "faq-support",
+    "claim": "Enterprise buyers can use Okta as an identity provider.",
+    "passage": "Supported identity providers include Okta, Azure AD, and Ping. Okta uses the SAML setup on this page.",
+    "source": "hand-written stand-in for an official FAQ",
+    "label": "SUPPORT",
+    "scored_by_ranker": false
+  },
+  {
+    "id": "competitor-page-insufficient",
+    "claim": "Enterprise buyers can use Okta as an identity provider.",
+    "passage": "Acme Security won a design award. The company was founded in 2014.",
+    "source": "hand-written stand-in for an off-topic competitor page",
+    "label": "INSUFFICIENT",
+    "scored_by_ranker": false
+  },
+  {
+    "id": "pricing-contradicts-availability",
+    "claim": "SAML is included with every paid plan.",
+    "passage": "SAML single sign-on is an Enterprise add-on and is not included with Team or Pro.",
+    "source": "hand-written stand-in for a pricing page",
+    "label": "CONTRADICT",
+    "scored_by_ranker": false
+  }
+]

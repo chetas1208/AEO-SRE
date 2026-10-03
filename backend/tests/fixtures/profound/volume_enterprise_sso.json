@@ -1,0 +1,46 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "Hand-built from the Profound OpenAPI spec (External API 0.60.2). NOT recorded from the live API; values are invented test data.",
+  "recorded": false
+ },
+ "info": {
+  "total_rows": 4,
+  "truncated": false,
+  "query": {}
+ },
+ "data": [
+  {
+   "country_code": "US",
+   "platform": "chatgpt.com",
+   "matching_type": "phrase_match",
+   "frequency": "weekly",
+   "date": "2026-09-07",
+   "volume": 1200.0
+  },
+  {
+   "country_code": "GB",
+   "platform": "chatgpt.com",
+   "matching_type": "phrase_match",
+   "frequency": "weekly",
+   "date": "2026-09-07",
+   "volume": 300.0
+  },
+  {
+   "country_code": "US",
+   "platform": "chatgpt.com",
+   "matching_type": "phrase_match",
+   "frequency": "weekly",
+   "date": "2026-09-14",
+   "volume": 1500.0
+  },
+  {
+   "country_code": "US",
+   "platform": "chatgpt.com",
+   "matching_type": "phrase_match",
+   "frequency": "monthly",
+   "date": "2026-09-01",
+   "volume": 5000.0
+  }
+ ]
+}

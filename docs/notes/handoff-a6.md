@@ -1,0 +1,26 @@
+# Handoff A6 (Evidence DAG / Provenance)
+
+## Files
+- `backend/app/models/evidence.py`: `Evidence`, `EvidenceNode` (synthetic nodes; `NodeKind` = root | prompt_cluster | experiment), `EvidenceEdge`, `Hypothesis`. Tables `evidence`, `evidence_nodes`, `evidence_edges`, `hypotheses`. Enum-ish columns are `String` holding `.value` (same convention as core.py). `incident_id` FKs to `incidents.id` (CASCADE). `EvidenceEdge.src_id/dst_id` are plain UUIDs (polymorphic: Evidence | EvidenceNode | Hypothesis | Incident), validated by the graph builder, not by FKs. A14: include the four tables in the Alembic migration (create_all works).
+- `backend/app/schemas/evidence.py`: `EvidenceItem`, `EvidenceDetail`, `HypothesisOut`, `ProvenanceOut`, `GraphNode`, `GraphEdge`, `GraphValidationOut`, `GraphOut`, enums `NodeClass`, `NodeRole`. snake_case on wire; every field also has a camelCase alias (`model_dump(by_alias=True)`), both accepted on input. `from_attributes=True` so `EvidenceItem.model_validate(orm_row)` works; `domain` is derived from `url`.
+- `backend/app/evidence/provenance.py`: `content_hash(text)` (sha256 hex of NFKC+whitespace-normalized text, case preserved, None for blank), `normalize_text`, `Provenance` (frozen dataclass; `.make`, `.from_evidence`, `.from_mapping`, `.missing`), `edge_provenance(...)` helper to build `EvidenceEdge.provenance`, `evidence_snapshot(list) -> dict` (sorted, JSON-safe, detached, with `snapshot_hash`), `verify_snapshot`, `snapshot_drift(snapshot, live_rows)`, `domain_of(url)`.
+- `backend/app/evidence/graph.py`: `build_graph(incident, evidence, edges, hypotheses, nodes=(), *, derive_hypothesis_edges=True, strict=False) -> EvidenceGraph`; `EvidenceGraph` (`.g` MultiDiGraph, `.report`, `.validate()`, `.serialize() -> GraphOut`, `.levels()`, `.topological_order()`, `.explain_path(node_id) -> PathExplanation`, `.conflicts()`, `.node()/.nodes()/.edges()`), `GraphIntegrityError`, plus `hypothesis_out(h, graph)` and `evidence_detail(ev, graph)` helpers for the API.
+- Tests: `backend/tests/unit/test_evidence_graph.py` (23 pass on Postgres test DB and with `AEO_TEST_DB=sqlite`; includes DB round trip via A13 factories).
+
+## Semantics (read before wiring)
+- Graph is built only from persisted rows. Root = persisted `EvidenceNode(kind="root")` if any, else derived from the `Incident` row (id = incident id, class `profound`, role `root`, extract = plain restatement of `incident.metrics`). Edges that reference the incident id are aliased to a persisted root node if one exists.
+- Edge direction = investigative trail (symptom -> explanation); hypotheses are sinks. Collector/RCA should write edges in that direction: e.g. incident -> prompt cluster (`associated_with`), cluster -> competitor page (`competes_with`), competitor page -> citing source (`cites`), evidence -> hypothesis (`supports` / `contradicts`), hypothesis/intervention -> experiment (`triggered`).
+- `Hypothesis.evidence_ids` with no persisted edge to the hypothesis yield `derived=true` `supports` edges (provenance copied from the evidence, confidence None). Pass `derive_hypothesis_edges=False` to disable. Unknown ids are reported as dangling, not hidden.
+- Contradictions are never dropped: `contradicts` edges are kept, parallel edges of different types between the same pair are all kept (MultiDiGraph), `GraphEdge.conflict=true`, `HypothesisOut.contradicting_evidence_ids`, `PathExplanation.contradictions`. Evidence with contradiction_score >= 0.5 (and > support) lacking any `contradicts` edge produces a warning in `validation.warnings`; RCA/collector should either add the edge or accept the warning.
+- Validation never silently discards: dangling edges go to `report.dangling_edges`; cycle-closing edges are kept and flagged `back_edge` (excluded from layout only); `strict=True` raises `GraphIntegrityError` instead. Missing provenance fields are listed (`provenance.missing`, `validation.edges_missing_provenance`, `nodes_missing_provenance`), never invented.
+- Levels: longest-path layering from the root; nodes unreachable from the root are listed in `validation.disconnected_nodes` and placed below all connected levels.
+- `explain_path`: shortest non-contradicting trail from root; confidence = product of edge confidences, `None` if any hop has none.
+
+## Stubbed / not done
+- No API routes (A12): suggested `GET /api/incidents/{id}/graph` = load rows (Evidence, EvidenceEdge, EvidenceNode, Hypothesis for incident) -> `build_graph(...).serialize()`; `/evidence` -> `EvidenceItem.model_validate(row)`; `/hypotheses` -> `hypothesis_out(h, graph)`.
+- No writer for EvidenceEdge rows: collector (A4) / rca (A3) must persist root/prompt-cluster nodes and edges using `edge_provenance(...)` and `content_hash(...)`. `EvidenceRanker` scores go into `Evidence.*_score`.
+- A5: store `evidence_snapshot(evidence)` in `Experiment.evidence_snapshot` and call `snapshot_drift` at verification time if desired.
+- Note: A13 factories use `content_hash="sha256:<hex>"`; `content_hash()` here returns bare hex. Column accepts both; pick one prefix convention project-wide (suggest bare hex).
+
+## Requests
+None blocking. Optional for A14: THIRD_PARTY.md merge from `docs/notes/third-party-a6.md` (Lattice: no license, concepts only).

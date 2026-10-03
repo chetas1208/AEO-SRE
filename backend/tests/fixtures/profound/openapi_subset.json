@@ -1,0 +1,384 @@
+{
+ "_fixture": {
+  "origin": "derived from the live-published OpenAPI spec (registry.scalar.com, External API 0.60.2)",
+  "recorded": false
+ },
+ "POST /v2/reports/visibility": {
+  "request": {
+   "category_id": {},
+   "start_date": {},
+   "end_date": {},
+   "group_by": {
+    "enum": [
+     "date",
+     "model",
+     "topic",
+     "region",
+     "prompt",
+     "persona"
+    ]
+   },
+   "metrics": {
+    "enum": [
+     "visibility_score",
+     "share_of_voice",
+     "average_position"
+    ]
+   },
+   "interval": {
+    "enum": [
+     "day",
+     "week",
+     "month"
+    ]
+   },
+   "scope": {
+    "enum": [
+     "owned",
+     "all"
+    ]
+   },
+   "assets": {},
+   "filter": {},
+   "sort": {},
+   "limit": {},
+   "max_results": {},
+   "cursor": {}
+  },
+  "required": [
+   "category_id",
+   "start_date",
+   "end_date"
+  ],
+  "response_row_keys": [
+   "asset",
+   "average_position",
+   "date",
+   "model",
+   "persona",
+   "prompt",
+   "rank",
+   "region",
+   "share_of_voice",
+   "topic",
+   "visibility_score"
+  ]
+ },
+ "POST /v2/reports/citations": {
+  "request": {
+   "category_id": {},
+   "start_date": {},
+   "end_date": {},
+   "entity": {
+    "enum": [
+     "domain",
+     "page",
+     "citation_category"
+    ]
+   },
+   "group_by": {
+    "enum": [
+     "page",
+     "date",
+     "model",
+     "topic",
+     "region",
+     "persona",
+     "prompt"
+    ]
+   },
+   "metrics": {
+    "enum": [
+     "count",
+     "citation_share",
+     "rank",
+     "first_cited_at"
+    ]
+   },
+   "interval": {
+    "enum": [
+     "day",
+     "week",
+     "month"
+    ]
+   },
+   "scope": {
+    "enum": [
+     "all",
+     "owned"
+    ]
+   },
+   "filter": {},
+   "limit": {},
+   "max_results": {},
+   "cursor": {}
+  },
+  "required": [
+   "category_id",
+   "start_date",
+   "end_date"
+  ],
+  "response_row_keys": [
+   "citation_share",
+   "count",
+   "date",
+   "domain",
+   "first_cited_at",
+   "model",
+   "page",
+   "persona",
+   "prompt",
+   "rank",
+   "region",
+   "topic"
+  ]
+ },
+ "POST /v2/reports/factcheck": {
+  "request": {
+   "category_id": {},
+   "start_date": {},
+   "end_date": {},
+   "group_by": {
+    "enum": [
+     "date",
+     "model",
+     "region",
+     "persona",
+     "prompt",
+     "topic",
+     "tag",
+     "citation",
+     "theme"
+    ]
+   },
+   "filter": {},
+   "limit": {},
+   "max_results": {},
+   "cursor": {}
+  },
+  "required": [
+   "category_id",
+   "start_date",
+   "end_date"
+  ],
+  "response_row_keys": [
+   "accuracy",
+   "accurate",
+   "citation",
+   "date",
+   "inaccurate",
+   "model",
+   "persona",
+   "prompt",
+   "region",
+   "tag",
+   "theme",
+   "topic"
+  ]
+ },
+ "POST /v2/reports/factcheck/claims": {
+  "request": {
+   "category_id": {},
+   "start_date": {},
+   "end_date": {},
+   "group_by": {
+    "enum": [
+     "model",
+     "region",
+     "persona",
+     "prompt",
+     "topic",
+     "tag",
+     "theme"
+    ]
+   },
+   "filter": {},
+   "include": {
+    "enum": [
+     "theme",
+     "reasoning",
+     "models",
+     "evidence",
+     "citation_sources"
+    ]
+   },
+   "limit": {},
+   "max_results": {},
+   "cursor": {}
+  },
+  "required": [
+   "category_id",
+   "start_date",
+   "end_date"
+  ],
+  "response_row_keys": [
+   "accuracy",
+   "accurate",
+   "citation_sources",
+   "claim",
+   "claims",
+   "cluster_id",
+   "evidence",
+   "inaccurate",
+   "model",
+   "models",
+   "occurrence",
+   "persona",
+   "prompt",
+   "reasoning",
+   "region",
+   "tag",
+   "theme",
+   "topic",
+   "total_claims"
+  ]
+ },
+ "POST /v2/prompt-volumes/volume/on-the-fly": {
+  "request": {
+   "keyword": {},
+   "matching_type": {
+    "enum": [
+     "exact_match",
+     "phrase_match"
+    ]
+   },
+   "start_date": {},
+   "end_date": {},
+   "regions": {},
+   "platforms": {
+    "enum": [
+     "chatgpt.com",
+     "gemini.google.com",
+     "perplexity.ai"
+    ]
+   },
+   "organization_id": {}
+  },
+  "required": [
+   "keyword",
+   "matching_type",
+   "start_date",
+   "end_date"
+  ],
+  "response_row_keys": [
+   "country_code",
+   "date",
+   "frequency",
+   "matching_type",
+   "platform",
+   "volume"
+  ]
+ },
+ "GET /v1/org/categories/{category_id}/prompts": {
+  "params": {
+   "category_id": {
+    "enum": null
+   },
+   "limit": {
+    "enum": null
+   },
+   "cursor": {
+    "enum": null
+   },
+   "order_by": {
+    "enum": [
+     "created_at",
+     "prompt"
+    ]
+   },
+   "order_dir": {
+    "enum": [
+     "asc",
+     "desc"
+    ]
+   },
+   "analysis_type": {
+    "enum": [
+     "visibility",
+     "sentiment",
+     "sentiment_v2",
+     "accuracy"
+    ]
+   },
+   "prompt_type": {
+    "enum": [
+     "visibility",
+     "sentiment"
+    ]
+   },
+   "status": {
+    "enum": [
+     "active",
+     "disabled"
+    ]
+   },
+   "topic_id": {
+    "enum": null
+   },
+   "tag_id": {
+    "enum": null
+   },
+   "region_id": {
+    "enum": null
+   },
+   "platform_id": {
+    "enum": null
+   },
+   "persona_id": {
+    "enum": null
+   }
+  },
+  "response_row_keys": [
+   "analysis_types",
+   "created_at",
+   "id",
+   "language",
+   "personas",
+   "platforms",
+   "prompt",
+   "prompt_type",
+   "regions",
+   "status",
+   "tags",
+   "topic",
+   "updated_at"
+  ]
+ },
+ "POST /v2/reports/query-fanouts": {
+  "request": {
+   "category_id": {},
+   "start_date": {},
+   "end_date": {},
+   "group_by": {"enum": ["date", "model", "region", "prompt", "query"]},
+   "metrics": {"enum": ["fanouts_per_execution", "total_fanouts", "share", "query_variations"]},
+   "interval": {"enum": ["day", "week", "month"]},
+   "cursor": {},
+   "limit": {}
+  },
+  "required": ["category_id", "start_date", "end_date"]
+ },
+ "GET /v1/agents": {
+  "params": {
+   "statuses": {
+    "enum": [
+     "published",
+     "draft"
+    ]
+   },
+   "limit": {
+    "enum": null
+   },
+   "next_cursor": {
+    "enum": null
+   }
+  },
+  "response_row_keys": [
+   "created_at",
+   "description",
+   "id",
+   "name",
+   "organization_id",
+   "status"
+  ]
+ }
+}

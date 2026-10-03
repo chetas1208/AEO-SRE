@@ -1,0 +1,33 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "TEST ONLY. Hand-built from the response_row_keys of POST /v2/reports/factcheck/claims in tests/fixtures/profound/openapi_subset.json (claim, occurrence, reasoning, evidence, citation_sources, models). NOT recorded; values are invented. Live FactCheck for the Mixpanel category returned an empty envelope, so no real claim shape has been observed.",
+  "recorded": false
+ },
+ "info": {"total_results": 3, "count": 3, "next_cursor": null, "models": ["ChatGPT", "Google Gemini"]},
+ "data": [
+  {
+   "claim": "TestCo does not support SAML SSO on any plan.",
+   "occurrence": 7,
+   "reasoning": "Cited review page states SSO is unavailable.",
+   "evidence": "The reviewed page lists SSO as missing.",
+   "citation_sources": ["https://reviews.example/testco-sso", {"domain": "forum.example", "url": "https://forum.example/t/1"}],
+   "models": ["ChatGPT", "Google Gemini"],
+   "accuracy": 0.0, "accurate": 0, "inaccurate": 7
+  },
+  {
+   "claim": "TestCo offers SAML SSO on the Enterprise plan.",
+   "occurrence": 4,
+   "reasoning": "Matches docs.",
+   "evidence": null,
+   "citation_sources": ["https://testco.example/docs/sso"],
+   "models": ["ChatGPT"]
+  },
+  {
+   "claim": "TestCo has an office in Lisbon.",
+   "occurrence": 1,
+   "citation_sources": [],
+   "models": ["Google Gemini"]
+  }
+ ]
+}

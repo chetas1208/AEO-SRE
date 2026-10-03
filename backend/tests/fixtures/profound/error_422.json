@@ -1,0 +1,17 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "Hand-built from the Profound OpenAPI spec (External API 0.60.2). NOT recorded from the live API; values are invented test data.",
+  "recorded": false
+ },
+ "detail": [
+  {
+   "loc": [
+    "body",
+    "category_id"
+   ],
+   "msg": "Field required",
+   "type": "missing"
+  }
+ ]
+}

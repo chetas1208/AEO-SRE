@@ -1,0 +1,64 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "Hand-built from the Profound OpenAPI spec (External API 0.60.2). NOT recorded from the live API; values are invented test data.",
+  "recorded": false
+ },
+ "info": {
+  "total_results": 12,
+  "count": 12,
+  "next_cursor": null,
+  "models": [
+   "ChatGPT",
+   "Perplexity"
+  ],
+  "start_date": "2026-09-20",
+  "end_date": "2026-09-25",
+  "scope": "owned",
+  "metrics": [
+   "citation_share",
+   "count"
+  ],
+  "analysis_types": [
+   "visibility"
+  ]
+ },
+ "data": [
+  {
+   "domain": "acme.com",
+   "date": "2026-09-20",
+   "citation_share": 0.2,
+   "count": 40
+  },
+  {
+   "domain": "acme.com",
+   "date": "2026-09-21",
+   "citation_share": 0.21,
+   "count": 42
+  },
+  {
+   "domain": "acme.com",
+   "date": "2026-09-22",
+   "citation_share": 0.2,
+   "count": 40
+  },
+  {
+   "domain": "acme.com",
+   "date": "2026-09-23",
+   "citation_share": 0.2,
+   "count": 41
+  },
+  {
+   "domain": "acme.com",
+   "date": "2026-09-24",
+   "citation_share": 0.1,
+   "count": 20
+  },
+  {
+   "domain": "acme.com",
+   "date": "2026-09-25",
+   "citation_share": 0.09,
+   "count": 18
+  }
+ ]
+}

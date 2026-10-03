@@ -1,0 +1,290 @@
+{
+  "name": "evidence_ranker",
+  "version": "evidence-ranker-20261002-e9e4fb7c",
+  "sha256": "e9e4fb7cc40e48383147068fbf85ab1b9a3c5887290ebf212bd630ad7e5f7243",
+  "trained_at": "2026-10-02T09:26:09+00:00",
+  "classes": [
+    "support",
+    "contradiction",
+    "insufficient"
+  ],
+  "primary_variant": "lex_cos",
+  "fresh_variant": "full",
+  "fresh_usable": false,
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "lexical_features": [
+    "claim_len_log",
+    "passage_len_log",
+    "len_ratio",
+    "tok_jaccard",
+    "claim_coverage",
+    "passage_coverage",
+    "bigram_coverage",
+    "unmatched_claim_tokens",
+    "ent_claim_count",
+    "ent_overlap",
+    "ent_jaccard",
+    "ent_passage_extra",
+    "num_claim_count",
+    "num_passage_count",
+    "num_exact_frac",
+    "num_conflict",
+    "num_min_rel_diff",
+    "num_unmatched_claim",
+    "comp_present",
+    "comp_satisfied",
+    "comp_violated",
+    "approx_comparator",
+    "year_claim_count",
+    "year_overlap_frac",
+    "year_conflict",
+    "month_conflict",
+    "neg_claim",
+    "neg_passage",
+    "neg_mismatch",
+    "antonym_conflict",
+    "antonym_shared",
+    "title_in_claim",
+    "title_sim",
+    "temporal_cue_claim",
+    "temporal_cue_passage",
+    "time_sensitivity"
+  ],
+  "feature_names": [
+    "cosine",
+    "claim_len_log",
+    "passage_len_log",
+    "len_ratio",
+    "tok_jaccard",
+    "claim_coverage",
+    "passage_coverage",
+    "bigram_coverage",
+    "unmatched_claim_tokens",
+    "ent_claim_count",
+    "ent_overlap",
+    "ent_jaccard",
+    "ent_passage_extra",
+    "num_claim_count",
+    "num_passage_count",
+    "num_exact_frac",
+    "num_conflict",
+    "num_min_rel_diff",
+    "num_unmatched_claim",
+    "comp_present",
+    "comp_satisfied",
+    "comp_violated",
+    "approx_comparator",
+    "year_claim_count",
+    "year_overlap_frac",
+    "year_conflict",
+    "month_conflict",
+    "neg_claim",
+    "neg_passage",
+    "neg_mismatch",
+    "antonym_conflict",
+    "antonym_shared",
+    "title_in_claim",
+    "title_sim",
+    "temporal_cue_claim",
+    "temporal_cue_passage",
+    "time_sensitivity",
+    "source_age_log",
+    "is_owned",
+    "revision_distance_log"
+  ],
+  "primary_columns": 37,
+  "datasets": {
+    "config": {
+      "subset": 40000,
+      "val_size": 6000,
+      "test_size": 12000,
+      "fresh_train": 12000,
+      "seed": 13,
+      "pool_sizes": {
+        "fever/train": 227936,
+        "fever/val": 15873,
+        "fever/test": 16008,
+        "vitaminc/train": 370653,
+        "vitaminc/val": 63054,
+        "vitaminc/test": 55197
+      }
+    },
+    "train": {
+      "n": 40000,
+      "by_label": {
+        "contradiction": 14666,
+        "support": 14667,
+        "insufficient": 10667
+      },
+      "by_source": {
+        "fever": 20000,
+        "vitaminc": 20000
+      },
+      "freshness_labeled": 11955,
+      "freshness_stale_rate": 0.5115851108322877
+    },
+    "val": {
+      "n": 6000,
+      "by_label": {
+        "contradiction": 2200,
+        "insufficient": 1600,
+        "support": 2200
+      },
+      "by_source": {
+        "fever": 3000,
+        "vitaminc": 3000
+      },
+      "freshness_labeled": 1796,
+      "freshness_stale_rate": 0.5111358574610245
+    },
+    "test": {
+      "n": 12000,
+      "by_label": {
+        "insufficient": 3200,
+        "contradiction": 4400,
+        "support": 4400
+      },
+      "by_source": {
+        "fever": 6000,
+        "vitaminc": 6000
+      },
+      "freshness_labeled": 3591,
+      "freshness_stale_rate": 0.521024784182679
+    },
+    "fresh_train": {
+      "n": 12000,
+      "by_label": {
+        "support": 4000,
+        "contradiction": 4000,
+        "insufficient": 4000
+      },
+      "by_source": {
+        "vitaminc": 12000
+      },
+      "freshness_labeled": 12000,
+      "freshness_stale_rate": 0.5
+    },
+    "fresh_val": {
+      "n": 2000,
+      "by_label": {
+        "insufficient": 666,
+        "contradiction": 666,
+        "support": 668
+      },
+      "by_source": {
+        "vitaminc": 2000
+      },
+      "freshness_labeled": 2000,
+      "freshness_stale_rate": 0.5
+    },
+    "fresh_test": {
+      "n": 4000,
+      "by_label": {
+        "insufficient": 1332,
+        "contradiction": 1334,
+        "support": 1334
+      },
+      "by_source": {
+        "vitaminc": 4000
+      },
+      "freshness_labeled": 4000,
+      "freshness_stale_rate": 0.5
+    },
+    "split_policy": "train/val/test come from the datasets' own official, disjoint splits (VitaminC train/dev/test; copenlu FEVER train/valid/test); each is subsampled class-balanced; no claim appears in two splits by construction of the official splits",
+    "raw_files": {
+      "vitaminc/train": {
+        "repo": "tals/vitaminc",
+        "file": "train.jsonl",
+        "hub_commit": "be6febb761b0b2807687e61e0b5282e459df2fa0",
+        "sha256": "7461c6fd1a13459590317c5ccdc8651dd2daf7c1ad8ae4b10ccd88d164fccd5a",
+        "bytes": 193958244
+      },
+      "vitaminc/val": {
+        "repo": "tals/vitaminc",
+        "file": "dev.jsonl",
+        "hub_commit": "be6febb761b0b2807687e61e0b5282e459df2fa0",
+        "sha256": "544934677f5d133873e6d38f4557f8966f4efa5d3d70874ffe6913f2091b86b5",
+        "bytes": 32876983
+      },
+      "vitaminc/test": {
+        "repo": "tals/vitaminc",
+        "file": "test.jsonl",
+        "hub_commit": "be6febb761b0b2807687e61e0b5282e459df2fa0",
+        "sha256": "7ad1808dbc30c62e0a1427a53022d0dfaff668a1fde3c4b612a2d266edd753ad",
+        "bytes": 28717099
+      },
+      "fever/train": {
+        "repo": "copenlu/fever_gold_evidence",
+        "file": "train.jsonl",
+        "hub_commit": "a6b8d891d393e97a4efac791afffb2d7de5e57c6",
+        "sha256": "bfa7b19109af675e5ce914dd96779b6382ca5c8c60d32c38e26f0072dd32f1c1",
+        "bytes": 96931344
+      },
+      "fever/val": {
+        "repo": "copenlu/fever_gold_evidence",
+        "file": "valid.jsonl",
+        "hub_commit": "a6b8d891d393e97a4efac791afffb2d7de5e57c6",
+        "sha256": "5da0ccc0ccf77f974611de13f8aac6f78c6bba6293912835099eb6029baa85d9",
+        "bytes": 6471611
+      },
+      "fever/test": {
+        "repo": "copenlu/fever_gold_evidence",
+        "file": "test.jsonl",
+        "hub_commit": "a6b8d891d393e97a4efac791afffb2d7de5e57c6",
+        "sha256": "3f4c9a9c6919f9a08af2ad2bcb9cc2be77a656169d93ff69a68fbd750c677b9e",
+        "bytes": 6626459
+      }
+    },
+    "leakage_check": {
+      "claim_overlap_train_test": 2,
+      "claim_overlap_train_val": 0,
+      "claim_overlap_val_test": 0
+    }
+  },
+  "hyperparameters": {
+    "cls": {
+      "objective": "multiclass",
+      "num_class": 3,
+      "learning_rate": 0.05,
+      "num_leaves": 63,
+      "feature_fraction": 0.8,
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "min_data_in_leaf": 20,
+      "lambda_l2": 1.0,
+      "num_threads": 18,
+      "verbosity": -1,
+      "seed": 13
+    },
+    "fresh": {
+      "objective": "binary",
+      "learning_rate": 0.05,
+      "num_leaves": 31,
+      "feature_fraction": 0.3,
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "lambda_l2": 1.0,
+      "num_threads": 18,
+      "verbosity": -1,
+      "seed": 13,
+      "min_data_in_leaf": 30
+    }
+  },
+  "libraries": {
+    "lightgbm": "4.7.0",
+    "sklearn": "1.9.1",
+    "numpy": "2.5.3",
+    "python": "3.12.3"
+  },
+  "args": {
+    "subset": "40000",
+    "val_size": "None",
+    "test_size": "None",
+    "fresh_train": "None",
+    "seed": "13",
+    "out": "/home/923873155/Marketing Hackathon 3Oct/backend/ml/artifacts/evidence_ranker",
+    "no_embeddings": "False",
+    "device": "None",
+    "threads": "18"
+  }
+}

@@ -1,0 +1,13 @@
+{
+ "_fixture": {
+  "origin": "synthetic",
+  "note": "Hand-built from the Profound OpenAPI QueryFanoutsV2Response shape. NOT recorded from the live API; values are invented test data.",
+  "recorded": false
+ },
+ "info": {"count": 3, "next_cursor": null},
+ "data": [
+  {"date": "2026-09-20", "prompt": "Does Acme support SAML?", "query": "enterprise analytics SSO", "share": 0.42, "total_fanouts": 8},
+  {"date": "2026-09-25", "prompt": "Does Acme support SAML?", "query": "enterprise analytics SSO", "share": 0.18, "total_fanouts": 3},
+  {"date": "2026-09-25", "prompt": "Does Acme support SAML?", "query": "okta sso", "share": 0.31, "total_fanouts": 6}
+ ]
+}
