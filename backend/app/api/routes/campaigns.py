@@ -1,11 +1,14 @@
 import json
-import os
 import re
 import uuid
 from pathlib import Path
 from typing import Any
+
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
+
+from app.api.deps import SessionDep
+from app.services.campaign_profound import live_profound_overlay, merge_profound_impact, resolve_brand_org_id
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
 
@@ -483,7 +486,7 @@ CAMPAIGNS_DB: list[dict[str, Any]] = [
 def _load_custom_campaigns() -> None:
     if CAMPAIGNS_STORE_PATH.exists():
         try:
-            with open(CAMPAIGNS_STORE_PATH, "r", encoding="utf-8") as f:
+            with open(CAMPAIGNS_STORE_PATH, encoding="utf-8") as f:
                 custom = json.load(f)
                 existing_ids = {c["id"] for c in CAMPAIGNS_DB}
                 for c in custom:
@@ -598,19 +601,40 @@ async def create_campaign(req: CampaignCreateRequest):
     return new_campaign
 
 
-@router.get("")
-async def list_campaigns():
-    """List all tracked campaigns with financial summaries and confidence scores."""
-    return {"campaigns": CAMPAIGNS_DB, "total": len(CAMPAIGNS_DB)}
+@router.get("/profound/live")
+async def campaigns_profound_live(session: SessionDep):
+    """Live Profound metrics + 7d delta for the brand org (from ingested signals)."""
+    return await live_profound_overlay(session)
 
+
+@router.post("/profound/refresh")
+async def campaigns_profound_refresh(session: SessionDep):
+    """Pull latest Profound signals, then return the live overlay."""
+    from app.services.pipeline import ingest
+
+    oid = await resolve_brand_org_id(session)
+    if oid is None:
+        raise HTTPException(status_code=404, detail="No organization configured for Profound live overlay")
+    ingest_result = await ingest(session, oid)
+    overlay = await live_profound_overlay(session, org_id=oid)
+    return {"ingest": ingest_result, "profound_live": overlay}
+
+
+@router.get("")
+async def list_campaigns(session: SessionDep):
+    """List all tracked campaigns with financial summaries and live Profound effectiveness overlay."""
+    overlay = await live_profound_overlay(session)
+    enriched = [merge_profound_impact(dict(c), overlay) for c in CAMPAIGNS_DB]
+    return {"campaigns": enriched, "total": len(enriched), "profound_live": overlay}
 
 
 @router.get("/{campaign_id}")
-async def get_campaign(campaign_id: str):
+async def get_campaign(campaign_id: str, session: SessionDep):
     """Get single campaign detail."""
+    overlay = await live_profound_overlay(session)
     for c in CAMPAIGNS_DB:
         if c["id"] == campaign_id:
-            return c
+            return merge_profound_impact(dict(c), overlay)
     raise HTTPException(status_code=404, detail="Campaign not found")
 
 

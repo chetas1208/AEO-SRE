@@ -15,7 +15,9 @@ const {
   selectCampaign,
   highlightOutcomePath,
   highlightCostPath,
-  clearHighlights
+  clearHighlights,
+  refreshProfoundLive,
+  profoundRefreshing
 } = useCampaigns()
 
 const isExperimentDrawerOpen = ref(false)
@@ -47,6 +49,15 @@ function closeCostDetail() {
         <div class="header-row">
           <span class="pane-title">Campaigns</span>
           <span class="count-badge">{{ campaigns.length }} Tracked</span>
+          <button
+            type="button"
+            class="profound-refresh-btn"
+            :disabled="profoundRefreshing"
+            title="Pull latest Profound signals and refresh campaign effectiveness"
+            @click="refreshProfoundLive"
+          >
+            {{ profoundRefreshing ? 'Syncing…' : 'Profound sync' }}
+          </button>
         </div>
         <p class="pane-subtitle">Provenance-backed cost & return ledger across every marketing initiative</p>
       </div>
@@ -68,6 +79,15 @@ function closeCostDetail() {
 
           <h3 class="campaign-name">{{ cmp.name }}</h3>
           <div class="channel-hint">{{ cmp.primary_channel }}</div>
+
+          <div v-if="cmp.campaign_effectiveness || cmp.profound_live" class="profound-effect-row">
+            <span
+              v-if="cmp.profound_live?.source_mode === 'LIVE'"
+              :class="['effect-pill', `effect-${(cmp.campaign_effectiveness || cmp.profound_live?.campaign_effectiveness || 'NO_DATA').toLowerCase()}`]"
+            >
+              Profound · {{ cmp.campaign_effectiveness || cmp.profound_live?.campaign_effectiveness }}
+            </span>
+          </div>
 
           <div class="card-financials">
             <div class="fin-item">
@@ -344,19 +364,33 @@ function closeCostDetail() {
 
             <!-- Profound AI Discovery Impact -->
             <div class="col-box">
-              <span class="box-title">Profound AI Discovery Impact</span>
+              <div class="box-title-row">
+                <span class="box-title">Profound AI Discovery Impact</span>
+                <span
+                  v-if="selectedCampaign.profound_impact?.data_source === 'LIVE_PROFOUND'"
+                  class="live-profound-tag"
+                >LIVE · 7d delta</span>
+              </div>
               <div class="profound-mini-stats">
                 <div class="p-stat">
-                  <span class="p-stat-label">Visibility</span>
-                  <span class="p-stat-val text-good">+{{ selectedCampaign.profound_impact.visibility_shift_pp }}pp</span>
+                  <span class="p-stat-label">Visibility Δ7d</span>
+                  <span
+                    :class="['p-stat-val', (selectedCampaign.profound_impact.visibility_shift_pp ?? 0) >= 0 ? 'text-good' : 'text-bad']"
+                  >
+                    {{ (selectedCampaign.profound_impact.visibility_shift_pp ?? 0) >= 0 ? '+' : '' }}{{ selectedCampaign.profound_impact.visibility_shift_pp ?? '—' }}pp
+                  </span>
                 </div>
                 <div class="p-stat">
-                  <span class="p-stat-label">Citation Share</span>
-                  <span class="p-stat-val text-good">+{{ selectedCampaign.profound_impact.citation_share_shift_pp }}pp</span>
+                  <span class="p-stat-label">Citation Δ7d</span>
+                  <span
+                    :class="['p-stat-val', (selectedCampaign.profound_impact.citation_share_shift_pp ?? 0) >= 0 ? 'text-good' : 'text-bad']"
+                  >
+                    {{ (selectedCampaign.profound_impact.citation_share_shift_pp ?? 0) >= 0 ? '+' : '' }}{{ selectedCampaign.profound_impact.citation_share_shift_pp ?? '—' }}pp
+                  </span>
                 </div>
                 <div class="p-stat">
-                  <span class="p-stat-label">Coverage</span>
-                  <span class="p-stat-val tone-blue">{{ selectedCampaign.profound_impact.prompt_coverage_pct }}%</span>
+                  <span class="p-stat-label">AI perception</span>
+                  <span class="p-stat-val tone-blue">{{ selectedCampaign.profound_impact.ai_perception_status }}</span>
                 </div>
               </div>
               <p class="profound-attribution-note">{{ selectedCampaign.profound_impact.attribution_note }}</p>
@@ -1068,6 +1102,53 @@ function closeCostDetail() {
   font-size: 10px;
   color: #64748b;
 }
+.profound-refresh-btn {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  background: rgba(16, 185, 129, 0.08);
+  color: #34d399;
+  cursor: pointer;
+}
+.profound-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.profound-effect-row {
+  margin: 6px 0 4px;
+}
+.effect-pill {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.effect-working { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.effect-stable { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+.effect-watch { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.effect-at_risk { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+.effect-no_data { background: rgba(99, 102, 241, 0.12); color: #818cf8; }
+.box-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.live-profound-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #34d399;
+  letter-spacing: 0.05em;
+}
+.text-bad { color: #f87171; }
+
 .profound-mini-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

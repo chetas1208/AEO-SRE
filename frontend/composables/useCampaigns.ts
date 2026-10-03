@@ -474,9 +474,10 @@ export function useCampaigns() {
   }
 
   // Load from backend API if reachable
+  const profoundRefreshing = ref(false)
+
   const loadCampaignsFromApi = async () => {
     try {
-      const config = useRuntimeConfig()
       const apiBase = useApiBase()
       const res = await $fetch<{ campaigns: Campaign[] }>(`${apiBase}/api/campaigns`)
       if (res && res.campaigns && res.campaigns.length > 0) {
@@ -484,6 +485,19 @@ export function useCampaigns() {
       }
     } catch {
       // Use resilient fallback data
+    }
+  }
+
+  const refreshProfoundLive = async () => {
+    profoundRefreshing.value = true
+    try {
+      const apiBase = useApiBase()
+      await $fetch(`${apiBase}/api/campaigns/profound/refresh`, { method: 'POST' })
+      await loadCampaignsFromApi()
+    } catch {
+      // keep current list; user still sees last good overlay
+    } finally {
+      profoundRefreshing.value = false
     }
   }
 
@@ -630,6 +644,8 @@ export function useCampaigns() {
     loadCampaignGraph,
     highlightOutcomePath,
     highlightCostPath,
-    clearHighlights
+    clearHighlights,
+    refreshProfoundLive,
+    profoundRefreshing
   }
 }

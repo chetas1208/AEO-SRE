@@ -100,6 +100,17 @@ export interface ProfoundImpact {
   competitor_share_shift_pp: number
   ai_perception_status: string
   affected_clusters_count: number
+  data_source?: 'LIVE_PROFOUND' | 'DEMO'
+  live_visibility?: number
+  live_citation_share?: number
+}
+
+export interface ProfoundLiveOverlay {
+  status: string
+  source_mode: string
+  signal_count?: number
+  campaign_effectiveness?: string
+  delta_basis?: string
 }
 
 export interface MuseFunnelStep {
@@ -187,6 +198,8 @@ export interface Campaign {
   assets: AssetLineageItem[]
   waste_breakdown: WasteBreakdown
   profound_impact: ProfoundImpact
+  profound_live?: ProfoundLiveOverlay
+  campaign_effectiveness?: string
   muse_outcomes: MuseOutcomes
   roi_confidence_breakdown: RoiConfidenceBreakdown
   timeline: TimelineEvent[]
