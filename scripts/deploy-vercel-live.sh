@@ -14,7 +14,7 @@ fi
 TUNNEL="$(tr -d '[:space:]' < "${ROOT}/logs/cloudflare/tunnel_url.txt")"
 echo "[INFO] Tunnel: ${TUNNEL}"
 
-cd "${ROOT}/frontend"
+cd "${ROOT}"
 vercel_env_set() {
   local name="$1" value="$2"
   vercel env rm "${name}" production -y >/dev/null 2>&1 || true
@@ -26,7 +26,7 @@ vercel_env_set "NUXT_BACKEND_PROXY_URL" "${TUNNEL}"
 vercel_env_set "NUXT_PUBLIC_API_SAME_ORIGIN" "1"
 vercel env rm "NUXT_PUBLIC_API_BASE_URL" production -y >/dev/null 2>&1 || true
 
-echo "[INFO] Deploying frontend to Vercel production..."
+echo "[INFO] Deploying from repo root (Vercel Root Directory = frontend)..."
 vercel deploy --prod --yes
 
 echo "[OK] Production: https://aeo-sre.vercel.app"
