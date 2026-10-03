@@ -6,6 +6,9 @@ const props = defineProps<{
   graph: GraphData
   selectedNodeId?: string | null
   activeEventNodeId?: string | null
+  /** optional path highlight (graph lineage): when set, nodes/edges outside the sets are dimmed */
+  highlightNodeIds?: string[] | null
+  highlightEdgeIds?: string[] | null
 }>()
 
 const emit = defineEmits<{
@@ -72,6 +75,7 @@ function getNodeColor(type: string): string {
 }
 
 function getNodeDepth(node: GraphNode): number {
+  if (node.depth != null) return node.depth
   const t = (node.type || '').toLowerCase()
   // Deterministic semantic depth layers:
   // z = -8: Profound Agents / Sources
@@ -136,6 +140,8 @@ function buildGraphScene() {
 
   const nodes = props.graph.nodes
   const edges = props.graph.edges
+  const hlNodes = props.highlightNodeIds?.length ? new Set(props.highlightNodeIds) : null
+  const hlEdges = props.highlightEdgeIds?.length ? new Set(props.highlightEdgeIds) : null
 
   if (!nodes.length) return
 
@@ -183,7 +189,7 @@ function buildGraphScene() {
       roughness: 0.3,
       metalness: 0.2,
       transparent: true,
-      opacity: 0.88
+      opacity: hlNodes && !hlNodes.has(node.id) ? 0.18 : 0.88
     })
     materialsToDispose.push(boxMat)
     const boxMesh = new THREE.Mesh(boxGeo, boxMat)
@@ -191,7 +197,7 @@ function buildGraphScene() {
 
     // Text sprite
     const texture = createTextTexture(node.title, node.type, colorHex)
-    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true })
+    const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: hlNodes && !hlNodes.has(node.id) ? 0.2 : 1 })
     materialsToDispose.push(spriteMat)
     const sprite = new THREE.Sprite(spriteMat)
     sprite.scale.set(6.2, 1.9, 1)
@@ -257,7 +263,7 @@ function buildGraphScene() {
     const lineMat = new THREE.LineBasicMaterial({
       color: new THREE.Color(edgeColor),
       transparent: true,
-      opacity: isConflict ? 0.9 : isProtected ? 0.75 : 0.45,
+      opacity: hlEdges ? (edge.id && hlEdges.has(edge.id) ? 1 : 0.06) : isConflict ? 0.9 : isProtected ? 0.75 : 0.45,
       linewidth: 2
     })
     materialsToDispose.push(lineMat)
@@ -434,7 +440,7 @@ function resetView() {
   cameraTarget.set(0, 0, 0)
 }
 
-watch(() => [props.graph, props.selectedNodeId], () => {
+watch(() => [props.graph, props.selectedNodeId, props.highlightNodeIds, props.highlightEdgeIds], () => {
   buildGraphScene()
 }, { deep: true })
 

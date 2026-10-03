@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Callable, Iterator
-from datetime import datetime
 from typing import Any
 
 import structlog
@@ -28,8 +27,8 @@ from app.core.config import get_settings
 from app.graph import model as gm
 from app.graph.outbox import EventSpec, insert_outbox_sync
 from app.models.changeguard import CanonicalClaim, ChangeCheck, ChangeSet
-from app.models.core import Evidence, Incident, Organization, PromptCluster
-from app.models.evidence import Evidence as _Evidence  # noqa: F401
+from app.models.core import Incident, Organization, PromptCluster
+from app.models.evidence import Evidence
 from app.models.interventions import (
     Approval,
     Execution,
@@ -308,7 +307,9 @@ def b_experiment(c: Ctx, exp: Experiment, versions: list[str]) -> list[EventSpec
     if exp.policy_decision_id:
         p.rel(("PolicyDecision", exp.policy_decision_id), "SELECTED", ("Experiment", exp.id))
     for t in _experiment_targets(c, exp, org):
-        p.rel(("Experiment", exp.id), "MEASURES", ("Target", gm.target_node_id(org, t)))
+        tid = gm.target_node_id(org, t)
+        p.node("Target", tid, {"key": t, "kind": "page"})
+        p.rel(("Experiment", exp.id), "MEASURES", ("Target", tid))
     base = p.dump()
     out: list[EventSpec] = []
     for ver in dict.fromkeys(versions):
@@ -673,15 +674,13 @@ def history_specs(session: Session, organization_id: Any = None) -> Iterator[Eve
     incidents = rows(Incident, *inc_org)
     inc_ids = {i.id for i in incidents}
     for o in incidents:
-        specs = safe(lambda o=o: b_incident(c, o, created=True), "incident")
-        yield from specs
+        yield from safe(lambda o=o: b_incident(c, o, created=True), "incident")
+    ivs: set[uuid.UUID] = set()
     for iv in rows(Intervention):
         if (not org) or iv.incident_id in inc_ids:
+            ivs.add(iv.id)
             yield from safe(lambda o=iv: b_intervention(c, o), "intervention")
-    ivs = {iv.id for iv in rows(Intervention) if (not org) or iv.incident_id in inc_ids}
-    for o in rows(PolicyVersion):
-        if org and o.source_experiment_id is None and False:  # versions are global; always projected
-            continue
+    for o in rows(PolicyVersion):  # versions are global: always projected
         yield from safe(lambda o=o: b_policy_version(c, o), "policy_version")
     for o in rows(PolicyDecision):
         if (not org) or o.incident_id in inc_ids:

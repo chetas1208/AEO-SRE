@@ -88,6 +88,10 @@ def classify(exc: BaseException) -> tuple[int, str, str, str, dict | None] | Non
         return 409, "DUPLICATE_REWARD", "conflict", msg, None
     if "NotRewardable" in name or "ExperimentStateError" in name:
         return 409, "EXPERIMENT_NOT_VERIFIABLE", "conflict", msg, None
+    if "GraphUnavailable" in name:  # app.graph.errors (Neo4j outage family): never a 500
+        return 503, "GRAPH_UNAVAILABLE", "unavailable", "graph is unavailable", {"state": getattr(exc, "state", None)}
+    if "GraphQueryError" in name:
+        return 503, "GRAPH_QUERY_FAILED", "unavailable", "graph query failed", None
     if "ProfoundNotConfigured" in name:
         return 503, "PROVIDER_NOT_CONFIGURED", "unavailable", "Profound is not configured", {"provider": "profound"}
     if "ProfoundError" in name:

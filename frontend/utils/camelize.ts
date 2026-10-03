@@ -3,7 +3,9 @@ const OPAQUE_KEYS = new Set([
   'metadata', 'context', 'raw', 'components', 'weights', 'scores', 'contextVector', 'meta', 'data',
   'beforeMetrics', 'afterMetrics', 'evidenceSnapshot', 'counts', 'countsBySeverity', 'countsByStatus', 'countsByState',
   'countsByType', 'proposedChange', 'approvedChange', 'modifiedChange', 'allowedActions', 'payload', 'result', 'state', 'priors',
-  'details'
+  'details',
+  // graph API: node `props` and persisted feature dictionaries keep their snake_case names (shown verbatim)
+  'props', 'properties', 'features', 'graphFeatures'
 ])
 
 export function toCamel(key: string): string {

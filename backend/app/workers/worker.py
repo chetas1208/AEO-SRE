@@ -155,6 +155,18 @@ async def cron_verify(ctx: dict[str, Any]) -> int:
     return len(ids)
 
 
+async def cron_graph_project(ctx: dict[str, Any]) -> dict[str, Any]:
+    """Drain the Neo4j projection outbox (idempotent; SKIP LOCKED so several workers never double-process).
+    Never raises: a down graph leaves the rows pending and the domain untouched."""
+    from app.graph.projector import drain
+
+    try:
+        return await drain(limit=1000, time_budget_s=45)
+    except Exception:  # noqa: BLE001
+        log.exception("graph.projection_failed")
+        return {"state": "DEGRADED", "error": "projector crashed (see logs)"}
+
+
 async def on_startup(ctx: dict[str, Any]) -> None:
     from app.api.logging import configure_logging
 
@@ -182,6 +194,7 @@ class WorkerSettings:
         cron(cron_discovery_gap, hour={3, 15}, minute=40, run_at_startup=False, unique=True),
         cron(cron_verify, minute={10, 25, 40, 55}, run_at_startup=False, unique=True),
         cron(cron_reap, minute={5, 35}, run_at_startup=True, unique=True),
+        cron(cron_graph_project, run_at_startup=True, unique=True),  # every minute
     ]
     redis_settings = redis_settings()
     on_startup = on_startup

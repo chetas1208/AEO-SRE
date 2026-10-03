@@ -102,3 +102,17 @@ neo4j-smoke:
 # Discovery gap: canonical truth vs what AI engines say (Profound). Usage: make discovery-gap ORG=<uuid> [DRY=1]
 discovery-gap:
 	cd backend && .venv/bin/python -m app.devtools.discovery_gap_run --org $(ORG) $(if $(DRY),--dry-run,)
+
+# Neo4j projection (N2). graph-audit is read-only (exit 1 on any Postgres<->Neo4j mismatch).
+graph-audit:
+	cd backend && .venv/bin/python -m app.graph.audit
+
+graph-replay:  # history -> outbox (idempotent) -> project
+	cd backend && .venv/bin/python -m app.graph.replay
+
+# Clears ONLY the application graph (app="profound-change-guard"), replays everything, verifies. Needs GRAPH_REBUILD_ALLOW=1.
+graph-rebuild:
+	cd backend && .venv/bin/python -m app.graph.replay --rebuild --yes
+
+graph-replay-test:
+	cd backend && .venv/bin/python -m pytest -q tests/graph_projection

@@ -104,3 +104,21 @@ class OrganizationNotFound(DomainError):
 
 class ChangeSetInvalid(DomainError):
     code, http_status, error_type = "CHANGE_SET_INVALID", 422, "validation_error"
+
+
+# ---- graph API (N6): typed errors for /api/graph/*. Read views normally DEGRADE (200, source=unavailable) instead
+# of raising; these cover the paths that cannot degrade (org resolution, parameters, unexpected graph failures).
+class GraphUnavailableError(DomainError):
+    code, http_status, error_type = "GRAPH_UNAVAILABLE", 503, "unavailable"
+
+
+class GraphQueryFailed(DomainError):
+    code, http_status, error_type = "GRAPH_QUERY_FAILED", 503, "unavailable"
+
+
+class GraphOrgRequired(DomainError):
+    code, http_status, error_type = "GRAPH_ORG_REQUIRED", 422, "validation_error"
+
+
+class GraphInvalidParameter(DomainError):
+    code, http_status, error_type = "GRAPH_INVALID_PARAMETER", 422, "validation_error"

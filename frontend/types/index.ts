@@ -189,6 +189,8 @@ export interface GraphNode {
   excerpt?: string | null
   status?: string | null
   level?: number | null
+  /** explicit depth layer for the 3D scene (graph lineage adapter); overrides the type-based depth */
+  depth?: number | null
 }
 
 export interface GraphEdge {
@@ -547,6 +549,8 @@ export interface GuardFinding {
 
 export interface ChangeCheck {
   id: string
+  /** Postgres change_set id = ChangeSet node business id in the graph (null when the API does not report it) */
+  changeSetId?: string | null
   decision: GuardDecision | null
   agentId: string | null
   agentName: string | null

@@ -19,9 +19,11 @@ from app.api.routes import (
     change_checks,
     events,
     experiments,
+    graph,
     health,
     incidents,
     interventions,
+    muse,
     organizations,
     policy,
     settings,
@@ -221,10 +223,12 @@ def create_app() -> FastAPI:
         incidents,
         interventions,
         experiments,
+        graph,
         policy,
         settings,
     ):
         app.include_router(module.router, responses=ERROR_RESPONSES)
+    app.include_router(muse.router)  # Muse connector: its own error envelope, bearer key + one org
     return app
 
 

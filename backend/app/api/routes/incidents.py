@@ -366,5 +366,5 @@ async def events(
             yield {"id": str(ev["seq"]), "data": json.dumps(ev)}
 
     return EventSourceResponse(
-        stream(), ping=15, headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+        stream(), ping=15, headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"}
     )

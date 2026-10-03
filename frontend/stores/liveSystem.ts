@@ -39,6 +39,7 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
   const incidentEventTick = ref(0) // bumps per NEW incident_event; pages watch it to refetch lists
   const lastIncidentEvent = ref<Record<string, any> | null>(null)
   const changeCheckTick = ref(0) // bumps on change_check.created / change_check.decided; the Change checks feed refetches
+  const graphTick = ref(0) // bumps on the named SSE event `graph_projected` (projector processed new events); the focused graph refetches
   const reconnectAttempt = ref(0)
   const seen = new Set<string>()
   let es: EventSource | null = null
@@ -89,11 +90,12 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
       globalStream.value = 'connected'
       reconnectAttempt.value = 0
       onHeartbeat()
-      if (wasReconnect) { incidentEventTick.value++; changeCheckTick.value++ } // no replay on this feed: refetch lists after a gap
+      if (wasReconnect) { incidentEventTick.value++; changeCheckTick.value++; graphTick.value++ } // no replay on this feed: refetch lists after a gap
     }
     src.onerror = () => { src.close(); if (es === src) es = null; scheduleReconnect() } // own backoff, not EventSource's fixed retry
     src.addEventListener('heartbeat', onHeartbeat)
     src.addEventListener('incident_event', (m) => onIncidentEvent((m as MessageEvent).data))
+    src.addEventListener('graph_projected', () => { graphTick.value++ })
     for (const name of ['change_check.created', 'change_check.decided', 'change_check']) src.addEventListener(name, onChangeCheckEvent)
   }
 
@@ -134,7 +136,7 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
 
   return {
     health, apiReachable, error, fetchedAt, stream, liveState, refresh, setStream,
-    globalStream, lastHeartbeatAt, heartbeatAgeSeconds, incidentEventTick, changeCheckTick, lastIncidentEvent, reconnectAttempt,
+    globalStream, lastHeartbeatAt, heartbeatAgeSeconds, incidentEventTick, changeCheckTick, graphTick, lastIncidentEvent, reconnectAttempt,
     startGlobalStream, stopGlobalStream
   }
 })

@@ -1,5 +1,6 @@
 // Tolerant adapters from camelized API payloads to the typed shapes in ~/types.
 // They only rename/unwrap fields; they never invent values.
+import type { GContext, GExplanation, GFeature, GHealth, GHighlightPath, GNode, GEdge, GraphView, GraphSourceMode } from '~/types/graph'
 import type {
   IntegrationStatus, PromptSet, PriorityBreakdown, Capability, CapabilityState, EvidenceItem, ExperimentDetail, ExperimentList, ExperimentSummaryRow, GraphData,
   Hypothesis, IncidentCounts, IncidentDetail, IncidentEvent, IncidentList, IncidentSummary, InterventionCandidate,
@@ -525,6 +526,7 @@ export function normChangeCheck(raw: unknown): ChangeCheck {
   for (const f of findings ?? []) if (f.experimentCode) codes.add(f.experimentCode)
   return {
     id: String(r.id ?? ''),
+    changeSetId: str(r.changeSetId),
     decision: normDecision(r.decision),
     agentId: str(agent.id ?? r.agentId),
     agentName: str(agent.name ?? r.agentName),
@@ -577,4 +579,157 @@ export function normCanonicalClaim(r: R): CanonicalClaim {
 
 export function normCanonicalClaims(raw: unknown): CanonicalClaim[] {
   return unwrapList(raw, 'claims', 'canonicalClaims').map(normCanonicalClaim)
+}
+
+// ---- Graph API (docs/GRAPH_SPEC.md; N6). The ONE place where API field names are mapped. Payloads are camelized, except
+// node `props` and feature dictionaries (kept snake_case, see utils/camelize.ts). Missing values stay null.
+const bool = (v: unknown): boolean | null => (typeof v === 'boolean' ? v : null)
+const mode = (v: unknown): GraphSourceMode | null => {
+  const m = typeof v === 'string' ? v.toUpperCase() : ''
+  return m === 'LIVE' || m === 'SIMULATED' || m === 'FIXTURE' || m === 'TEST' ? m : null
+}
+const isUnavailable = (r: R): boolean =>
+  String(r.source ?? '').toLowerCase() === 'unavailable' || r.unavailable === true || r.available === false || String(r.state ?? '').toLowerCase() === 'unavailable'
+const isStale = (r: R): boolean => r.graphStale === true || r.stale === true || r.graphContextStale === true
+
+export function normGNode(raw: unknown): GNode | null {
+  const r: R = isObj(raw) ? raw : {}
+  if (r.id === undefined || r.id === null || r.id === '') return null
+  const props: R = isObj(r.props) ? r.props : isObj(r.properties) ? r.properties : {}
+  return {
+    id: String(r.id),
+    label: String(r.label ?? r.type ?? r.kind ?? 'Node'),
+    props,
+    source: str(props.source ?? r.source),
+    sourceMode: mode(props.source_mode ?? props.sourceMode ?? r.sourceMode),
+    occurredAt: str(props.occurred_at ?? props.occurredAt ?? r.occurredAt),
+    recordedAt: str(props.recorded_at ?? props.recordedAt ?? r.recordedAt)
+  }
+}
+
+export function normGEdge(raw: unknown): GEdge | null {
+  const r: R = isObj(raw) ? raw : {}
+  const source = r.source ?? r.src ?? r.from
+  const target = r.target ?? r.dst ?? r.to
+  if (source == null || target == null) return null
+  const type = String(r.type ?? r.edgeType ?? r.rel ?? 'RELATED')
+  return { id: String(r.id ?? `${source}|${type}|${target}`), source: String(source), target: String(target), type }
+}
+
+export function normHighlightPaths(raw: unknown): GHighlightPath[] {
+  const out: GHighlightPath[] = []
+  const list = Array.isArray(raw) ? raw : isObj(raw) ? Object.entries(raw).map(([k, v]) => (isObj(v) ? { kind: k, ...v } : { kind: k, nodeIds: v })) : []
+  list.forEach((p: unknown, i: number) => {
+    const r: R = Array.isArray(p) ? { nodeIds: p } : isObj(p) ? p : {}
+    const nodeIds = (Array.isArray(r.nodeIds) ? r.nodeIds : Array.isArray(r.nodes) ? r.nodes : Array.isArray(r.path) ? r.path : [])
+      .map((n: unknown) => (isObj(n) ? n.id : n)).filter((n: unknown) => n !== undefined && n !== null).map(String)
+    if (!nodeIds.length) return
+    const edgeIds = (Array.isArray(r.edgeIds) ? r.edgeIds : Array.isArray(r.edges) ? r.edges : []).map((e: unknown) => (isObj(e) ? e.id : e)).filter(Boolean).map(String)
+    out.push({
+      id: String(r.id ?? r.pathId ?? `path-${i}`),
+      kind: String(r.kind ?? r.type ?? r.name ?? 'decision').toLowerCase(),
+      decisionId: str(r.decisionId ?? r.anchorId ?? r.anchor),
+      nodeIds, edgeIds
+    })
+  })
+  return out
+}
+
+/** Lineage/neighbourhood view (changes/{id}/lineage, experiments/{id}/lineage). */
+export function normGraphView(raw: unknown): GraphView {
+  const r: R = isObj(raw) ? raw : {}
+  const unavailable = isUnavailable(r)
+  const nodes = unavailable ? [] : unwrapList(r.nodes).map(normGNode).filter((n): n is GNode => !!n)
+  const ids = new Set(nodes.map((n) => n.id))
+  const edges = unavailable ? [] : unwrapList(r.edges).map(normGEdge).filter((e): e is GEdge => !!e && ids.has(e.source) && ids.has(e.target))
+  return {
+    nodes, edges,
+    focusId: str(r.focusId),
+    generatedAt: str(r.generatedAt),
+    asOf: str(r.asOf),
+    truncated: bool(r.truncated),
+    found: bool(r.found),
+    highlightPaths: unavailable ? [] : normHighlightPaths(r.highlightPaths ?? r.paths),
+    unavailable,
+    stale: isStale(r),
+    reason: str(r.reason ?? r.unavailableReason ?? r.staleReason),
+    lastGoodAt: str(r.lastGoodAt ?? r.lastGoodTimestamp ?? r.lastProjectedAt)
+  }
+}
+
+export function normGExplanation(raw: unknown): GExplanation {
+  const r: R = isObj(raw) ? raw : {}
+  return {
+    changesetId: str(r.changesetId ?? r.changeSetId),
+    found: bool(r.found),
+    decision: str(r.decision),
+    decisionId: str(r.decisionId),
+    text: str(r.text),
+    statements: unwrapList<R>(r.statements).map((s) => ({
+      text: String(s.text ?? ''),
+      nodeIds: (Array.isArray(s.nodeIds) ? s.nodeIds : []).map(String),
+      edgeIds: (Array.isArray(s.edges) ? s.edges : Array.isArray(s.edgeIds) ? s.edgeIds : []).map(String)
+    })).filter((s) => s.text),
+    generatedAt: str(r.generatedAt),
+    unavailable: isUnavailable(r),
+    stale: isStale(r),
+    reason: str(r.reason)
+  }
+}
+
+function normFeatures(r: R): GFeature[] {
+  const dict = isObj(r.features) ? r.features : isObj(r.graphFeatures) ? r.graphFeatures : null
+  const missing = new Set<string>(Array.isArray(r.missing) ? r.missing.map(String) : [])
+  if (dict) return Object.entries(dict).map(([name, v]) => ({ name, value: missing.has(name) ? null : num(v) }))
+  const names: unknown[] = Array.isArray(r.names) ? r.names : []
+  const vec: unknown[] = Array.isArray(r.vector) ? r.vector : []
+  return names.length && names.length === vec.length ? names.map((n, i) => ({ name: String(n), value: missing.has(String(n)) ? null : num(vec[i]) })) : []
+}
+
+/** Policy + graph features + historical neighbours (changes/{id}/context). */
+export function normGContext(raw: unknown): GContext {
+  const r: R = isObj(raw) ? raw : {}
+  const p: R | null = isObj(r.policy) ? r.policy : isObj(r.recommendation) ? r.recommendation : null
+  const nb: R | null = isObj(r.similar) ? r.similar : isObj(r.similarContexts) ? r.similarContexts : isObj(r.historicalNeighbors) ? r.historicalNeighbors : isObj(r.neighbors) ? r.neighbors : null
+  const rec = p ? (typeof p.recommendation === 'string' ? p.recommendation : isObj(p.recommendation) ? str(p.recommendation.action) : str(p.recommendedAction ?? p.action)) : null
+  const eligible = p && Array.isArray(p.eligibleActions) ? p.eligibleActions.map(String) : null
+  const modeStr = p ? str(p.mode ?? p.policyMode) : null
+  const baselineActive = p ? (bool(p.baselineActive) ?? (modeStr ? modeStr.toLowerCase() === 'shadow' ? true : null : null)) : null
+  const ver = p ? p.version ?? p.policyVersion : null
+  return {
+    policy: p ? {
+      version: ver == null ? null : String(ver),
+      recommendation: rec,
+      selectedAction: str(p.selectedAction ?? p.selected),
+      eligibleActions: eligible,
+      mode: modeStr,
+      baselineActive,
+      graduated: bool(p.graduated),
+      baselineAction: str(p.baselineAction ?? p.baselineDecision),
+      fallbackReason: str(p.fallbackReason)
+    } : null,
+    features: normFeatures(r),
+    featureVersion: str(r.featureVersion ?? r.version),
+    snapshotTime: str(r.snapshotTime ?? r.asOf ?? r.generatedAt),
+    neighbors: nb ? {
+      count: num(nb.count ?? nb.candidatesConsidered ?? nb.historicalSimilarContextCount ?? (Array.isArray(nb.contexts) ? nb.contexts.length : null)),
+      allowRate: num(nb.allowRate), blockRate: num(nb.blockRate), reviewRate: num(nb.reviewRate),
+      byDecision: unwrapList<R>(nb.byDecision).map((d) => ({ decision: String(d.decision ?? ''), n: num(d.n), positiveRate: num(d.positiveRate) })).filter((d) => d.decision)
+    } : null,
+    unavailable: isUnavailable(r),
+    stale: isStale(r) || (p ? p.stale === true : false),
+    reason: str(r.reason ?? r.unavailableReason ?? (p ? p.fallbackReason : null))
+  }
+}
+
+export function normGHealth(raw: unknown): GHealth {
+  const r: R = isObj(raw) ? raw : {}
+  return {
+    state: str(r.state ?? r.status ?? r.neo4jState),
+    latencyMs: num(r.latencyMs),
+    projectionLagSeconds: num(r.projectionLagSeconds ?? r.lagSeconds),
+    outboxBacklog: num(r.outboxBacklog ?? r.backlog),
+    lastProjectedAt: str(r.lastProjectedAt ?? r.lastSuccessAt),
+    reason: str(r.reason ?? r.error)
+  }
 }
