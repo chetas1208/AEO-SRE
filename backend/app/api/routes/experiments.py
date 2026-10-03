@@ -216,8 +216,25 @@ async def create_experiment(
                 error_type="conflict",
                 code="BASELINE_UNAVAILABLE",
             )
+    from app.integrations.mixpanel.metrics import count_events, parse_mixpanel_metric_key
+
+    mp_event = parse_mixpanel_metric_key(data.primary_metric)
+    if mp_event and data.primary_metric not in before:
+        end = datetime.now(timezone.utc)
+        start = end - timedelta(days=7)
+        before[data.primary_metric] = float(
+            await count_events(session, org_id=org_id, event_name=mp_event, start=start, end=end)
+        )
     if data.primary_metric not in before:
-        before[data.primary_metric] = 50.0
+        if run_mode == "test":
+            before[data.primary_metric] = 50.0
+        else:
+            raise ApiError(
+                f"No measured baseline for primary metric '{data.primary_metric}'.",
+                status_code=409,
+                error_type="conflict",
+                code="BASELINE_UNAVAILABLE",
+            )
 
     # 4. Resolve ActionType
     try:
