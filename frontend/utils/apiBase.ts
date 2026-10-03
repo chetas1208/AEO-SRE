@@ -33,6 +33,7 @@ export const DEFAULT_PUBLIC_TUNNEL = 'https://somehow-air-animals-connectors.try
 /** True only when the SPA is on a public host and has no reachable API (neither configured nor fallback tunnel). */
 export function isBrowserApiMisconfigured(): boolean {
   if (typeof window === 'undefined') return false
+  if (typeof useRuntimeConfig !== 'function') return false
   const config = useRuntimeConfig()
   if (config.public.apiSameOrigin) return false
   const host = window.location.hostname
