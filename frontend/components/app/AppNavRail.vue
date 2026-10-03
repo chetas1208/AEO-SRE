@@ -21,7 +21,7 @@ const isExperiments = computed(() => route.path.startsWith('/experiments'))
 
 <template>
   <aside :class="['rail', { open }]" aria-label="Primary navigation">
-    <div class="logo">
+    <NuxtLink to="/" class="logo" aria-label="AgentMatch home" @click="$emit('navigate')">
       <svg class="logo-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
           <linearGradient id="agentmatch-grad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
@@ -44,7 +44,7 @@ const isExperiments = computed(() => route.path.startsWith('/experiments'))
         <span class="logo-title">AgentMatch</span>
         <span class="logo-sub">Agent-Native AI Discovery</span>
       </div>
-    </div>
+    </NuxtLink>
 
     <nav>
       <NuxtLink to="/matches" :class="{ active: isMatches }" @click="$emit('navigate')">

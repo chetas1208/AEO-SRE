@@ -134,8 +134,11 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
     return 'live'
   })
 
+  const profoundReady = computed(() => health.value?.profoundState === 'READY')
+  const neo4jReady = computed(() => health.value?.neo4jState === 'READY')
+
   return {
-    health, apiReachable, error, fetchedAt, stream, liveState, refresh, setStream,
+    health, apiReachable, error, fetchedAt, stream, liveState, profoundReady, neo4jReady, refresh, setStream,
     globalStream, lastHeartbeatAt, heartbeatAgeSeconds, incidentEventTick, changeCheckTick, graphTick, lastIncidentEvent, reconnectAttempt,
     startGlobalStream, stopGlobalStream
   }

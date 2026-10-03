@@ -198,3 +198,14 @@ class GraphProjectedEvent(BaseModel):
     last_event_type: str | None = None
     backlog: int = 0
     time: datetime
+
+
+class GraphPerspectiveResponse(BaseModel):
+    organization_id: str | None = None
+    generated_at: datetime
+    source: str = "live"
+    perspective: str
+    focus_id: str | None = None
+    nodes: list[dict[str, Any]] = Field(default_factory=list)
+    edges: list[dict[str, Any]] = Field(default_factory=list)
+    highlight_paths: dict[str, list[str]] = Field(default_factory=dict)

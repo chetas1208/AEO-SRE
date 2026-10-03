@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DiscoveryGapItem, GapType } from '~/types/agentmatch'
+import KnowledgeGraphExplorer from '~/components/graph/KnowledgeGraphExplorer.vue'
 
 const gapsState = useDiscoveryGaps()
 const {
@@ -41,9 +42,9 @@ function submitModify() {
 </script>
 
 <template>
-  <div class="discovery-gaps-layout">
+  <div class="split-workspace">
     <!-- LEFT SIDEBAR: Discovery Gaps Queue -->
-    <aside class="gaps-queue-pane" aria-label="Discovery Gaps Queue">
+    <aside class="queue-pane" aria-label="Discovery Gaps Queue">
       <div class="pane-header">
         <div class="header-row">
           <span class="pane-title">Discovery Gaps</span>
@@ -100,7 +101,7 @@ function submitModify() {
     </aside>
 
     <!-- MAIN CENTER WORKSPACE: Side-by-side Truth vs Perception & Actions -->
-    <main class="gaps-workspace-pane">
+    <main class="workspace-pane floating-safe">
       <template v-if="selectedGap">
         <!-- Top Gap Header -->
         <header class="workspace-header">
@@ -190,6 +191,15 @@ function submitModify() {
               </div>
             </div>
           </div>
+        </section>
+
+        <!-- KNOWLEDGE GRAPH LINEAGE (PERCEPTION PERSPECTIVE) -->
+        <section class="graph-section" aria-label="AI Perception Knowledge Graph">
+          <KnowledgeGraphExplorer
+            :initial-perspective="'perception'"
+            :initial-focus-id="selectedGapId"
+            title="AI Perception Discrepancy Graph"
+          />
         </section>
 
         <!-- COMPACT PROFOUND METRICS PANEL -->
@@ -312,26 +322,6 @@ function submitModify() {
 </template>
 
 <style scoped>
-.discovery-gaps-layout {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  min-height: calc(100vh - 56px);
-  background: var(--bg-0, #060911);
-}
-@media (max-width: 1024px) {
-  .discovery-gaps-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* SIDEBAR QUEUE */
-.gaps-queue-pane {
-  background: rgba(10, 14, 26, 0.95);
-  border-right: 1px solid var(--border, rgba(45, 58, 88, 0.55));
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
 .pane-header {
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -340,6 +330,7 @@ function submitModify() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 .pane-title {
   font-size: 14px;
@@ -353,11 +344,13 @@ function submitModify() {
   background: rgba(244, 63, 94, 0.15);
   padding: 2px 8px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 .pane-subtitle {
   font-size: 12px;
   color: #94a3b8;
   margin-top: 4px;
+  line-height: 1.4;
 }
 .filters-bar {
   display: flex;
@@ -400,6 +393,10 @@ function submitModify() {
   padding: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 .gap-card:hover {
   background: rgba(23, 32, 56, 0.85);
@@ -414,7 +411,9 @@ function submitModify() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 .severity-pill {
   font-size: 10px;

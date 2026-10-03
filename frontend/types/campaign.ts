@@ -140,6 +140,27 @@ export interface ReturnSources {
   proxy?: string
 }
 
+export interface OperationalMetrics {
+  gross_return: number
+  net_return: number
+  cost_per_output: number
+  cost_per_agent_run: number
+  cost_per_approved_asset: number
+  cost_per_lead: number
+  cost_per_ai_visibility_point: number | null
+  cost_per_citation_gain: number | null
+  agent_roi: {
+    ratio: number
+    attribution_label: string
+  }
+  health_dimensions: {
+    cost_completeness: number
+    outcome_coverage: number
+    attribution_quality: string
+    ai_discovery_coverage: string
+  }
+}
+
 export interface Campaign {
   id: string
   name: string
@@ -157,6 +178,7 @@ export interface Campaign {
   cost_completeness_pct: number
   outcome_coverage_pct: number
   return_sources: ReturnSources
+  operational_metrics: OperationalMetrics
   cost_composition: CostCompositionItem[]
   cost_lineage: CostLineageNode
   people: PersonCost[]

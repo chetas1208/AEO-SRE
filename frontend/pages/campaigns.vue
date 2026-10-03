@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Campaign, CostLineageNode, CostCompositionItem, PersonCost, AgentCost, VideoCost, AssetLineageItem } from '~/types/campaign'
+import KnowledgeGraphExplorer from '~/components/graph/KnowledgeGraphExplorer.vue'
 import CampaignGraphScene from '~/components/visualization/CampaignGraphScene.vue'
 import CampaignGraphTree from '~/components/visualization/CampaignGraphTree.vue'
 
@@ -16,11 +17,8 @@ const {
   clearHighlights
 } = useCampaigns()
 
-// Visualization mode: 3D graph, accessible DOM tree, or chronological timeline
+// View mode for graph visualization: 3D Spatial (Three.js), Accessible DOM Tree, or Chronological Timeline
 const vizMode = ref<'3d' | 'tree' | 'timeline'>('3d')
-
-// Detail drill-down tab
-const detailTab = ref<'costs' | 'people' | 'agents' | 'videos' | 'assets' | 'profound' | 'muse' | 'waste'>('costs')
 
 // Cost lineage expanded tree state
 const lineageExpanded = ref(true)
@@ -39,15 +37,15 @@ function closeCostDetail() {
 </script>
 
 <template>
-  <div class="campaigns-layout">
+  <div class="split-workspace">
     <!-- LEFT SIDEBAR: Campaign Queue -->
-    <aside class="campaign-queue-pane" aria-label="Campaign Financial Queue">
+    <aside class="queue-pane" aria-label="Campaign Financial Queue">
       <div class="pane-header">
         <div class="header-row">
           <span class="pane-title">Campaigns</span>
           <span class="count-badge">{{ campaigns.length }} Tracked</span>
         </div>
-        <p class="pane-subtitle">Financial & outcome lineage across marketing investments</p>
+        <p class="pane-subtitle">Provenance-backed cost & return ledger across every marketing initiative</p>
       </div>
 
       <div class="campaign-list" role="list">
@@ -89,7 +87,7 @@ function closeCostDetail() {
     </aside>
 
     <!-- MAIN CENTER WORKSPACE: Financial Control Center -->
-    <main class="campaign-workspace-pane">
+    <main class="workspace-pane floating-safe">
       <template v-if="selectedCampaign">
         <!-- Compact Detail Header -->
         <header class="workspace-header">
@@ -114,10 +112,10 @@ function closeCostDetail() {
           </div>
         </header>
 
-        <!-- TOP FINANCIAL STRIP (Max 5 High-Value Metrics) -->
+        <!-- TOP FINANCIAL STRIP (Max 5 High-Value Executive Metrics) -->
         <section class="financial-strip" aria-label="Top Financial Strip">
           <div class="metric-card" @click="highlightCostPath()">
-            <span class="metric-label">Total Cost</span>
+            <span class="metric-label">Total Cost (Accounting)</span>
             <span class="metric-val">${{ Number(selectedCampaign.total_cost).toLocaleString() }}</span>
             <span class="metric-sub">Across 7 cost dimensions</span>
           </div>
@@ -131,7 +129,7 @@ function closeCostDetail() {
           <div class="metric-card" @click="highlightOutcomePath()">
             <span class="metric-label">Campaign ROI</span>
             <span class="metric-val text-good">{{ selectedCampaign.roi ? `${selectedCampaign.roi}x` : 'Not measurable yet' }}</span>
-            <span class="metric-sub">Confidence: {{ selectedCampaign.measurement_confidence }}</span>
+            <span class="metric-sub">Net: +${{ Number(selectedCampaign.operational_metrics.net_return).toLocaleString() }}</span>
           </div>
 
           <div class="metric-card">
@@ -147,52 +145,289 @@ function closeCostDetail() {
           </div>
         </section>
 
-        <!-- ROI CONFIDENCE & ATTRIBUTION SOURCES PANEL -->
-        <section class="confidence-panel">
-          <div class="conf-header">
-            <div class="conf-badge-row">
-              <span :class="['conf-badge-lg', `conf-${selectedCampaign.measurement_confidence.toLowerCase()}`]">
-                {{ selectedCampaign.measurement_confidence }} MEASUREMENT CONFIDENCE
-              </span>
-              <span class="conf-note">No isolated ROI figures: every return dollar is mapped to its evidentiary origin</span>
+        <!-- OPERATIONAL UNIT METRICS STRIP -->
+        <section class="operational-strip" aria-label="Operational Unit Metrics">
+          <div class="op-item">
+            <span class="op-label">Cost / Output:</span>
+            <span class="op-val">${{ Number(selectedCampaign.operational_metrics.cost_per_output.toFixed(0)).toLocaleString() }}</span>
+          </div>
+          <div class="op-sep">·</div>
+          <div class="op-item">
+            <span class="op-label">Cost / Agent Run:</span>
+            <span class="op-val">${{ selectedCampaign.operational_metrics.cost_per_agent_run.toFixed(2) }}</span>
+          </div>
+          <div class="op-sep">·</div>
+          <div class="op-item">
+            <span class="op-label">Cost / Lead:</span>
+            <span class="op-val">${{ Number(selectedCampaign.operational_metrics.cost_per_lead.toFixed(0)).toLocaleString() }}</span>
+          </div>
+          <div class="op-sep">·</div>
+          <div class="op-item">
+            <span class="op-label">Cost / AI Visibility Point:</span>
+            <span class="op-val text-good">${{ Number(selectedCampaign.operational_metrics.cost_per_ai_visibility_point?.toFixed(0) || 0).toLocaleString() }}/pp</span>
+          </div>
+          <div class="op-sep">·</div>
+          <div class="op-item">
+            <span class="op-label">Agent ROI:</span>
+            <span class="op-val text-good">{{ selectedCampaign.operational_metrics.agent_roi.ratio }}x</span>
+            <span class="op-hint">({{ selectedCampaign.operational_metrics.agent_roi.attribution_label.slice(0, 10) }}…)</span>
+          </div>
+        </section>
+
+        <!-- SIGNATURE 3-COLUMN CORE: COST | OUTPUT | OUTCOME -->
+        <section class="three-column-core" aria-label="Core Financial Columns">
+          <!-- COLUMN 1: COST (Financial Accounting) -->
+          <div class="core-column cost-column">
+            <div class="column-header">
+              <span class="col-pill col-pill-cost">COST</span>
+              <h3 class="column-title">Financial Accounting</h3>
+              <span class="column-amount">${{ Number(selectedCampaign.total_cost).toLocaleString() }}</span>
+            </div>
+
+            <!-- Horizontal Composition Bar -->
+            <div class="composition-bar" aria-label="Cost Composition Breakdown">
+              <div
+                v-for="item in selectedCampaign.cost_composition"
+                :key="item.category"
+                class="bar-segment"
+                :style="{ width: `${item.pct}%` }"
+                :title="`${item.category}: $${item.amount.toLocaleString()} (${item.pct}%) · ${item.source}`"
+              />
+            </div>
+
+            <!-- Cost Lineage Tree -->
+            <div class="col-box">
+              <div class="box-head" @click="lineageExpanded = !lineageExpanded">
+                <span>{{ lineageExpanded ? '▼' : '▶' }} Cost Lineage Breakdown</span>
+                <span class="text-warn font-mono">${{ Number(selectedCampaign.cost_lineage.amount).toLocaleString() }}</span>
+              </div>
+              <div v-if="lineageExpanded" class="col-lineage-list">
+                <div
+                  v-for="child in selectedCampaign.cost_lineage.children || []"
+                  :key="child.id"
+                  class="col-lineage-item"
+                  @click="inspectCostNode(child)"
+                >
+                  <div class="lineage-row">
+                    <span class="c-name">{{ child.name }}</span>
+                    <span class="c-amt">${{ Number(child.amount).toLocaleString() }}</span>
+                  </div>
+                  <div v-if="child.children?.length" class="col-sub-items">
+                    <div
+                      v-for="sub in child.children"
+                      :key="sub.id"
+                      class="sub-item-row"
+                      @click.stop="inspectCostNode(sub)"
+                    >
+                      <span>{{ sub.name }}</span>
+                      <span class="font-mono">${{ Number(sub.amount).toLocaleString() }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cost Contributors Summary -->
+            <div class="col-box">
+              <span class="box-title">Contributor Hours & Rates</span>
+              <div class="mini-list">
+                <div v-for="p in selectedCampaign.people" :key="p.id" class="mini-item">
+                  <div class="mini-left">
+                    <span class="p-name">{{ p.name }}</span>
+                    <span class="p-role">{{ p.role }} ({{ p.hours }}h @ ${{ p.hourly_cost }}/h)</span>
+                  </div>
+                  <span class="p-total">${{ Number(p.total_cost).toLocaleString() }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="return-sources-grid">
-            <div class="source-card">
-              <span class="source-type text-good">DIRECT</span>
-              <span class="source-amount">${{ Number(selectedCampaign.return_sources.direct).toLocaleString() }}</span>
-              <span class="source-desc">Signed contracts & closed won revenue</span>
+          <!-- COLUMN 2: OUTPUT (Work & Assets) -->
+          <div class="core-column output-column">
+            <div class="column-header">
+              <span class="col-pill col-pill-output">OUTPUT</span>
+              <h3 class="column-title">Work & Production</h3>
+              <span class="column-amount">{{ selectedCampaign.assets.length + selectedCampaign.videos.length }} Assets</span>
             </div>
-            <div class="source-card">
-              <span class="source-type text-blue">ATTRIBUTED</span>
-              <span class="source-amount">${{ Number(selectedCampaign.return_sources.attributed).toLocaleString() }}</span>
-              <span class="source-desc">CRM pipeline with touchpoint attribution</span>
+
+            <!-- Assets & Videos -->
+            <div class="col-box">
+              <span class="box-title">Campaign Production Assets</span>
+              <div class="assets-stack">
+                <div v-for="ast in selectedCampaign.assets" :key="ast.id" class="asset-mini-card">
+                  <div class="ast-meta-top">
+                    <span class="ast-type-tag">{{ ast.type }}</span>
+                    <span class="ast-by">By {{ ast.created_by }}</span>
+                  </div>
+                  <h4 class="ast-card-title">{{ ast.title }}</h4>
+                  <div v-if="ast.generated_by_agent" class="ast-agent-note">
+                    Agent Draft: <em>{{ ast.generated_by_agent }}</em>
+                  </div>
+                  <div class="ast-channels">Channels: {{ ast.distributed_on.join(', ') }}</div>
+                </div>
+
+                <div v-for="v in selectedCampaign.videos" :key="v.id" class="video-mini-card">
+                  <div class="ast-meta-top">
+                    <span class="ast-type-tag video-tag">Video ({{ v.versions_count }} revisions)</span>
+                    <span class="text-good font-mono">${{ Number(v.total_cost).toLocaleString() }}</span>
+                  </div>
+                  <h4 class="ast-card-title">{{ v.title }}</h4>
+                  <div class="video-sub-costs">
+                    <span>Creator: ${{ v.creator_cost }}</span>
+                    <span>Editing: ${{ v.editing_cost }}</span>
+                    <span>AI Gen: ${{ v.ai_generation_cost }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="source-card">
-              <span class="source-type text-warn">MODELED</span>
-              <span class="source-amount">${{ Number(selectedCampaign.return_sources.modeled).toLocaleString() }}</span>
-              <span class="source-desc">Estimated downstream lifetime value</span>
+
+            <!-- Agent Runs Efficiency -->
+            <div class="col-box">
+              <span class="box-title">Autonomous Agent Runs</span>
+              <div class="mini-list">
+                <div v-for="ag in selectedCampaign.agents" :key="ag.id" class="mini-item">
+                  <div class="mini-left">
+                    <span class="p-name">{{ ag.name }}</span>
+                    <span class="p-role">{{ ag.runs }} runs ({{ ag.approved_outputs }} approved) · {{ (ag.tokens / 1000000).toFixed(1) }}M tok</span>
+                  </div>
+                  <span class="text-blue font-mono">${{ ag.total_cost }}</span>
+                </div>
+              </div>
             </div>
-            <div class="source-card">
-              <span class="source-type text-purple">PROXY</span>
-              <span class="source-amount">{{ selectedCampaign.return_sources.proxy }}</span>
-              <span class="source-desc">Synthesizer visibility & citation gains</span>
+          </div>
+
+          <!-- COLUMN 3: OUTCOME (Attribution & Returns) -->
+          <div class="core-column outcome-column">
+            <div class="column-header">
+              <span class="col-pill col-pill-outcome">OUTCOME</span>
+              <h3 class="column-title">Attributed Return</h3>
+              <span class="column-amount text-good">${{ Number(selectedCampaign.attributed_return).toLocaleString() }}</span>
+            </div>
+
+            <!-- Return Sources Breakdown -->
+            <div class="col-box">
+              <span class="box-title">Return Sources (Quality Labeled)</span>
+              <div class="return-sources-mini">
+                <div class="ret-item">
+                  <div class="ret-top">
+                    <span class="source-tag-direct">DIRECT (Signed Deals)</span>
+                    <span class="ret-amt text-good">${{ Number(selectedCampaign.return_sources.direct).toLocaleString() }}</span>
+                  </div>
+                  <span class="ret-desc">Enterprise contract commitments directly linked</span>
+                </div>
+                <div class="ret-item">
+                  <div class="ret-top">
+                    <span class="source-tag-attributed">ATTRIBUTED (Pipeline)</span>
+                    <span class="ret-amt text-blue">${{ Number(selectedCampaign.return_sources.attributed).toLocaleString() }}</span>
+                  </div>
+                  <span class="ret-desc">Opportunities with verified campaign touchpoints</span>
+                </div>
+                <div class="ret-item">
+                  <div class="ret-top">
+                    <span class="source-tag-modeled">MODELED (LTV)</span>
+                    <span class="ret-amt text-warn">${{ Number(selectedCampaign.return_sources.modeled).toLocaleString() }}</span>
+                  </div>
+                  <span class="ret-desc">Projected expansion and renewal value</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profound AI Discovery Impact -->
+            <div class="col-box">
+              <span class="box-title">Profound AI Discovery Impact</span>
+              <div class="profound-mini-stats">
+                <div class="p-stat">
+                  <span class="p-stat-label">Visibility</span>
+                  <span class="p-stat-val text-good">+{{ selectedCampaign.profound_impact.visibility_shift_pp }}pp</span>
+                </div>
+                <div class="p-stat">
+                  <span class="p-stat-label">Citation Share</span>
+                  <span class="p-stat-val text-good">+{{ selectedCampaign.profound_impact.citation_share_shift_pp }}pp</span>
+                </div>
+                <div class="p-stat">
+                  <span class="p-stat-label">Coverage</span>
+                  <span class="p-stat-val tone-blue">{{ selectedCampaign.profound_impact.prompt_coverage_pct }}%</span>
+                </div>
+              </div>
+              <p class="profound-attribution-note">{{ selectedCampaign.profound_impact.attribution_note }}</p>
+            </div>
+
+            <!-- Muse Agent-Mediated Funnel -->
+            <div class="col-box">
+              <span class="box-title">Muse Agent-Mediated Funnel</span>
+              <div class="muse-funnel-mini">
+                <div class="m-step">
+                  <span class="m-val">{{ selectedCampaign.muse_outcomes.matched_intents }}</span>
+                  <span class="m-lbl">Demand</span>
+                </div>
+                <span class="m-arrow">→</span>
+                <div class="m-step">
+                  <span class="m-val text-blue">{{ selectedCampaign.muse_outcomes.shortlisted }}</span>
+                  <span class="m-lbl">Shortlisted</span>
+                </div>
+                <span class="m-arrow">→</span>
+                <div class="m-step">
+                  <span class="m-val text-good">{{ selectedCampaign.muse_outcomes.converted }}</span>
+                  <span class="m-lbl">Converted</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- SIGNATURE 3D CAMPAIGN GRAPH & TIMELINE SECTION -->
+        <!-- WASTE MAP: Spend That Never Reached the Market -->
+        <section class="waste-map-section" aria-label="Waste & Inefficiency Map">
+          <div class="waste-headline-card">
+            <div class="waste-lead-row">
+              <div class="headline-block">
+                <span class="waste-badge">Waste Map & Inefficiency Ledger</span>
+                <h3 class="waste-headline">
+                  “${{ Number(selectedCampaign.waste_breakdown.potential_inefficiency).toLocaleString() }} of this campaign never reached the market.”
+                </h3>
+              </div>
+              <div class="health-scores-block">
+                <div class="h-dim">
+                  <span class="h-lbl">Cost Completeness</span>
+                  <span class="h-val">{{ selectedCampaign.operational_metrics.health_dimensions.cost_completeness }}%</span>
+                </div>
+                <div class="h-dim">
+                  <span class="h-lbl">Outcome Coverage</span>
+                  <span class="h-val">{{ selectedCampaign.operational_metrics.health_dimensions.outcome_coverage }}%</span>
+                </div>
+                <div class="h-dim">
+                  <span class="h-lbl">Attribution Quality</span>
+                  <span class="h-val">{{ selectedCampaign.operational_metrics.health_dimensions.attribution_quality }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="waste-items-grid">
+              <div
+                v-for="(w, i) in selectedCampaign.waste_breakdown.items"
+                :key="i"
+                class="waste-chip-card"
+              >
+                <div class="w-top">
+                  <span :class="['w-cat', `cat-${w.category.toLowerCase()}`]">{{ w.category }}</span>
+                  <span class="w-amt">${{ Number(w.amount).toLocaleString() }}</span>
+                </div>
+                <span class="w-label">{{ w.label }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3D CAMPAIGN GRAPH & TIMELINE SECTION -->
         <section class="graph-section">
           <div class="graph-toolbar">
             <div class="toolbar-title-block">
-              <h3 class="section-title">Campaign Lineage Graph</h3>
-              <span class="section-hint">Investment → People & Agents → Assets → Distribution → Profound & Muse → Outcomes</span>
+              <h3 class="section-title">3D Campaign Lineage Graph</h3>
+              <span class="section-hint">z = -10 (Costs) → z = -5 (People/Agents) → z = 0 (Campaign) → z = +5 (Assets) → z = +10 (Signals) → z = +15 (Outcomes)</span>
             </div>
 
             <div class="toolbar-actions">
               <div v-if="highlightedPathNodeIds.length > 0" class="path-active-pill">
-                <span>Path highlighted</span>
+                <span>Path Highlighted</span>
                 <button type="button" class="btn-clear-path" @click="clearHighlights">✕ Clear</button>
               </div>
 
@@ -202,14 +437,7 @@ function closeCostDetail() {
                   :class="['mode-btn', { active: vizMode === '3d' }]"
                   @click="vizMode = '3d'"
                 >
-                  3D Spatial (Three.js)
-                </button>
-                <button
-                  type="button"
-                  :class="['mode-btn', { active: vizMode === 'tree' }]"
-                  @click="vizMode = 'tree'"
-                >
-                  Accessible DOM Tree
+                  Knowledge Graph (2D/3D)
                 </button>
                 <button
                   type="button"
@@ -223,18 +451,11 @@ function closeCostDetail() {
           </div>
 
           <div class="graph-viewport">
-            <CampaignGraphScene
+            <KnowledgeGraphExplorer
               v-if="vizMode === '3d'"
-              :nodes="graphData?.nodes || []"
-              :edges="graphData?.edges || []"
-              :highlight-node-ids="highlightedPathNodeIds"
-              :highlight-edge-ids="highlightedPathEdgeIds"
-            />
-            <CampaignGraphTree
-              v-else-if="vizMode === 'tree'"
-              :nodes="graphData?.nodes || []"
-              :edges="graphData?.edges || []"
-              :highlight-node-ids="highlightedPathNodeIds"
+              :initial-perspective="'campaign'"
+              :initial-focus-id="selectedCampaignId"
+              title="CampaignGraph Financial Lineage"
             />
             <!-- Chronological Timeline Mode -->
             <div v-else class="timeline-container">
@@ -256,346 +477,10 @@ function closeCostDetail() {
             </div>
           </div>
         </section>
-
-        <!-- COST COMPOSITION & HIERARCHICAL LINEAGE SECTION -->
-        <section class="cost-section">
-          <div class="section-top">
-            <h3 class="section-title">Cost Composition & Lineage</h3>
-            <span class="section-hint">Click branches to trace exact expenditures down to hours, runs, and invoices</span>
-          </div>
-
-          <!-- Horizontal Composition Bar -->
-          <div class="composition-bar" aria-label="Cost Composition Breakdown">
-            <div
-              v-for="item in selectedCampaign.cost_composition"
-              :key="item.category"
-              class="bar-segment"
-              :style="{ width: `${item.pct}%` }"
-              :title="`${item.category}: $${item.amount.toLocaleString()} (${item.pct}%) · ${item.source}`"
-            />
-          </div>
-
-          <!-- Cost Lineage Interactive Tree -->
-          <div class="lineage-tree-box">
-            <div class="lineage-root-row" @click="lineageExpanded = !lineageExpanded">
-              <div class="row-left">
-                <span class="expand-icon">{{ lineageExpanded ? '▼' : '▶' }}</span>
-                <strong class="lineage-name">{{ selectedCampaign.cost_lineage.name }}</strong>
-              </div>
-              <div class="row-right">
-                <span class="lineage-amount">${{ Number(selectedCampaign.cost_lineage.amount).toLocaleString() }}</span>
-                <button type="button" class="btn-inspect" @click.stop="highlightCostPath()">Highlight Path</button>
-              </div>
-            </div>
-
-            <div v-if="lineageExpanded" class="lineage-children">
-              <div
-                v-for="child in selectedCampaign.cost_lineage.children || []"
-                :key="child.id"
-                class="lineage-branch"
-              >
-                <div class="branch-header" @click="inspectCostNode(child)">
-                  <span class="branch-name">{{ child.name }}</span>
-                  <span class="branch-amount">${{ Number(child.amount).toLocaleString() }}</span>
-                </div>
-
-                <div v-if="child.children?.length" class="sub-branches">
-                  <div
-                    v-for="sub in child.children"
-                    :key="sub.id"
-                    class="sub-branch-item"
-                    @click="inspectCostNode(sub)"
-                  >
-                    <span class="sub-name">{{ sub.name }}</span>
-                    <span v-if="sub.details" class="sub-details">{{ sub.details }}</span>
-                    <span class="sub-amount">${{ Number(sub.amount).toLocaleString() }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- DRILL-DOWN SUB-SURFACES (People, Agents, Videos, Assets, Profound, Muse, Waste) -->
-        <section class="detail-drilldown-section">
-          <div class="drilldown-tabs" role="tablist">
-            <button
-              role="tab"
-              :aria-selected="detailTab === 'costs'"
-              :class="['tab-btn', { active: detailTab === 'costs' }]"
-              @click="detailTab = 'costs'"
-            >
-              Cost Overview
-            </button>
-            <button
-              role="tab"
-              :aria-selected="detailTab === 'people'"
-              :class="['tab-btn', { active: detailTab === 'people' }]"
-              @click="detailTab = 'people'"
-            >
-              People ({{ selectedCampaign.people.length }})
-            </button>
-            <button
-              role="tab"
-              :aria-selected="detailTab === 'agents'"
-              :class="['tab-btn', { active: detailTab === 'agents' }]"
-              @click="detailTab = 'agents'"
-            >
-              Agents ({{ selectedCampaign.agents.length }})
-            </button>
-            <button
-              role="tab"
-              :aria-selected="detailTab === 'videos'"
-              :class="['tab-btn', { active: detailTab === 'videos' }]"
-              @click="detailTab = 'videos'"
-            >
-              Videos ({{ selectedCampaign.videos.length }})
-            </button>
-            <button
-              role="tab"
-              :aria-selected="detailTab === 'assets'"
-              :class="['tab-btn', { active: detailTab === 'assets' }]"
-              @click="detailTab = 'assets'"
-            >
-              Asset Lineage
-            </button>
-            <button
-              role="tab"
-              :aria-selected="detailTab === 'profound'"
-              :class="['tab-btn', { active: detailTab === 'profound' }]"
-              @click="detailTab = 'profound'"
-            >
-              Profound Impact
-            </button>
-            <button
-              role="tab"
-              :aria-selected="detailTab === 'muse'"
-              :class="['tab-btn', { active: detailTab === 'muse' }]"
-              @click="detailTab = 'muse'"
-            >
-              Muse Outcomes
-            </button>
-            <button
-              role="tab"
-              :aria-selected="detailTab === 'waste'"
-              :class="['tab-btn', { active: detailTab === 'waste' }]"
-              @click="detailTab = 'waste'"
-            >
-              Inefficiency Analysis
-            </button>
-          </div>
-
-          <div class="drilldown-content">
-            <!-- PEOPLE TAB -->
-            <div v-if="detailTab === 'people'" class="pane-wrap">
-              <h4 class="pane-title">Human Contributor Cost Model</h4>
-              <p class="pane-desc">Time and hourly rates logged against specific campaign deliverables. Quality: MANUAL & ESTIMATED.</p>
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Contributor</th>
-                      <th>Role</th>
-                      <th>Hours</th>
-                      <th>Rate</th>
-                      <th>Total</th>
-                      <th>Quality</th>
-                      <th>Outputs</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="p in selectedCampaign.people" :key="p.id">
-                      <td><strong>{{ p.name }}</strong></td>
-                      <td>{{ p.role }}</td>
-                      <td>{{ p.hours }} hrs</td>
-                      <td>${{ p.hourly_cost }}/hr</td>
-                      <td class="text-good font-mono">${{ Number(p.total_cost).toLocaleString() }}</td>
-                      <td><span class="source-tag">{{ p.source_quality }}</span></td>
-                      <td>{{ p.outputs.join(', ') }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- AGENTS TAB -->
-            <div v-if="detailTab === 'agents'" class="pane-wrap">
-              <h4 class="pane-title">Autonomous Agent & Model API Costs</h4>
-              <p class="pane-desc">Run counts, token consumption, and cost per approved output across autonomous agents.</p>
-              <div class="table-wrap">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Agent</th>
-                      <th>Runs (Success / Fail)</th>
-                      <th>Tokens</th>
-                      <th>Model Cost</th>
-                      <th>Tool Cost</th>
-                      <th>Total Cost</th>
-                      <th>Approved Outputs</th>
-                      <th>Cost / Approved</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="ag in selectedCampaign.agents" :key="ag.id">
-                      <td><strong>{{ ag.name }}</strong></td>
-                      <td>{{ ag.successful_runs }} / {{ ag.runs }} ({{ ag.failed_runs }} failed)</td>
-                      <td class="font-mono">{{ (ag.tokens / 1000000).toFixed(1) }}M</td>
-                      <td class="font-mono">${{ ag.model_cost }}</td>
-                      <td class="font-mono">${{ ag.tool_cost }}</td>
-                      <td class="text-good font-mono">${{ ag.total_cost }}</td>
-                      <td>{{ ag.approved_outputs }} ({{ ag.approval_rate_pct }}%)</td>
-                      <td class="font-mono">${{ ag.cost_per_approved_output }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- VIDEOS TAB -->
-            <div v-if="detailTab === 'videos'" class="pane-wrap">
-              <h4 class="pane-title">Video & Media Production Lineage</h4>
-              <div v-if="selectedCampaign.videos.length === 0" class="empty-hint">No dedicated video assets for this campaign.</div>
-              <div v-for="v in selectedCampaign.videos" :key="v.id" class="video-card">
-                <div class="video-header">
-                  <h5 class="video-name">{{ v.title }}</h5>
-                  <span class="video-cost-tag">Total: ${{ Number(v.total_cost).toLocaleString() }}</span>
-                </div>
-                <div class="video-costs-row">
-                  <span>Creator: ${{ v.creator_cost }}</span>
-                  <span>Editing: ${{ v.editing_cost }}</span>
-                  <span>AI Gen: ${{ v.ai_generation_cost }}</span>
-                  <span>Distribution: ${{ v.distribution_cost }}</span>
-                  <span>{{ v.versions_count }} revisions</span>
-                </div>
-                <div class="video-outcomes-row">
-                  <span class="outcome-chip">Views: {{ v.views.toLocaleString() }}</span>
-                  <span class="outcome-chip">Engagement: {{ v.engagement_pct }}%</span>
-                  <span class="outcome-chip">Qualified Visits: {{ v.qualified_visits }}</span>
-                  <span class="outcome-chip">Profound Citations: {{ v.profound_citations_observed }}</span>
-                  <span class="outcome-chip">Muse Shortlists: {{ v.muse_shortlist_events }}</span>
-                  <span class="outcome-chip text-good">Leads: {{ v.leads_generated }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- ASSET LINEAGE TAB -->
-            <div v-if="detailTab === 'assets'" class="pane-wrap">
-              <h4 class="pane-title">Asset Lineage & Output Provenance</h4>
-              <div class="assets-grid">
-                <div v-for="ast in selectedCampaign.assets" :key="ast.id" class="asset-card">
-                  <div class="ast-top">
-                    <span class="ast-type">{{ ast.type }}</span>
-                    <span class="ast-approved">Approved by {{ ast.approved_by }}</span>
-                  </div>
-                  <h5 class="ast-title">{{ ast.title }}</h5>
-                  <div class="ast-lineage-list">
-                    <div>Created by: <strong>{{ ast.created_by }}</strong></div>
-                    <div v-if="ast.generated_by_agent">Generated by: <em>{{ ast.generated_by_agent }}</em></div>
-                    <div v-if="ast.edited_by">Edited by: {{ ast.edited_by }}</div>
-                    <div>Distributed on: {{ ast.distributed_on.join(', ') }}</div>
-                  </div>
-                  <div class="ast-downstream">
-                    <span class="downstream-label">Linked Outcomes:</span>
-                    <span class="downstream-text">{{ ast.downstream_outcomes.join(' · ') }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- PROFOUND TAB -->
-            <div v-if="detailTab === 'profound'" class="pane-wrap">
-              <div class="profound-header-row">
-                <h4 class="pane-title">Profound AI Discovery Impact</h4>
-                <span class="profound-note">{{ selectedCampaign.profound_impact.attribution_note }}</span>
-              </div>
-              <div class="profound-metrics-grid">
-                <div class="p-box">
-                  <span class="p-label">Visibility Shift</span>
-                  <span class="p-val text-good">+{{ selectedCampaign.profound_impact.visibility_shift_pp }}pp</span>
-                  <span class="p-sub">Observed post-campaign</span>
-                </div>
-                <div class="p-box">
-                  <span class="p-label">Citation Share Shift</span>
-                  <span class="p-val text-good">+{{ selectedCampaign.profound_impact.citation_share_shift_pp }}pp</span>
-                  <span class="p-sub">Official domain citations</span>
-                </div>
-                <div class="p-box">
-                  <span class="p-label">Prompt Coverage</span>
-                  <span class="p-val tone-blue">{{ selectedCampaign.profound_impact.prompt_coverage_pct }}%</span>
-                  <span class="p-sub">Intent clusters addressed</span>
-                </div>
-                <div class="p-box">
-                  <span class="p-label">Competitor Share</span>
-                  <span class="p-val text-good">{{ selectedCampaign.profound_impact.competitor_share_shift_pp }}pp</span>
-                  <span class="p-sub">Displaced competitor citations</span>
-                </div>
-              </div>
-              <div class="perception-status-box">
-                <strong>AI Perception Status:</strong> {{ selectedCampaign.profound_impact.ai_perception_status }} across {{ selectedCampaign.profound_impact.affected_clusters_count }} prompt clusters.
-              </div>
-            </div>
-
-            <!-- MUSE TAB -->
-            <div v-if="detailTab === 'muse'" class="pane-wrap">
-              <h4 class="pane-title">Muse Agent-Mediated Funnel</h4>
-              <p class="pane-desc">Telemetry from personal agents evaluating products against verified buyer constraints.</p>
-              <div class="funnel-chain">
-                <div
-                  v-for="(step, i) in selectedCampaign.muse_outcomes.funnel"
-                  :key="i"
-                  class="funnel-step"
-                >
-                  <span class="step-num">{{ step.count }}</span>
-                  <span class="step-name">{{ step.step }}</span>
-                  <span v-if="i < selectedCampaign.muse_outcomes.funnel.length - 1" class="step-arrow">→</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- WASTE / INEFFICIENCY TAB -->
-            <div v-if="detailTab === 'waste'" class="pane-wrap">
-              <div class="waste-header-row">
-                <h4 class="pane-title">Marketing Inefficiency & Optimization Opportunities</h4>
-                <span class="waste-total-badge">
-                  Potential Inefficiency: ${{ Number(selectedCampaign.waste_breakdown.potential_inefficiency).toLocaleString() }}
-                </span>
-              </div>
-              <div class="waste-list">
-                <div
-                  v-for="(w, i) in selectedCampaign.waste_breakdown.items"
-                  :key="i"
-                  class="waste-item"
-                >
-                  <span :class="['waste-category', `cat-${w.category.toLowerCase()}`]">{{ w.category }}</span>
-                  <span class="waste-label">{{ w.label }}</span>
-                  <span class="waste-amount">${{ Number(w.amount).toLocaleString() }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- DEFAULT COSTS TAB -->
-            <div v-if="detailTab === 'costs'" class="pane-wrap">
-              <h4 class="pane-title">High-Level Cost Allocation</h4>
-              <div class="cost-table-simple">
-                <div
-                  v-for="c in selectedCampaign.cost_composition"
-                  :key="c.category"
-                  class="cost-row-simple"
-                >
-                  <span class="c-cat">{{ c.category }}</span>
-                  <span class="c-pct font-mono">{{ c.pct }}%</span>
-                  <span class="c-amt font-mono">${{ Number(c.amount).toLocaleString() }}</span>
-                  <span class="c-src">{{ c.source }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </template>
 
       <div v-else class="empty-state">
-        <p>No campaigns tracked yet. Create or ingest a campaign to start cost and outcome lineage.</p>
+        <p>No campaigns tracked yet. Ingest or create a campaign to start cost and outcome lineage.</p>
       </div>
     </main>
 
@@ -632,26 +517,6 @@ function closeCostDetail() {
 </template>
 
 <style scoped>
-.campaigns-layout {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  min-height: calc(100vh - 56px);
-  background: var(--bg-0, #060911);
-}
-@media (max-width: 1024px) {
-  .campaigns-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* QUEUE */
-.campaign-queue-pane {
-  background: rgba(10, 14, 26, 0.95);
-  border-right: 1px solid var(--border, rgba(45, 58, 88, 0.55));
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
 .pane-header {
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -660,6 +525,7 @@ function closeCostDetail() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 .pane-title {
   font-size: 14px;
@@ -673,11 +539,13 @@ function closeCostDetail() {
   background: rgba(99, 102, 241, 0.15);
   padding: 2px 8px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 .pane-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   color: #94a3b8;
   margin-top: 4px;
+  line-height: 1.4;
 }
 .campaign-list {
   display: flex;
@@ -693,6 +561,10 @@ function closeCostDetail() {
   padding: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 .campaign-card:hover {
   background: rgba(23, 32, 56, 0.85);
@@ -707,7 +579,9 @@ function closeCostDetail() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 .status-pill {
   font-size: 10px;
@@ -790,7 +664,7 @@ function closeCostDetail() {
   background: rgba(15, 21, 38, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
-  padding: 20px;
+  padding: 18px 20px;
 }
 .meta-line {
   display: flex;
@@ -827,7 +701,7 @@ function closeCostDetail() {
   font-family: var(--font-mono, monospace);
 }
 
-/* FINANCIAL STRIP */
+/* TOP FINANCIAL STRIP */
 .financial-strip {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -872,72 +746,437 @@ function closeCostDetail() {
   color: #64748b;
 }
 
-/* ROI CONFIDENCE PANEL */
-.confidence-panel {
+/* OPERATIONAL STRIP */
+.operational-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 21, 38, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 12px;
+}
+.op-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.op-label {
+  color: #94a3b8;
+}
+.op-val {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  color: #f1f5f9;
+}
+.op-hint {
+  font-size: 10px;
+  color: #64748b;
+}
+.op-sep {
+  color: #475569;
+}
+
+/* 3-COLUMN CORE */
+.three-column-core {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 1200px) {
+  .three-column-core {
+    grid-template-columns: 1fr;
+  }
+}
+.core-column {
   background: rgba(15, 21, 38, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
-  padding: 16px 20px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
-.conf-header {
+.column-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 10px;
 }
-.conf-badge-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.conf-badge-lg {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
+.col-pill {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
   border-radius: 4px;
 }
-.conf-note {
-  font-size: 12px;
-  color: #94a3b8;
+.col-pill-cost {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
 }
-.return-sources-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+.col-pill-output {
+  background: rgba(34, 211, 238, 0.2);
+  color: #22d3ee;
 }
-@media (max-width: 900px) {
-  .return-sources-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.col-pill-outcome {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
 }
-.source-card {
-  background: rgba(18, 26, 47, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.column-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f5f9;
+  flex: 1;
+  margin-left: 8px;
 }
-.source-type {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-.source-amount {
-  font-size: 18px;
+.column-amount {
+  font-size: 14px;
   font-weight: 700;
   font-family: var(--font-mono, monospace);
   color: #ffffff;
 }
-.source-desc {
-  font-size: 10px;
+
+.composition-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+.bar-segment:nth-child(1) { background: #38bdf8; }
+.bar-segment:nth-child(2) { background: #6366f1; }
+.bar-segment:nth-child(3) { background: #a855f7; }
+.bar-segment:nth-child(4) { background: #ec4899; }
+.bar-segment:nth-child(5) { background: #10b981; }
+.bar-segment:nth-child(6) { background: #f59e0b; }
+.bar-segment:nth-child(7) { background: #64748b; }
+
+.col-box {
+  background: rgba(10, 15, 29, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.box-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  cursor: pointer;
+}
+.box-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: #64748b;
 }
 
-/* GRAPH SECTION */
+.col-lineage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.col-lineage-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.lineage-row {
+  display: flex;
+  justify-content: space-between;
+  color: #cbd5e1;
+}
+.col-sub-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 12px;
+  font-size: 10px;
+  color: #94a3b8;
+}
+.sub-item-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.sub-item-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mini-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+.mini-left {
+  display: flex;
+  flex-direction: column;
+}
+.p-name {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.p-role {
+  font-size: 10px;
+  color: #64748b;
+}
+.p-total {
+  font-family: var(--font-mono, monospace);
+  color: #38bdf8;
+}
+
+/* OUTPUT COLUMN */
+.assets-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.asset-mini-card, .video-mini-card {
+  background: rgba(18, 26, 47, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ast-meta-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+}
+.ast-type-tag {
+  color: #22d3ee;
+  font-weight: 700;
+}
+.video-tag {
+  color: #a855f7;
+}
+.ast-by {
+  color: #64748b;
+}
+.ast-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+}
+.ast-agent-note {
+  font-size: 10px;
+  color: #818cf8;
+}
+.ast-channels, .video-sub-costs {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  gap: 8px;
+}
+
+/* OUTCOME COLUMN */
+.return-sources-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ret-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ret-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+.source-tag-direct {
+  font-weight: 700;
+  color: #34d399;
+}
+.source-tag-attributed {
+  font-weight: 700;
+  color: #38bdf8;
+}
+.source-tag-modeled {
+  font-weight: 700;
+  color: #fde68a;
+}
+.ret-amt {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+}
+.ret-desc {
+  font-size: 10px;
+  color: #64748b;
+}
+.profound-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  text-align: center;
+}
+.p-stat {
+  background: rgba(18, 26, 47, 0.6);
+  padding: 6px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+}
+.p-stat-label {
+  font-size: 9px;
+  color: #64748b;
+}
+.p-stat-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+}
+.profound-attribution-note {
+  font-size: 10px;
+  color: #a855f7;
+  margin-top: 4px;
+}
+.muse-funnel-mini {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.m-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.m-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: #ffffff;
+}
+.m-lbl {
+  font-size: 9px;
+  color: #64748b;
+}
+.m-arrow {
+  color: #475569;
+}
+
+/* WASTE MAP */
+.waste-map-section {
+  display: flex;
+  flex-direction: column;
+}
+.waste-headline-card {
+  background: rgba(15, 21, 38, 0.85);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.waste-lead-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+@media (max-width: 900px) {
+  .waste-lead-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+.waste-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.waste-headline {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 6px;
+}
+.health-scores-block {
+  display: flex;
+  gap: 16px;
+}
+.h-dim {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.h-lbl {
+  font-size: 10px;
+  color: #64748b;
+}
+.h-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: #38bdf8;
+}
+
+.waste-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.waste-chip-card {
+  background: rgba(18, 26, 47, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.w-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.w-cat {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.cat-rework { background: rgba(245, 158, 11, 0.2); color: #fde68a; }
+.cat-duplicate { background: rgba(244, 63, 94, 0.2); color: #fda4af; }
+.cat-abandoned { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+.w-amt {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: #f43f5e;
+}
+.w-label {
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+/* 3D GRAPH SECTION */
 .graph-section {
   display: flex;
   flex-direction: column;
@@ -954,9 +1193,10 @@ function closeCostDetail() {
   color: #f8fafc;
 }
 .section-hint {
-  font-size: 12px;
+  font-size: 11px;
   color: #64748b;
   margin-left: 8px;
+  font-family: var(--font-mono, monospace);
 }
 .toolbar-actions {
   display: flex;
@@ -1057,486 +1297,13 @@ function closeCostDetail() {
   color: #cbd5e1;
 }
 
-/* COST COMPOSITION & LINEAGE */
-.cost-section {
-  background: rgba(15, 21, 38, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.composition-bar {
-  display: flex;
-  height: 10px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
-}
-.bar-segment:nth-child(1) { background: #38bdf8; }
-.bar-segment:nth-child(2) { background: #6366f1; }
-.bar-segment:nth-child(3) { background: #a855f7; }
-.bar-segment:nth-child(4) { background: #ec4899; }
-.bar-segment:nth-child(5) { background: #10b981; }
-.bar-segment:nth-child(6) { background: #f59e0b; }
-.bar-segment:nth-child(7) { background: #64748b; }
-
-.lineage-tree-box {
-  background: rgba(10, 15, 29, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  overflow: hidden;
-}
-.lineage-root-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: rgba(18, 26, 47, 0.8);
-  cursor: pointer;
-}
-.row-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.expand-icon {
-  font-size: 10px;
-  color: #6366f1;
-}
-.lineage-name {
-  color: #ffffff;
-  font-size: 13px;
-}
-.row-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.lineage-amount {
-  font-size: 14px;
-  font-weight: 700;
-  font-family: var(--font-mono, monospace);
-  color: #f59e0b;
-}
-.btn-inspect {
-  background: rgba(99, 102, 241, 0.2);
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  color: #818cf8;
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.lineage-children {
-  display: flex;
-  flex-direction: column;
-  padding: 10px 16px;
-  gap: 8px;
-}
-.lineage-branch {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.branch-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 600;
-  color: #e2e8f0;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.branch-header:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-.branch-amount {
-  font-family: var(--font-mono, monospace);
-  color: #cbd5e1;
-}
-.sub-branches {
-  display: flex;
-  flex-direction: column;
-  margin-left: 20px;
-  gap: 4px;
-}
-.sub-branch-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: #94a3b8;
-  padding: 3px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.sub-branch-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
-}
-.sub-details {
-  font-size: 10px;
-  color: #64748b;
-  font-family: var(--font-mono, monospace);
-}
-.sub-amount {
-  font-family: var(--font-mono, monospace);
-  color: #e2e8f0;
-}
-
-/* DRILLDOWN TABS */
-.detail-drilldown-section {
-  background: rgba(15, 21, 38, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.drilldown-tabs {
-  display: flex;
-  background: rgba(10, 15, 30, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  overflow-x: auto;
-}
-.tab-btn {
-  padding: 12px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #94a3b8;
-  background: transparent;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-.tab-btn:hover {
-  color: #e2e8f0;
-}
-.tab-btn.active {
-  color: #6366f1;
-  border-bottom-color: #6366f1;
-  background: rgba(99, 102, 241, 0.05);
-}
-.drilldown-content {
-  padding: 20px;
-}
-.pane-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-}
-.pane-desc {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 4px;
-  margin-bottom: 14px;
-}
-.table-wrap {
-  overflow-x: auto;
-}
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  text-align: left;
-}
-.data-table th {
-  padding: 8px 12px;
-  color: #64748b;
-  font-size: 10px;
-  text-transform: uppercase;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-.data-table td {
-  padding: 10px 12px;
-  color: #cbd5e1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-.source-tag {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* VIDEOS */
-.video-card {
-  background: rgba(18, 26, 47, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.video-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.video-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ffffff;
-}
-.video-cost-tag {
-  font-size: 12px;
-  font-weight: 700;
-  font-family: var(--font-mono, monospace);
-  color: #38bdf8;
-}
-.video-costs-row {
-  display: flex;
-  gap: 14px;
-  font-size: 11px;
-  color: #94a3b8;
-}
-.video-outcomes-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.outcome-chip {
-  font-size: 11px;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2px 8px;
-  border-radius: 4px;
-  color: #cbd5e1;
-}
-
-/* ASSETS */
-.assets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-}
-.asset-card {
-  background: rgba(18, 26, 47, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ast-top {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: #38bdf8;
-  font-family: var(--font-mono, monospace);
-}
-.ast-approved {
-  color: #34d399;
-}
-.ast-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ffffff;
-}
-.ast-lineage-list {
-  font-size: 11px;
-  color: #94a3b8;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.ast-downstream {
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 6px;
-  font-size: 11px;
-  color: #34d399;
-}
-.downstream-label {
-  color: #64748b;
-  display: block;
-  font-size: 10px;
-}
-
-/* PROFOUND */
-.profound-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.profound-note {
-  font-size: 12px;
-  color: #a855f7;
-}
-.profound-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-.p-box {
-  background: rgba(18, 26, 47, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.p-label {
-  font-size: 11px;
-  color: #94a3b8;
-}
-.p-val {
-  font-size: 20px;
-  font-weight: 700;
-  font-family: var(--font-mono, monospace);
-}
-.p-sub {
-  font-size: 10px;
-  color: #64748b;
-}
-.perception-status-box {
-  margin-top: 14px;
-  background: rgba(168, 85, 247, 0.1);
-  border-left: 3px solid #a855f7;
-  padding: 10px 14px;
-  font-size: 12px;
-  color: #e2e8f0;
-  border-radius: 0 6px 6px 0;
-}
-
-/* MUSE */
-.funnel-chain {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-}
-.funnel-step {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(18, 26, 47, 0.8);
-  border: 1px solid rgba(45, 212, 191, 0.3);
-  border-radius: 6px;
-  padding: 8px 12px;
-}
-.step-num {
-  font-size: 16px;
-  font-weight: 700;
-  font-family: var(--font-mono, monospace);
-  color: #2dd4bf;
-}
-.step-name {
-  font-size: 12px;
-  color: #e2e8f0;
-}
-.step-arrow {
-  color: #475569;
-  font-weight: 700;
-}
-
-/* WASTE */
-.waste-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-.waste-total-badge {
-  font-size: 12px;
-  font-weight: 700;
-  color: #f43f5e;
-  background: rgba(244, 63, 94, 0.15);
-  padding: 3px 10px;
-  border-radius: 4px;
-}
-.waste-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.waste-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(18, 26, 47, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 12px;
-}
-.waste-category {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-.cat-rework {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fde68a;
-}
-.cat-duplicate {
-  background: rgba(244, 63, 94, 0.2);
-  color: #fda4af;
-}
-.cat-abandoned {
-  background: rgba(148, 163, 184, 0.2);
-  color: #cbd5e1;
-}
-.waste-label {
-  color: #e2e8f0;
-  flex: 1;
-  margin-left: 12px;
-}
-.waste-amount {
-  font-family: var(--font-mono, monospace);
-  font-weight: 700;
-  color: #f43f5e;
-}
-
-/* SIMPLE COSTS */
-.cost-table-simple {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.cost-row-simple {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(18, 26, 47, 0.6);
-  padding: 10px 14px;
-  border-radius: 6px;
-  font-size: 12px;
-}
-.c-cat {
-  font-weight: 600;
-  color: #ffffff;
-  min-width: 140px;
-}
-.c-pct {
-  color: #94a3b8;
-}
-.c-amt {
-  color: #38bdf8;
-  font-weight: 700;
-}
-.c-src {
-  font-size: 10px;
-  color: #64748b;
-  font-family: var(--font-mono, monospace);
-}
-
 /* DRAWER */
 .drawer-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
-  z-index: 100;
+  z-index: var(--z-modal, 50);
   display: flex;
   justify-content: flex-end;
 }

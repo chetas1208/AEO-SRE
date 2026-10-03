@@ -474,6 +474,8 @@ export interface SystemHealth {
   overall?: CapabilityState | null
   capabilities: Capability[]
   executors: Capability[] // manual always healthy; optional executors are never alarming
+  profoundState?: string | null
+  neo4jState?: string | null
   lastIngestionAt?: string | null
   lastInvestigationAt?: string | null
   lastPolicyUpdateAt?: string | null

@@ -7,6 +7,12 @@ const searchEl = ref<HTMLInputElement | null>(null)
 
 const headerMeta = computed(() => {
   const p = route.path
+  if (p === '/') {
+    return {
+      title: 'AgentMatch',
+      subtitle: 'Understand demand. Fix AI perception. Measure what marketing actually produces.'
+    }
+  }
   if (p.startsWith('/matches')) {
     return {
       title: 'Matches',

@@ -3056,6 +3056,17 @@ Maximum 5 high-value executive metrics:
 4. **Cost Completeness** (e.g. `92%` verified invoices & logged hours)
 5. **Outcome Coverage** (e.g. `74%` Profound & Muse telemetry)
 
+### Operational metrics strip (executive drill-down)
+
+Secondary KPI row on `/campaigns` (from `operational_metrics` on `GET /api/campaigns/{id}`):
+
+- **Gross return** / **Net return** (after total cost).
+- **Unit economics**: cost per output, cost per agent run, cost per approved asset, cost per lead, cost per AI visibility point, cost per citation gain.
+- **Agent ROI**: ratio plus attribution label (DIRECT / ATTRIBUTED / MODELED).
+- **Health dimensions**: cost completeness, outcome coverage, attribution quality, AI discovery coverage.
+
+Clicking a top-strip metric should highlight the matching branch in the 3D graph (cost vs outcome paths).
+
 ## 4. Explicit ROI Confidence & Provenance
 
 ROI figures are never presented in isolation. Every return dollar is categorized by evidentiary source:
@@ -3090,3 +3101,111 @@ Centers on deterministic spatial z-levels:
 - `z = +13`: Business Outcomes & Revenue (green `#10b981`)
 
 Edge thickness reflects cost weight. Outcome edges differ by confidence (solid for DIRECT, dashed for ATTRIBUTED, muted for MODELED). Clicking any cost item or return metric highlights the active causal lineage path and dims all other nodes. Includes an **Accessible Semantic DOM Tree** (`CampaignGraphTree.vue`) and **Chronological Event Timeline**.
+
+---
+
+# FINAL UI ARCHITECTURE — OCT 3 2026
+
+## 1. Executive Summary & Design System Foundation
+
+The AgentMatch control plane enforces the **"Quiet shell, active data"** design philosophy (inspired by Linear 2026 and Microsoft Fluent 2.0). Primary navigation recedes visually to give absolute priority to the active data and operations.
+
+### Canonical Layout Tokens (`frontend/assets/css/main.css`)
+```css
+:root {
+  --sidebar-width: 240px;
+  --rail: var(--sidebar-width);
+  --topbar-height: 56px;
+  --queue-min-width: 280px;
+  --queue-pref-width: 340px;
+  --queue-max-width: 400px;
+  --safe-floating-right: 24px;
+
+  /* Centralized z-index scale */
+  --z-base: 1;
+  --z-panel: 5;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-tooltip: 30;
+  --z-drawer: 40;
+  --z-modal: 50;
+  --z-toast: 60;
+  --z-external-safe: 70;
+}
+```
+
+### Shared Shell Primitives
+- `.split-workspace`: 2-column flex container (`queue-pane` + `workspace-pane`), eliminating layout collisions and double-padding glitches.
+- `.queue-pane`: Left queue bounded between `280px` and `400px` (`width: clamp(280px, 24vw, 400px)`), with dedicated vertical scrolling and sticky filter header.
+- `.workspace-pane`: Fluid center-right operational canvas (`flex: 1 1 0; min-width: 0;`), enforcing strict horizontal bounds.
+- `.floating-safe`: Padded right margin (`padding-right: var(--safe-floating-right)`) preventing floating controls from obscuring workspace contents.
+
+---
+
+## 2. Product Homepage (`/`)
+
+The product homepage at `/` anchors the entire platform narrative:
+
+1. **Branding & Global Routing**: The application logo in `AppNavRail.vue` links directly to `/` with the accessible label `AgentMatch home`.
+2. **Hero Narrative**: *"Understand demand. Fix AI perception. Measure what marketing actually produces."* with direct call-to-actions to `/matches` and `/campaigns`.
+3. **Causal Topology Loop**: Interactive visualization of the continuous marketing feedback loop:
+   ```text
+   MUSE INTENT → PRODUCT TRUTH ↔ PROFOUND PERCEPTION → DISCOVERY GAP → CAMPAIGN → EXPERIMENT → OUTCOME
+   ```
+   Powered by live Pinia reactive store counts (`activeIntentsCount`, `discoveryGapsCount`, `campaignsCount`, `experimentsCount`).
+4. **Core Capabilities Grid**:
+   - **AgentMatch** (`/matches`): Intent envelopes, real-time match matrix, canonical product verification.
+   - **Discovery Gaps** (`/discovery-gaps`): Perception discrepancy analysis, Profound citations, action approvals.
+   - **CampaignGraph ROI** (`/campaigns`): Provenance-backed cost ledger, contributor modeling, multi-tier attribution.
+   - **Experiments** (`/experiments`): Protected A/B execution, gate verification, Bayesian policy learning.
+5. **Substrate Telemetry Strip**: Live connection status indicators for Muse Connector, Profound Engine, Neo4j Aura Graph Database, and Dual-Tier Model Runtime (Anthropic Haiku 4.5 / Sonnet 4.6).
+
+---
+
+## 3. Live Knowledge Graph Explorer (`KnowledgeGraphExplorer.vue`)
+
+A unified knowledge graph component embedded across all core views (`/matches`, `/discovery-gaps`, `/campaigns`, `/experiments`):
+
+### 2D Analytical Default Mode
+- Built with SVG and responsive vector rendering.
+- Layout algorithms: **Hierarchical Layered** (flow from intent to perception to outcomes) and **Force-Directed** (relational clustering).
+- Node glyphs: distinctive visual styles for `INTENT`, `PRODUCT`, `CLAIM`, `ENGINE`, `AI_CLAIM`, `GAP`, `CAMPAIGN`, `ASSET`, and `EXPERIMENT`.
+- Selective Label Policy: persistent labels on selected/hovered nodes; secondary labels collapse to type tags to prevent visual clutter.
+- High-Contrast Edge Dimming: unrelated edges dim to `opacity: 0.08`, while active causal paths render at `opacity: 1.0` with glowing accent stroke.
+- Pan & Zoom: Smooth mouse drag pan, wheel zoom (`0.4x` to `2.5x`), and one-click "Fit to Viewport".
+
+### 3D Spatial Exploration Mode
+- Three.js WebGL spatial scene with semantic z-depth stratification:
+  - `z = -10`: Base Infrastructure & Canonical Truth
+  - `z = -5`: Inbound Intent Envelopes (Muse)
+  - `z = 0`: Campaign Nexus & Interventions
+  - `z = +5`: AI Engine Perceptions (Profound) & Gaps
+  - `z = +10`: Business Outcomes & Revenue Returns
+- Efficient WebGL Lifecycle: Animation frames explicitly managed via `requestAnimationFrame` / `cancelAnimationFrame`. Materials, geometries, and textures are disposed when switching to 2D to prevent GPU memory leaks.
+- Automatic graceful fallback to 2D if WebGL is unsupported or encounters context loss.
+
+### Graph Interaction & Inspection
+- **Toolbar**: 2D/3D toggle, Perspective selector (`Intent`, `Perception`, `Campaign`, `Experiment`), Layout toggle (`Hierarchical`/`Force`), search query filter, "Trace Path" (BFS pathfinding between selected nodes), "Expand" neighbors, and "Fit/Reset".
+- **Inspector Drawer**: 340px right panel displaying selected node entity type, label, confidence scores, properties, relation tables, and "Open Detail" deep navigation.
+- **Accessible Semantic DOM Tree**: ARIA-compliant fallback hierarchy with `role="tree"` and `role="treeitem"` for keyboard navigation and screen readers.
+
+### Backend Context API (`GET /api/graph/context`)
+- Serves normalized nodes, edges, and highlighted paths based on `perspective` (`intent`, `perception`, `campaign`, `experiment`), `focus_id`, and `depth`.
+- Powered directly by Neo4j Aura Cypher queries when available, with in-memory fallback from real domain entities.
+
+---
+
+## 4. Multi-Viewport & Collision Verification Matrix
+
+Verified with Playwright E2E suite (`frontend/e2e/layout-collision.spec.ts`) across 5 standard production viewports:
+
+| Resolution | Device Archetype | Nav Rail | Topbar | Split Workspace | Card Badges | Status |
+|:---|:---|:---:|:---:|:---:|:---:|:---:|
+| **1920 × 1080** | Full HD Desktop | Non-overlapping | Non-overlapping | Verified (zero overlap) | Zero collision | **PASS** |
+| **1600 × 900** | Large Laptop | Non-overlapping | Non-overlapping | Verified (zero overlap) | Zero collision | **PASS** |
+| **1440 × 900** | Standard Laptop / MacBook | Non-overlapping | Non-overlapping | Verified (zero overlap) | Zero collision | **PASS** |
+| **1366 × 768** | Standard Widescreen | Non-overlapping | Non-overlapping | Verified (zero overlap) | Zero collision | **PASS** |
+| **1280 × 800** | Compact Widescreen | Non-overlapping | Non-overlapping | Verified (zero overlap) | Zero collision | **PASS** |
+
+All 25 automated checks passed, and visual snapshots were generated under `frontend/test-artifacts/screenshots/viewports/`.
+

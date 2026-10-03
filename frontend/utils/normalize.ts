@@ -438,6 +438,8 @@ export function normHealth(health: unknown, caps: unknown): SystemHealth {
     overall: c.overall ?? null,
     capabilities: normCapabilities(caps),
     executors: normCapabilities({ capabilities: c.executors ?? {} }),
+    profoundState: h.profoundState ?? null,
+    neo4jState: h.neo4jState ?? null,
     lastIngestionAt: c.lastIngestion ?? null,
     lastInvestigationAt: c.lastInvestigation ?? null,
     lastPolicyUpdateAt: c.lastPolicyUpdate ?? null,

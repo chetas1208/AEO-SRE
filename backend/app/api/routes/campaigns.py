@@ -29,6 +29,26 @@ CAMPAIGNS_DB: list[dict[str, Any]] = [
             "modeled": 21000.0,
             "proxy": "+9.2pp Profound visibility"
         },
+        "operational_metrics": {
+            "gross_return": 118000.0,
+            "net_return": 75220.0,
+            "cost_per_output": 2037.14,
+            "cost_per_agent_run": 57.57,
+            "cost_per_approved_asset": 2415.0,
+            "cost_per_lead": 2251.58,
+            "cost_per_ai_visibility_point": 4650.0,
+            "cost_per_citation_gain": 6684.38,
+            "agent_roi": {
+                "ratio": 3.82,
+                "attribution_label": "ATTRIBUTED (outputs linked to deal touchpoints)"
+            },
+            "health_dimensions": {
+                "cost_completeness": 92,
+                "outcome_coverage": 74,
+                "attribution_quality": "Medium",
+                "ai_discovery_coverage": "High"
+            }
+        },
         "cost_composition": [
             {"category": "Paid Media", "amount": 18000.0, "pct": 42.1, "source": "OBSERVED"},
             {"category": "People", "amount": 11400.0, "pct": 26.6, "source": "ESTIMATED"},
@@ -301,6 +321,26 @@ CAMPAIGNS_DB: list[dict[str, Any]] = [
             "attributed": 22200.0,
             "modeled": 0.0,
             "proxy": "+14.0pp Profound citation share"
+        },
+        "operational_metrics": {
+            "gross_return": 54200.0,
+            "net_return": 35800.0,
+            "cost_per_output": 1226.67,
+            "cost_per_agent_run": 121.43,
+            "cost_per_approved_asset": 18400.0,
+            "cost_per_lead": 3066.67,
+            "cost_per_ai_visibility_point": 1483.87,
+            "cost_per_citation_gain": 1314.29,
+            "agent_roi": {
+                "ratio": 4.65,
+                "attribution_label": "DIRECT (schema adoption led to enterprise deal)"
+            },
+            "health_dimensions": {
+                "cost_completeness": 98,
+                "outcome_coverage": 88,
+                "attribution_quality": "High",
+                "ai_discovery_coverage": "High"
+            }
         },
         "cost_composition": [
             {"category": "People", "amount": 9200.0, "pct": 50.0, "source": "ACTUAL"},

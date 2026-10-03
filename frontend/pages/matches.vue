@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { IntentEnvelope, MatchCandidate, IntentConstraint } from '~/types/agentmatch'
-import AgentMatchScene from '~/components/visualization/AgentMatchScene.vue'
-import AgentMatchGraphTree from '~/components/visualization/AgentMatchGraphTree.vue'
+import KnowledgeGraphExplorer from '~/components/graph/KnowledgeGraphExplorer.vue'
 
 const matches = useMatches()
 const {
@@ -55,9 +54,9 @@ function handleNodeSelect(id: string | null) {
 </script>
 
 <template>
-  <div class="matches-layout">
+  <div class="split-workspace">
     <!-- LEFT SIDEBAR: Intent Envelopes Queue -->
-    <aside class="intent-queue-pane" aria-label="Personal Agent Intent Envelopes">
+    <aside class="queue-pane" aria-label="Personal Agent Intent Envelopes">
       <div class="pane-header">
         <div class="header-row">
           <span class="pane-title">Intent Envelopes</span>
@@ -93,7 +92,7 @@ function handleNodeSelect(id: string | null) {
     </aside>
 
     <!-- MAIN CENTER WORKSPACE: Match Evaluation & Graph -->
-    <main class="match-workspace-pane">
+    <main class="workspace-pane floating-safe">
       <template v-if="selectedIntent">
         <!-- Top Intent Context Banner -->
         <header class="workspace-header">
@@ -170,54 +169,13 @@ function handleNodeSelect(id: string | null) {
           </div>
         </section>
 
-        <!-- 3D Spatial AgentMatch Graph & DOM Fallback Hierarchy -->
-        <section class="graph-section">
-          <div class="graph-toolbar">
-            <div class="toolbar-left">
-              <h3 class="section-title">AgentMatch Graph Lineage</h3>
-              <span class="section-hint">Causal path from buyer intent to verified claims & perception</span>
-            </div>
-            <div class="mode-toggle">
-              <button
-                type="button"
-                :class="['mode-btn', { active: viewMode === '3d' }]"
-                @click="viewMode = '3d'"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                  <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
-                3D Spatial (Three.js)
-              </button>
-              <button
-                type="button"
-                :class="['mode-btn', { active: viewMode === 'tree' }]"
-                @click="viewMode = 'tree'"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path d="M3 3v18h18" />
-                  <path d="M7 16l4-4 4 4 5-6" />
-                </svg>
-                Semantic Hierarchy (DOM)
-              </button>
-            </div>
-          </div>
-
-          <div class="graph-viewport">
-            <AgentMatchScene
-              v-if="viewMode === '3d'"
-              :nodes="nodes"
-              :edges="edges"
-              @select-node="handleNodeSelect"
-            />
-            <AgentMatchGraphTree
-              v-else
-              :nodes="nodes"
-              :edges="edges"
-              @select-node="handleNodeSelect"
-            />
-          </div>
+        <!-- Knowledge Graph Explorer (2D Analytical Default + 3D Spatial) -->
+        <section class="graph-section" aria-label="AgentMatch Knowledge Graph Lineage">
+          <KnowledgeGraphExplorer
+            :initial-perspective="'intent'"
+            :initial-focus-id="selectedCandidateId || selectedIntentId"
+            title="AgentMatch Causal Lineage"
+          />
         </section>
 
         <!-- Detail Tabs & Analysis Sections -->
@@ -405,26 +363,6 @@ function handleNodeSelect(id: string | null) {
 </template>
 
 <style scoped>
-.matches-layout {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  min-height: calc(100vh - 56px);
-  background: var(--bg-0, #060911);
-}
-@media (max-width: 1024px) {
-  .matches-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* LEFT SIDEBAR: Intent Envelopes */
-.intent-queue-pane {
-  background: rgba(10, 14, 26, 0.95);
-  border-right: 1px solid var(--border, rgba(45, 58, 88, 0.55));
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
 .pane-header {
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -433,6 +371,7 @@ function handleNodeSelect(id: string | null) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 .pane-title {
   font-size: 14px;
@@ -447,11 +386,13 @@ function handleNodeSelect(id: string | null) {
   background: rgba(56, 189, 248, 0.15);
   padding: 2px 8px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 .pane-subtitle {
   font-size: 12px;
   color: #94a3b8;
   margin-top: 4px;
+  line-height: 1.4;
 }
 .intent-list {
   display: flex;
@@ -467,6 +408,10 @@ function handleNodeSelect(id: string | null) {
   padding: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 .intent-card:hover {
   background: rgba(23, 32, 56, 0.85);
@@ -481,7 +426,9 @@ function handleNodeSelect(id: string | null) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 .source-pill {
   font-size: 10px;
@@ -1019,7 +966,7 @@ function handleNodeSelect(id: string | null) {
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
-  z-index: 100;
+  z-index: var(--z-modal, 50);
   display: flex;
   justify-content: flex-end;
 }
