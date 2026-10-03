@@ -17,7 +17,7 @@ This document describes the public deployment architecture, process management, 
                               │ HTTPS (API & SSE requests)
                               ▼
                    CLOUDFLARE TUNNEL
-     https://destinations-cams-easily-comparing.trycloudflare.com
+     https://somehow-air-animals-connectors.trycloudflare.com
                               │
                               │ Local QUIC/HTTP2 tunnel
                               ▼
@@ -41,7 +41,7 @@ This document describes the public deployment architecture, process management, 
 | Component | Target / Host | Ingress / Endpoint | Status |
 | :--- | :--- | :--- | :--- |
 | **Frontend** | Vercel | `https://aeo-sre.vercel.app` (or assigned project URL) | Production |
-| **API Gateway** | Cloudflare Tunnel | `https://destinations-cams-easily-comparing.trycloudflare.com` | Live & Verified |
+| **API Gateway** | Cloudflare Tunnel | `https://somehow-air-animals-connectors.trycloudflare.com` | Live & Verified |
 | **Backend API** | Host Server | `127.0.0.1:8000` (FastAPI / Uvicorn) | Active (nohup) |
 | **Worker Engine** | Host Server | ARQ worker (`app.workers.worker.WorkerSettings`) | Active (nohup) |
 | **Database** | Host Server | PostgreSQL 16 (Alembic Head: 0006) | Healthy |
@@ -114,7 +114,7 @@ curl -s http://127.0.0.1:8000/api/health
 
 # Public tunnel health probe (using DNS-over-HTTPS or public DNS)
 curl -s --doh-url https://cloudflare-dns.com/dns-query \
-  https://destinations-cams-easily-comparing.trycloudflare.com/api/health
+  https://somehow-air-animals-connectors.trycloudflare.com/api/health
 
 # System capabilities and subsystem breakdown
 curl -s http://127.0.0.1:8000/api/system/capabilities
@@ -187,7 +187,7 @@ NEO4J_URI=neo4j+s://...
 NEO4J_PASSWORD=...
 
 # Frontend Runtime (Vercel Production — required; redeploy after changing)
-NUXT_PUBLIC_API_BASE_URL=https://destinations-cams-easily-comparing.trycloudflare.com
+NUXT_PUBLIC_API_BASE_URL=https://somehow-air-animals-connectors.trycloudflare.com
 ```
 
 **Browser rule:** `NUXT_PUBLIC_API_BASE_URL` must be the **public Cloudflare HTTPS hostname**. Never `http://localhost:8000` in Vercel Production — the visitor's browser cannot reach your server's loopback. Local dev may use `http://localhost:8000` in root `.env` only.

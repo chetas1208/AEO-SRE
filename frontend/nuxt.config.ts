@@ -10,7 +10,7 @@ if (existsSync(rootEnv)) loadDotenv({ path: rootEnv, quiet: true })
 
 const apiFromEnv = (process.env.NUXT_PUBLIC_API_BASE_URL || '').trim()
 /** Override via Vercel env; fallback only for Vercel builds when env missing (see DEPLOYMENT.md). */
-const VERCEL_API_FALLBACK = 'https://destinations-cams-easily-comparing.trycloudflare.com'
+const VERCEL_API_FALLBACK = 'https://somehow-air-animals-connectors.trycloudflare.com'
 const resolvedApiBase =
   apiFromEnv
   || (process.env.VERCEL === '1' ? VERCEL_API_FALLBACK : '')

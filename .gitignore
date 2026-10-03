@@ -47,3 +47,5 @@ experiments/guard_evals/
 # Cloudflare credentials and certificates
 cloudflared/
 *.pem
+.vercel
+.env*

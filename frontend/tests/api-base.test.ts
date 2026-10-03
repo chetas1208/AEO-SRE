@@ -10,7 +10,7 @@ describe('apiBase production invariants', () => {
 
   it('requires HTTPS in production', () => {
     expect(() => assertProductionApiBase('http://api.example.com', { production: true })).toThrow(/HTTPS/)
-    expect(() => assertProductionApiBase('https://destinations-cams-easily-comparing.trycloudflare.com', { production: true })).not.toThrow()
+    expect(() => assertProductionApiBase('https://somehow-air-animals-connectors.trycloudflare.com', { production: true })).not.toThrow()
   })
 
   it('normalizes trailing slashes', () => {
