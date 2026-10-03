@@ -1,5 +1,95 @@
 [
   {
+    "id": "cmp-production-live-verifica-ceb45d",
+    "name": "Production Live Verification Campaign",
+    "owner": "Operations Lead",
+    "objective": "Verify production campaign creation from public domain",
+    "status": "ACTIVE",
+    "date_range": "Active Now",
+    "channels": [
+      "Search LLMs",
+      "Developer Docs"
+    ],
+    "primary_channel": "Search LLMs",
+    "currency": "USD",
+    "budget": 15000.0,
+    "total_cost": 0.0,
+    "attributed_return": 0.0,
+    "roi": 0.0,
+    "measurement_confidence": "HIGH",
+    "cost_completeness_pct": 100,
+    "outcome_coverage_pct": 100,
+    "assigned_agents": [
+      "agt-citation-recovery"
+    ],
+    "primary_metric": "visibility",
+    "return_sources": {
+      "direct": 0.0,
+      "attributed": 0.0,
+      "modeled": 0.0,
+      "proxy": "+0.0pp Profound visibility"
+    },
+    "operational_metrics": {
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "cost_per_output": 0.0,
+      "cost_per_agent_run": 0.0,
+      "cost_per_approved_asset": 0.0,
+      "cost_per_lead": 0.0,
+      "cost_per_ai_visibility_point": 0.0,
+      "cost_per_citation_gain": 0.0,
+      "agent_roi": {
+        "ratio": 1.0,
+        "attribution_label": "ATTRIBUTED (live campaign)"
+      },
+      "health_dimensions": {
+        "cost_completeness": 100,
+        "outcome_coverage": 100,
+        "attribution_quality": "High",
+        "ai_discovery_coverage": "High"
+      }
+    },
+    "cost_composition": [
+      {
+        "category": "Agent Runs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      },
+      {
+        "category": "Model APIs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      }
+    ],
+    "cost_lineage": {
+      "id": "root-cost-cmp-production-live-verifica-ceb45d",
+      "name": "Total Campaign Cost",
+      "amount": 0.0,
+      "children": []
+    },
+    "people_breakdown": [],
+    "agent_activity": [
+      {
+        "id": "agt-run-cmp-production-live-verifica-ceb45d",
+        "name": "agt-citation-recovery",
+        "role": "Autonomous Operator",
+        "runs": 0,
+        "cost": 0.0,
+        "status": "RUNNING",
+        "outputs": []
+      }
+    ],
+    "timeline": [
+      {
+        "time": "Just now",
+        "event": "Campaign 'Production Live Verification Campaign' created with $15,000 budget",
+        "type": "budget"
+      }
+    ]
+  },
+  {
     "id": "cmp-q4-autonomous-aeo-expans-6a21eb",
     "name": "Q4 Autonomous AEO Expansion",
     "owner": "Operations Lead",
