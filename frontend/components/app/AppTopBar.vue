@@ -19,6 +19,12 @@ const headerMeta = computed(() => {
       subtitle: 'High-signal discrepancies where your product wins but AI engines underrepresent it'
     }
   }
+  if (p.startsWith('/campaigns')) {
+    return {
+      title: 'Campaigns',
+      subtitle: 'Where did the money go, what work did it produce, and what came back?'
+    }
+  }
   if (p.startsWith('/experiments')) {
     return {
       title: 'Experiments',

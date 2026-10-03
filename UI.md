@@ -3018,3 +3018,75 @@ When product truth satisfies personal agent constraints but AI engines underrepr
 - **Muse Connector**: Live personal agent demand status and intent envelope sync.
 - **Profound Engine**: AI answer engine perception sync and visibility tracking.
 - **System**: Live system health, capability breakdown, and organization switcher.
+
+
+---
+
+# 82. CAMPAIGNGRAPH ROI — CURRENT UI
+
+## 1. Core Purpose
+
+CampaignGraph ROI answers:
+> "Where did the money go, what work did it produce, and what came back?"
+
+It connects marketing investment all the way to observed and attributed business outcomes:
+```text
+Investment
+→ People & Agents
+→ Assets & Video
+→ Distribution
+→ Profound & Muse Signals
+→ Business Outcomes & Attributed Return
+```
+
+## 2. Navigation Architecture
+
+Primary navigation is constrained to:
+- **AgentMatch** (`/matches`): Intent envelopes, verified constraints vs AI perception, and discovery gaps.
+- **Campaigns** (`/campaigns`): Financial control center, cost lineage, human/agent models, asset provenance, Profound/Muse telemetry, and 3D Campaign Graph.
+- **Experiments** (`/experiments`): Protected experiments, causal spine, before/after metrics, and policy learning.
+- (Sub-surfaces for Costs, Agents, People, Assets, Videos, Profound, Muse, and Inefficiency are housed inside Campaigns).
+
+## 3. Financial Summary & Top Strip
+
+Maximum 5 high-value executive metrics:
+1. **Total Cost** (e.g. `$42,780` across 7 cost categories)
+2. **Attributed Return** (e.g. `$118,000` direct contracts & pipeline)
+3. **ROI** (e.g. `1.76x`)
+4. **Cost Completeness** (e.g. `92%` verified invoices & logged hours)
+5. **Outcome Coverage** (e.g. `74%` Profound & Muse telemetry)
+
+## 4. Explicit ROI Confidence & Provenance
+
+ROI figures are never presented in isolation. Every return dollar is categorized by evidentiary source:
+- **DIRECT**: Signed contracts and closed won revenue.
+- **ATTRIBUTED**: CRM pipeline with touchpoint attribution.
+- **MODELED**: Estimated downstream lifetime value.
+- **PROXY**: Visibility and citation share shifts.
+- Measurement Confidence badges: `HIGH`, `MEDIUM`, or `LOW`.
+
+## 5. Cost Lineage & Breakdown
+
+- **Composition**: Horizontal allocation bar across Paid Media, People, Video, Creators, Agents, Tools, and Model APIs.
+- **Interactive Lineage Tree**: Clicking any cost branch unfolds exact children down to individual roles, contractor rates, studio editing fees, agent run counts, and token costs.
+- **Cost Item Inspection Drawer**: Click any node to view provenance, contributor hours/rate, and trigger 3D path highlighting.
+
+## 6. Contributor Models (People & Autonomous Agents)
+
+- **Human Contributor Cost Model**: Tracks team members and contractors with hours, rate, total, source quality (`MANUAL` / `ESTIMATED` / `ACTUAL`), and delivered outputs.
+- **Agent Cost & Efficiency**: Tracks autonomous agent runs, success rates, token usage, model costs, tool costs, approved outputs, and cost per approved output.
+- **Video & Media Lineage**: Detailed breakdown of studio production, creator fees, editing, AI generation, revision iterations, and observed viewer outcomes.
+- **Inefficiency Analysis**: Categorizes non-productive spend as `REWORK`, `DUPLICATE`, `ABANDONED`, or `UNKNOWN`.
+
+## 7. 3D Campaign Lineage Graph (`CampaignGraphScene.vue`)
+
+Centers on deterministic spatial z-levels:
+- `z = -12`: Cost & Financial Inputs (amber `#f59e0b`)
+- `z = -8`: People & Agents (cyan `#38bdf8` / indigo `#818cf8`)
+- `z = -3`: Assets & Video Production (teal `#22d3ee`)
+- `z = 0`: Campaign Nexus (white / indigo `#6366f1`)
+- `z = +5`: Distribution Channels (blue `#60a5fa`)
+- `z = +9`: Profound & Muse Signals (purple `#a855f7` / teal `#2dd4bf`)
+- `z = +13`: Business Outcomes & Revenue (green `#10b981`)
+
+Edge thickness reflects cost weight. Outcome edges differ by confidence (solid for DIRECT, dashed for ATTRIBUTED, muted for MODELED). Clicking any cost item or return metric highlights the active causal lineage path and dims all other nodes. Includes an **Accessible Semantic DOM Tree** (`CampaignGraphTree.vue`) and **Chronological Event Timeline**.

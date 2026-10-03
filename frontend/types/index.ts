@@ -2,6 +2,7 @@
 // camelizes keys (see utils/camelize.ts). String unions mirror backend/app/domain/enums.py.
 // If /openapi.json is reachable, `pnpm gen:api` writes types/api.generated.ts for cross-checking.
 export * from './agentmatch'
+export * from './campaign'
 
 export type Severity = 'critical' | 'high' | 'medium' | 'low'
 export type IncidentState =

@@ -6,12 +6,15 @@ const route = useRoute()
 const matches = useMatches()
 const discoveryGaps = useDiscoveryGaps()
 const experiments = useExperiments()
+const { campaigns } = useCampaigns()
 
 const matchesCount = computed(() => matches.intents.value.length)
 const gapsCount = computed(() => discoveryGaps.criticalGapsCount.value || discoveryGaps.gaps.value.length)
 const waitingExperiments = computed(() => waitingCount(experiments.data.value))
+const campaignsCount = computed(() => campaigns.value.length)
 
 const isMatches = computed(() => route.path.startsWith('/matches'))
+const isCampaigns = computed(() => route.path.startsWith('/campaigns'))
 const isDiscoveryGaps = computed(() => route.path.startsWith('/discovery-gaps') || route.path.startsWith('/incidents'))
 const isExperiments = computed(() => route.path.startsWith('/experiments'))
 </script>
@@ -51,9 +54,31 @@ const isExperiments = computed(() => route.path.startsWith('/experiments'))
             <circle cx="12" cy="12" r="6" />
             <circle cx="12" cy="12" r="2" />
           </svg>
-          Matches
+          AgentMatch
         </span>
         <span v-if="matchesCount" class="nav-badge tone-info" :aria-label="`${matchesCount} active intent envelopes`">{{ matchesCount }}</span>
+      </NuxtLink>
+
+      <NuxtLink to="/campaigns" :class="{ active: isCampaigns }" @click="$emit('navigate')">
+        <span class="row">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="12" y1="1" x2="12" y2="23" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+          Campaigns
+        </span>
+        <span v-if="campaignsCount" class="nav-badge tone-purple" :aria-label="`${campaignsCount} campaigns tracked`">{{ campaignsCount }}</span>
+      </NuxtLink>
+
+      <NuxtLink to="/experiments" :class="{ active: isExperiments }" @click="$emit('navigate')">
+        <span class="row">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 2v7.31M14 2v7.31M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0" />
+            <path d="M5.52 16h12.96" />
+          </svg>
+          Experiments
+        </span>
+        <span v-if="waitingExperiments" class="nav-badge tone-warn" :aria-label="`${waitingExperiments} awaiting verification`">{{ waitingExperiments }}</span>
       </NuxtLink>
 
       <NuxtLink to="/discovery-gaps" :class="{ active: isDiscoveryGaps }" @click="$emit('navigate')">
@@ -66,17 +91,6 @@ const isExperiments = computed(() => route.path.startsWith('/experiments'))
           Discovery Gaps
         </span>
         <span v-if="gapsCount" class="nav-badge tone-bad" :aria-label="`${gapsCount} discovery gaps need attention`">{{ gapsCount }}</span>
-      </NuxtLink>
-
-      <NuxtLink to="/experiments" :class="{ active: isExperiments }" @click="$emit('navigate')">
-        <span class="row">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M10 2v7.31M14 2v7.31M8.5 2h7M14 9.3a6.5 6.5 0 1 1-4 0" />
-            <path d="M5.52 16h12.96" />
-          </svg>
-          Experiments
-        </span>
-        <span v-if="waitingExperiments" class="nav-badge tone-warn" :aria-label="`${waitingExperiments} awaiting verification`">{{ waitingExperiments }}</span>
       </NuxtLink>
     </nav>
 

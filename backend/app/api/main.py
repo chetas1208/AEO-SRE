@@ -15,6 +15,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.api.errors import Unavailable, register_error_handlers
 from app.api.logging import configure_logging
 from app.api.routes import (
+    campaigns,
     canonical_claims,
     change_checks,
     events,
@@ -214,6 +215,7 @@ def create_app() -> FastAPI:
         )  # fmt: skip
 
     for module in (
+        campaigns,
         events,
         health,
         system,
