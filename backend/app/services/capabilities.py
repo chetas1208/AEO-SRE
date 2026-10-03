@@ -245,7 +245,7 @@ async def check_mixpanel(session: AsyncSession) -> Capability:
             key="mixpanel", label="Mixpanel", state=CS.UNAVAILABLE,
             detail="Mixpanel service account not configured",
             last_success=ok or last_sync, last_error=err, last_error_at=err_at,
-            meta={"health_state": state, **meta},
+            meta={"health_state": state, "optional": True, **meta},
         )
     client = MixpanelClient(s)
     auth_ok, latency_ms, auth_err = await client.ping_auth()
@@ -589,7 +589,12 @@ async def collect_capabilities(session: AsyncSession, probe: bool = False) -> Ca
     by_key = {c.key: c for c in caps}
     by_key["api"] = Capability(key="api", label="API", state=CS.HEALTHY, last_success=utcnow())
     ordered = {k: by_key[k] for k in ("api", *(c.key for c in caps))}
-    states = {c.state for c in ordered.values()}
+
+    def _core_capability(c: Capability) -> bool:
+        return not (c.meta or {}).get("optional")
+
+    core = [c for c in ordered.values() if _core_capability(c)]
+    states = {c.state for c in core}
     if by_key["database"].state == CS.UNAVAILABLE:
         overall = CS.UNAVAILABLE
     elif states == {CS.HEALTHY}:

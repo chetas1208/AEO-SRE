@@ -467,6 +467,8 @@ export interface Capability {
   lastError?: string | null
   detail?: string | null
   label?: string | null
+  /** Optional integrations (e.g. Mixpanel not configured) must not turn the live pill red. */
+  optional?: boolean
 }
 
 export interface SystemHealth {

@@ -139,7 +139,7 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
     if (apiReachable.value !== true) return 'disconnected'
     if (globalStream.value === 'reconnecting') return 'reconnecting'
     if (globalStream.value === 'disconnected') return 'disconnected'
-    const caps = health.value?.capabilities ?? []
+    const caps = (health.value?.capabilities ?? []).filter((c) => !c.optional)
     if (caps.some((c) => c.state !== 'healthy')) return 'degraded'
     return 'live'
   })

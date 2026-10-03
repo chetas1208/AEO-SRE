@@ -44,7 +44,14 @@ async def test_capabilities_never_crash_and_report_unavailable(app_client):
     assert ex["github"]["state"] == "unavailable" and ex["github"]["meta"]["optional"] is True
     assert ex["profound_agent"]["state"] == "unavailable"
     # GitHub being unset must not make the system look degraded because of it
-    others = {k: c["state"] for k, c in body["capabilities"].items()}
+    mp = body["capabilities"].get("mixpanel")
+    if mp and mp["state"] == "unavailable":
+        assert (mp.get("meta") or {}).get("optional") is True
+    others = {
+        k: c["state"]
+        for k, c in body["capabilities"].items()
+        if not (c.get("meta") or {}).get("optional")
+    }
     if all(v == "healthy" for v in others.values()):
         assert body["overall"] == "healthy"
 

@@ -432,7 +432,8 @@ export function normCapabilities(raw: unknown): Capability[] {
     state: capState(c.state),
     lastSuccessAt: c.lastSuccess ?? null,
     lastError: c.lastError ?? null,
-    detail: c.detail ?? null
+    detail: c.detail ?? null,
+    optional: !!(isObj(c.meta) && c.meta.optional)
   }))
 }
 
