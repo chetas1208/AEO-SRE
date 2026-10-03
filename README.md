@@ -40,6 +40,9 @@ Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## What the system does
 
+- **Live 3D Agent Control Plane (`/`).** The homepage serves as an operational Flight Deck connecting personal agent intent (Muse), verified product truth, Profound AI-search intelligence, campaign unit economics, and Change Guard-protected experiments into one live control plane. Built with Three.js (`AgentControlGraphScene.vue`), it features spatial depth stratification (Agents z=-10, Campaigns z=0, Decisions z=+5, Experiments z=+10, Outcomes z=+15), real-time SSE streaming (`/api/control-plane/events`), semantic color coding (emerald positive return, rose negative issue, amber pending review, sky blue running), raycast hover tooltips, and an interactive DOM entity inspector.
+- **Real Experiment Creation Engine.** Experiment creation is a complete frontend-to-backend workflow (`POST /api/experiments`), accessible directly from `/`, from Discovery Gaps (`/discovery-gaps`), and from Campaigns (`/campaigns`). The stepped creation drawer (`ExperimentCreateDrawer.vue`) enforces domain invariants: mandatory causal hypotheses, frozen baseline metrics from live backend telemetry, temporal verification window scheduling (24h to 14 days), and automatic Change Guard target-protection registration.
+- **Change Guard experiment protection.** Change Guard coordinates concurrent changes across autonomous agents and human editors. It blocks conflicting modifications (`409 Conflict`) on protected target URLs or active prompt clusters while an experiment is awaiting verification, preventing experiment contamination and ensuring causal measurement integrity.
 - **Profound's role.** Profound is the observability substrate: visibility, citation share, prompt volume, competitor
   share and FactCheck accuracy are ingested as raw payloads plus normalised `Signal` rows
   (`backend/app/connectors/profound`, `services/ingestion.py`). We do not rebuild what Profound ships; we add

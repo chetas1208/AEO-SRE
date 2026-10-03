@@ -105,6 +105,11 @@ class ControlPolicyDecision(Base):
     fallback_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     mask_violation: Mapped[bool] = mapped_column(Boolean, default=False)
     agrees: Mapped[bool | None] = mapped_column(Boolean, nullable=True)  # recommendation == baseline decision
+    laya_model_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    laya_selected_action: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    laya_distribution: Mapped[dict] = mapped_column(JSONType, default=dict)
+    laya_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    laya_escalation_probability: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

@@ -1547,3 +1547,35 @@ Frontend behaviour is verified only by its own tests (Vitest 48 reported, Playwr
 ### Revisit When
 
 The peer responds, or the frontend is handed to a single owner.
+
+---
+
+## DEC-047 — Laya Prior + GraphLinUCB Shadow; Muse Data Not RL Training Fuel
+
+**Status:** ACCEPTED  
+**Date:** 2026-10-03  
+**Supersedes:** None
+
+### Context
+
+AgentMatch needs a fast local decision layer and an online learner for control-plane actions without replacing Change Guard, PostgreSQL, Neo4j, or Profound. Meta Muse connector terms forbid using connector data for unrelated profiling or model training.
+
+### Decision
+
+1. **Laya** is a System-1 typed-decision prior (choice/score/noul), not the RL learner and not a chat model. It recommends; it never executes side effects.
+2. **GraphLinUCB** (contextual bandit) is the control-policy learner, starting in **SHADOW** mode: baseline Change Guard decision is returned; Laya + bandit outputs are persisted for eval.
+3. **Deterministic safety masks** always restrict eligible actions; the bandit cannot override masks.
+4. **LLM escalation** runs only when rules and Laya cannot answer confidently (see `app/intelligence/escalation.py`).
+5. **Muse connector payload must not** be written into global Laya/bandit/LLM training tables; authorized Muse context is allowed for the active request only.
+
+### Alternatives Considered
+
+End-to-end LLM for every decision; PPO/DQN on sparse rewards; training bandit on Muse conversation history.
+
+### Consequences
+
+`docs/AGENTMATCH_DECISION_LAYER.md` and `docs/MUSE_CONNECTOR.md` describe phases. OAuth multi-tenant Muse is phase 2. Laya weights remain optional until benchmarked.
+
+### Revisit When
+
+Shadow eval graduation criteria pass and ACTIVE mode is approved; or Muse OAuth V1 ships.

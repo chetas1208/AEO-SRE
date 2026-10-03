@@ -3,6 +3,7 @@ import type { Campaign, CostLineageNode, CostCompositionItem, PersonCost, AgentC
 import KnowledgeGraphExplorer from '~/components/graph/KnowledgeGraphExplorer.vue'
 import CampaignGraphScene from '~/components/visualization/CampaignGraphScene.vue'
 import CampaignGraphTree from '~/components/visualization/CampaignGraphTree.vue'
+import ExperimentCreateDrawer from '~/components/experiments/ExperimentCreateDrawer.vue'
 
 const {
   campaigns,
@@ -16,6 +17,8 @@ const {
   highlightCostPath,
   clearHighlights
 } = useCampaigns()
+
+const isExperimentDrawerOpen = ref(false)
 
 // View mode for graph visualization: 3D Spatial (Three.js), Accessible DOM Tree, or Chronological Timeline
 const vizMode = ref<'3d' | 'tree' | 'timeline'>('3d')
@@ -103,6 +106,13 @@ function closeCostDetail() {
           </div>
 
           <div class="header-badges">
+            <button
+              type="button"
+              class="btn-campaign-experiment"
+              @click="isExperimentDrawerOpen = true"
+            >
+              🧪 Test in Experiments Engine →
+            </button>
             <span :class="['status-pill-lg', `status-${selectedCampaign.status.toLowerCase()}`]">
               {{ selectedCampaign.status }}
             </span>
@@ -513,10 +523,42 @@ function closeCostDetail() {
         </div>
       </div>
     </div>
+
+    <!-- Contextual Experiment Creation Drawer -->
+    <ExperimentCreateDrawer
+      v-model="isExperimentDrawerOpen"
+      initial-trigger="campaign"
+      :initial-campaign-id="selectedCampaign?.id"
+      :initial-name="selectedCampaign ? `Test Campaign Optimization: ${selectedCampaign.name}` : ''"
+      :initial-hypothesis="selectedCampaign ? `Targeted content and attribution remediation for ${selectedCampaign.name} will improve search visibility.` : ''"
+      :initial-target-url="selectedCampaign?.landing_url || 'https://profound.academy/pricing'"
+      initial-action="update_existing_page"
+      initial-primary-metric="visibility"
+    />
   </div>
 </template>
 
 <style scoped>
+.btn-campaign-experiment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #c7d2fe;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-campaign-experiment:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: #818cf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
 .pane-header {
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);

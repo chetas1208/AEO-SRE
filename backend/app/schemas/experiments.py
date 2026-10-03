@@ -141,3 +141,26 @@ class ExperimentDetail(ApiModel):
 class VerifyOut(ApiModel):
     experiment_id: uuid.UUID
     job: JobRef
+
+
+class ExperimentCreateIn(ApiModel):
+    name: str = Field(min_length=3, max_length=256, description="Human-readable title for the experiment")
+    hypothesis: str = Field(min_length=10, max_length=2000, description="Mandatory causal hypothesis declaring expected change")
+    selected_action: str = Field(
+        default="update_existing_page",
+        description="ActionType e.g. update_existing_page, create_canonical_page, create_faq, structured_data, publisher_outreach, observe"
+    )
+    target_url: str | None = Field(default=None, max_length=1024, description="Target URL being modified or tested")
+    target_key: str | None = Field(default=None, max_length=512, description="Target identifier or claim key")
+    primary_metric: str = Field(
+        default="visibility",
+        description="Primary metric to verify: visibility, citation_share, accuracy, or competitor_share"
+    )
+    secondary_metrics: list[str] = Field(default_factory=list)
+    verification_window_hours: float = Field(default=48.0, ge=1.0, le=720.0, description="Hours to wait before verification eligibility")
+    incident_id: uuid.UUID | None = None
+    campaign_id: str | None = None
+    org_id: uuid.UUID | None = None
+    notes: str | None = None
+    dry_run: bool = False
+    auto_activate: bool = True

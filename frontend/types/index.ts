@@ -594,3 +594,163 @@ export interface CanonicalClaim {
   status: 'active' | 'retired' | string
   updatedAt: string | null
 }
+
+export interface ExperimentCreateIn {
+  name: string
+  hypothesis: string
+  selected_action: string
+  target_url?: string | null
+  target_key?: string | null
+  primary_metric?: string
+  secondary_metrics?: string[]
+  verification_window_hours?: number
+  incident_id?: string | null
+  campaign_id?: string | null
+  org_id?: string | null
+  notes?: string | null
+  dry_run?: boolean
+  auto_activate?: boolean
+}
+
+export interface ControlPlaneSummary {
+  activeAgents?: number
+  active_agents?: number
+  runningCampaigns?: number
+  running_campaigns?: number
+  modelCostToday?: number
+  model_cost_today?: number
+  attributedReturn?: number
+  attributed_return?: number
+  decisionsNeedingReview?: number
+  decisions_needing_review?: number
+  experimentsMeasuring?: number
+  experiments_measuring?: number
+}
+
+export interface AgentActivity {
+  id: string
+  name: string
+  role: string
+  campaignId?: string
+  campaign_id?: string
+  campaignName?: string
+  campaign_name?: string
+  currentTask?: string
+  current_task?: string
+  runs: number
+  modelCost?: number
+  model_cost?: number
+  totalCost?: number
+  total_cost?: number
+  outputsProduced?: number
+  outputs_produced?: number
+  outputsAccepted?: number
+  outputs_accepted?: number
+  attributedOutcome?: 'POSITIVE' | 'NEGATIVE' | 'UNCERTAIN' | 'NOT_MEASURABLE'
+  attributed_outcome?: 'POSITIVE' | 'NEGATIVE' | 'UNCERTAIN' | 'NOT_MEASURABLE'
+  state: 'RUNNING' | 'WAITING' | 'REVIEW' | 'BLOCKED' | 'COMPLETED' | 'FAILED'
+  lastActiveAt?: string | null
+  last_active_at?: string | null
+}
+
+export interface CampaignFinancialCard {
+  id: string
+  name: string
+  status: string
+  totalCost?: number
+  total_cost?: number
+  attributedReturn?: number | null
+  attributed_return?: number | null
+  netReturn?: number | null
+  net_return?: number | null
+  roiPct?: number | null
+  roi_pct?: number | null
+  financialStatus?: 'POSITIVE' | 'NEGATIVE' | 'UNCERTAIN' | 'NOT_MEASURABLE'
+  financial_status?: 'POSITIVE' | 'NEGATIVE' | 'UNCERTAIN' | 'NOT_MEASURABLE'
+  measurementConfidence?: 'HIGH' | 'MEDIUM' | 'LOW'
+  measurement_confidence?: 'HIGH' | 'MEDIUM' | 'LOW'
+  returnSource?: 'DIRECT' | 'ATTRIBUTED' | 'MODELED' | 'PROXY' | 'UNKNOWN'
+  return_source?: 'DIRECT' | 'ATTRIBUTED' | 'MODELED' | 'PROXY' | 'UNKNOWN'
+  primaryChannel?: string
+  primary_channel?: string
+  activeAgentsCount?: number
+  active_agents_count?: number
+  activeExperimentsCount?: number
+  active_experiments_count?: number
+}
+
+export interface DecisionCard {
+  id: string
+  title: string
+  recommendedBy?: string
+  recommended_by?: string
+  campaignId?: string
+  campaign_id?: string
+  campaignName?: string
+  campaign_name?: string
+  actionType?: string
+  action_type?: string
+  policyVersion?: string
+  policy_version?: string
+  status: 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'MODIFIED'
+  observedOutcome?: 'POSITIVE' | 'NEGATIVE' | 'PENDING' | 'UNCERTAIN'
+  observed_outcome?: 'POSITIVE' | 'NEGATIVE' | 'PENDING' | 'UNCERTAIN'
+  context: string
+  cost: number
+  createdAt?: string
+  created_at?: string
+}
+
+export interface ExperimentControlCard {
+  id: string
+  code: string
+  name: string
+  hypothesis: string
+  action: string
+  primaryMetric?: string
+  primary_metric?: string
+  status: string
+  eligibleAt?: string | null
+  eligible_at?: string | null
+  targetKey?: string | null
+  target_key?: string | null
+  protectionActive?: boolean
+  protection_active?: boolean
+}
+
+export interface ControlPlaneGraphNode {
+  id: string
+  type: 'agent' | 'campaign' | 'task' | 'decision' | 'asset' | 'experiment' | 'signal' | 'outcome'
+  label: string
+  status: 'positive' | 'negative' | 'uncertain' | 'neutral' | 'running'
+  meta: Record<string, unknown>
+  x: number
+  y: number
+  z: number
+}
+
+export interface ControlPlaneGraphEdge {
+  id: string
+  source: string
+  target: string
+  label?: string
+  status: 'positive' | 'negative' | 'uncertain' | 'neutral' | 'active'
+  confidence?: string | null
+}
+
+export interface ControlPlaneResponse {
+  generatedAt?: string
+  generated_at?: string
+  sourceMode?: 'LIVE' | 'TEST'
+  source_mode?: 'LIVE' | 'TEST'
+  summary: ControlPlaneSummary
+  agents: AgentActivity[]
+  campaigns: CampaignFinancialCard[]
+  decisions: DecisionCard[]
+  experiments: ExperimentControlCard[]
+  graph: {
+    nodes: ControlPlaneGraphNode[]
+    edges: ControlPlaneGraphEdge[]
+  }
+}
+

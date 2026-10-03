@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { DiscoveryGapItem, GapType } from '~/types/agentmatch'
 import KnowledgeGraphExplorer from '~/components/graph/KnowledgeGraphExplorer.vue'
+import ExperimentCreateDrawer from '~/components/experiments/ExperimentCreateDrawer.vue'
 
 const gapsState = useDiscoveryGaps()
+const experimentDrawerOpen = ref(false)
 const {
   gaps,
   selectedGapId,
@@ -284,12 +286,14 @@ function submitModify() {
                 >
                   ✕ Reject
                 </button>
-                <NuxtLink
-                  to="/experiments"
+                <button
+                  type="button"
                   class="btn-experiment"
+                  data-testid="btn-create-gap-experiment"
+                  @click="experimentDrawerOpen = true"
                 >
-                  Test in Experiments Engine →
-                </NuxtLink>
+                  🧪 Test in Experiments Engine →
+                </button>
               </div>
             </div>
           </div>
@@ -318,6 +322,19 @@ function submitModify() {
         </div>
       </div>
     </div>
+
+    <!-- Real Experiment Creation Drawer from Discovery Gap -->
+    <ExperimentCreateDrawer
+      v-if="selectedGap"
+      v-model="experimentDrawerOpen"
+      initial-trigger="gap"
+      :initial-name="`Remediate: ${selectedGap.title}`"
+      :initial-hypothesis="selectedGap.actionPlan?.planDescription || `Updating canonical evidence will close the +${selectedGap.perceptionGap}% gap across answer engines.`"
+      :initial-action="selectedGap.actionPlan?.actionType || 'update_existing_page'"
+      :initial-target-url="selectedGap.productTruth?.sourceUrl || ''"
+      initial-primary-metric="accuracy"
+      :initial-incident-id="selectedGap.id"
+    />
   </div>
 </template>
 

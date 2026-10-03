@@ -1,4 +1,4 @@
-import type { ExperimentList } from '~/types'
+import type { ExperimentCreateIn, ExperimentDetail, ExperimentList } from '~/types'
 
 export function useExperiments() {
   const org = useOrganizationStore()
@@ -8,6 +8,47 @@ export function useExperiments() {
     normExperimentList,
     { enabled: () => org.loaded }
   )
-  useAutoRefresh(() => res.refresh(), 60_000)
-  return res
+  useAutoRefresh(() => res.refresh(), 30_000)
+
+  const isCreating = ref(false)
+  const createError = ref<string | null>(null)
+  const createSuccess = ref<string | null>(null)
+
+  async function createExperiment(payload: ExperimentCreateIn): Promise<ExperimentDetail> {
+    isCreating.value = true
+    createError.value = null
+    createSuccess.value = null
+
+    try {
+      const response = await apiFetch<Record<string, unknown>>('/api/experiments', {
+        method: 'POST',
+        body: {
+          ...payload,
+          org_id: payload.org_id || org.currentId || undefined
+        }
+      })
+      const detail = normExperimentDetail(response)
+      createSuccess.value = `Experiment ${detail.code} successfully created`
+      await res.refresh()
+      return detail
+    } catch (err: any) {
+      const message =
+        err?.data?.error?.message ||
+        err?.response?._data?.error?.message ||
+        err?.message ||
+        'Failed to create experiment'
+      createError.value = message
+      throw new Error(message)
+    } finally {
+      isCreating.value = false
+    }
+  }
+
+  return {
+    ...res,
+    isCreating,
+    createError,
+    createSuccess,
+    createExperiment
+  }
 }

@@ -121,6 +121,16 @@ class Settings(BaseSettings):
     max_model_calls: int = 2
     max_investigation_seconds: float = 180.0
     max_answer_rows: int = 20
+    # Control policy (Change Guard shadow / GraphLinUCB). See docs/AGENTMATCH_DECISION_LAYER.md.
+    control_policy_mode: str = "SHADOW"  # SHADOW | ACTIVE | BASELINE_ONLY
+    control_policy_shadow_enabled: bool = True
+    control_policy_linucb_alpha: float = 0.5
+    # Laya System-1 prior (optional local checkpoint).
+    laya_enabled: bool = False
+    laya_checkpoint: str = "convaiinnovations/laya-typed-decisions"
+    laya_confidence_accept: float = 0.72
+    laya_confidence_review: float = 0.55
+    laya_confidence_escalate: float = 0.40
 
 
 # Backward-compatible protocol aliases (older .env files used anthropic | openai).

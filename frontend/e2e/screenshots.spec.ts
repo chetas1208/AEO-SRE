@@ -8,7 +8,7 @@ fs.mkdirSync(screenshotDir, { recursive: true })
 
 test('screenshot: change-guard-default', async ({ page }) => {
   await page.goto('/incidents')
-  await expect(page.getByRole('heading', { name: /incidents|change guard/i })).toBeVisible({ timeout: 25_000 })
+  await expect(page.getByRole('heading', { name: /incident|change guard/i })).toBeVisible({ timeout: 25_000 })
   await page.screenshot({ path: `${screenshotDir}/change-guard-default.png`, fullPage: true })
 })
 

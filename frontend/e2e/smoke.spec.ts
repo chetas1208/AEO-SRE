@@ -15,7 +15,7 @@ test.beforeAll(async ({ request }) => {
 
 test('incidents list loads', async ({ page }) => {
   await page.goto('/incidents')
-  await expect(page.getByRole('heading', { name: /incidents/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /incident/i })).toBeVisible({ timeout: 15_000 })
 })
 
 test('incident detail and provenance badge', async ({ page, request }) => {

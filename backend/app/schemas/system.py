@@ -27,6 +27,7 @@ class CapabilitiesOut(ApiModel):
     model_artifact_version: str | None = None
     next_ingestion: datetime | None = None
     graph: dict[str, Any] | None = None  # Neo4j projection state + detected capabilities (never affects `overall`)
+    decision_engine: dict[str, Any] | None = None  # Laya + control policy mode (informational)
 
 
 class HealthOut(ApiModel):

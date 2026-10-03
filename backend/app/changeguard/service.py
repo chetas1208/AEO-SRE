@@ -520,6 +520,9 @@ async def submit(session: AsyncSession, inp: ChangeInput) -> Submitted:
     session.add(check)
     await session.flush()
     await _record(session, prop, cs, check)
+    from app.control_policy.shadow import record_after_check
+
+    await record_after_check(session, cs, check)
     return Submitted(cs, check, False)
 
 
@@ -535,6 +538,9 @@ async def _replay_or_recheck(session: AsyncSession, prop: Proposal, existing: Ch
         session.add(check)
         await session.flush()
         await _record(session, prop, existing, check)
+        from app.control_policy.shadow import record_after_check
+
+        await record_after_check(session, existing, check)
         return Submitted(existing, check, False)
     check = await latest_check(session, existing.id)
     if check is None:  # cannot happen (set + check are one transaction); fail loudly rather than invent a decision

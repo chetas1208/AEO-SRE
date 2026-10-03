@@ -5,8 +5,9 @@ import structlog
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 
-from app.api.deps import ActorDep, PageDep, SessionDep
-from app.api.errors import Conflict, NotFound
+from datetime import datetime, timedelta, timezone
+from app.api.deps import ActorDep, BusDep, PageDep, SessionDep
+from app.api.errors import ApiError, Conflict, NotFound
 from app.api.locks import entity_lock
 from app.api.mappers import (
     SUMMARY_GROUPS,
@@ -21,14 +22,17 @@ from app.api.mappers import (
 )
 from app.core.audit import audit
 from app.core.queue import enqueue
-from app.domain.enums import ExperimentStatus
+from app.domain.enums import ActionType, ExperimentStatus, IncidentCategory, IncidentState, Severity
 from app.domain.errors import ExperimentNotVerifiable
 from app.experiments import window as vwindow
-from app.models.core import Incident, Job
+from app.experiments.collision import find_collisions, scope_key
+from app.experiments.spec import build_spec
+from app.models.core import Incident, Job, Organization, PromptCluster
 from app.models.interventions import Approval, Execution, Experiment, ExperimentOutcome, Intervention, Reward
 from app.models.policy import PolicyVersion
 from app.schemas.experiments import (
     DeclaredMetrics,
+    ExperimentCreateIn,
     ExperimentDetail,
     ExperimentList,
     ExperimentRow,
@@ -93,6 +97,216 @@ async def list_experiments(
         total=sum(by_value.values()),
     )
     return ExperimentList(items=items, total=total, limit=page.limit, offset=page.offset, summary=summary)
+
+
+@router.post("", response_model=ExperimentDetail, status_code=201)
+async def create_experiment(
+    data: ExperimentCreateIn,
+    session: SessionDep,
+    actor: ActorDep,
+    bus: BusDep,
+):
+    """Create a new experiment with full hypothesis, action, baseline metrics, target protection, and verification schedule."""
+    now = datetime.now(timezone.utc)
+
+    # 1. Resolve org_id
+    org_id = data.org_id
+    if not org_id:
+        if data.incident_id:
+            existing_inc = await session.get(Incident, data.incident_id)
+            if not existing_inc:
+                raise NotFound(f"incident {data.incident_id} not found")
+            org_id = existing_inc.org_id
+        else:
+            first_org = (await session.execute(select(Organization).limit(1))).scalar()
+            if not first_org:
+                raise Conflict("No organization found to bind experiment")
+            org_id = first_org.id
+
+    # 2. Resolve or create Incident
+    inc: Incident | None = None
+    if data.incident_id:
+        inc = await session.get(Incident, data.incident_id)
+        if not inc:
+            raise NotFound(f"incident {data.incident_id} not found")
+    else:
+        # Category mapped to primary metric for deterministic spec builder
+        cat_map = {
+            "visibility": IncidentCategory.VISIBILITY_DROP,
+            "citation_share": IncidentCategory.LOST_CITATION_SOURCE,
+            "accuracy": IncidentCategory.FACTUAL_CONFLICT,
+            "competitor_share": IncidentCategory.COMPETITOR_CITATION_GAIN,
+        }
+        category = cat_map.get(data.primary_metric, IncidentCategory.FACTUAL_CONFLICT)
+        cluster = PromptCluster(org_id=org_id, topic=data.name[:255], prompts=[])
+        session.add(cluster)
+        await session.flush()
+
+        inc = Incident(
+            org_id=org_id,
+            prompt_cluster_id=cluster.id,
+            title=data.name,
+            category=category.value,
+            severity=Severity.HIGH.value,
+            priority=50.0,
+            state=IncidentState.INTERVENTION_PROPOSED.value,
+            detected_at=now,
+            summary=f"Experiment candidate: {data.hypothesis[:200]}",
+            context={
+                "campaign_id": data.campaign_id,
+                "hypothesis": data.hypothesis,
+                "source": "experiment_creation_ui",
+            },
+            metrics=[
+                {"key": "visibility", "before": 58.0, "after": 58.0},
+                {"key": "citation_share", "before": 24.0, "after": 24.0},
+                {"key": "accuracy", "before": 62.0, "after": 62.0},
+                {"key": "competitor_share", "before": 42.0, "after": 42.0},
+            ],
+        )
+        session.add(inc)
+        await session.flush()
+
+    # 3. Resolve baseline metrics
+    before = {}
+    for m in (inc.metrics or []):
+        if isinstance(m, dict) and m.get("key") and (m.get("before") is not None or m.get("after") is not None):
+            before[m["key"]] = float(m.get("before") if m.get("before") is not None else m.get("after"))
+    if not before:
+        before = {"visibility": 55.0, "citation_share": 20.0, "accuracy": 60.0, "competitor_share": 40.0}
+    if data.primary_metric not in before:
+        before[data.primary_metric] = 50.0
+
+    # 4. Resolve ActionType
+    try:
+        action = ActionType(data.selected_action.lower())
+    except ValueError:
+        raise ApiError(
+            f"Invalid action '{data.selected_action}'. Must be one of {[a.value for a in ActionType]}",
+            status_code=422,
+            error_type="unprocessable_entity",
+            code="INVALID_ACTION",
+        )
+
+    # 5. Create Intervention
+    target_key = data.target_key
+    if not target_key and data.target_url:
+        target_key = f"target:{data.target_url.strip().lower().rstrip('/')}"
+    if not target_key:
+        target_key = scope_key(inc)
+
+    iv = Intervention(
+        id=uuid.uuid4(),
+        incident_id=inc.id,
+        action=action,
+        title=data.name,
+        rationale=data.hypothesis,
+        proposed_change={
+            "target_url": data.target_url,
+            "target_key": target_key,
+            "campaign_id": data.campaign_id,
+            "notes": data.notes,
+        },
+        selection_basis="manual_override",
+    )
+    session.add(iv)
+    await session.flush()
+
+    # 6. Build spec & verification window
+    delay_hours = 1.0
+    w_start = now + timedelta(hours=delay_hours)
+    w_end = w_start + timedelta(hours=data.verification_window_hours)
+
+    spec = build_spec(
+        action=action,
+        root_cause=data.hypothesis[:120],
+        category=inc.category,
+        before_metrics=before,
+        window_start=w_start,
+        window_end=w_end,
+        executed_after=timedelta(hours=delay_hours),
+        declared_at=now,
+    ).to_json()
+
+    exp_status = ExperimentStatus.AWAITING_VERIFICATION if data.auto_activate else ExperimentStatus.PROPOSED
+    executed_at = now if data.auto_activate else None
+
+    # Check collision (contamination)
+    dummy_exp = Experiment(
+        id=uuid.uuid4(),
+        incident_id=inc.id,
+        intervention_id=iv.id,
+        selected_action=action,
+        status=exp_status,
+        target_key=target_key,
+        dry_run=data.dry_run,
+    )
+    conflicts = await find_collisions(session, dummy_exp)
+    if conflicts:
+        raise Conflict(
+            f"Target '{data.target_url or target_key}' is already protected by active experiment {conflicts[0].experiment_id} ({conflicts[0].reason}); "
+            "wait for measurement to finish or dismiss the conflicting experiment.",
+            {"conflicts": [{"experiment_id": str(c.experiment_id), "reason": c.reason, "status": c.status} for c in conflicts]},
+        )
+
+    # 7. Persist Experiment
+    exp = Experiment(
+        id=dummy_exp.id,
+        incident_id=inc.id,
+        intervention_id=iv.id,
+        policy_version_id=None,
+        policy_probability=None,
+        context_vector=[],
+        alternatives=[],
+        evidence_snapshot={},
+        before_metrics=before,
+        after_metrics=None,
+        status=exp_status,
+        verification_window_start=w_start,
+        verification_window_end=w_end,
+        executed_at=executed_at,
+        selected_action=action,
+        selection_basis=None,
+        cold_start=False,
+        reason=data.hypothesis,
+        proposed_change=iv.proposed_change,
+        approved_change=iv.proposed_change if data.auto_activate else None,
+        timeline=[
+            {"from": None, "to": ExperimentStatus.PROPOSED.value, "actor": actor or "human", "reason": "experiment created", "at": now.isoformat()},
+            *([{"from": ExperimentStatus.PROPOSED.value, "to": exp_status.value, "actor": actor or "human", "reason": "activated on creation", "at": now.isoformat()}] if data.auto_activate else []),
+        ],
+        spec=spec,
+        target_key=target_key,
+        dry_run=data.dry_run,
+    )
+    session.add(exp)
+    await session.flush()
+
+    # 8. Emit SSE event
+    try:
+        await bus.publish({
+            "type": "experiment.created",
+            "experiment_id": str(exp.id),
+            "code": exp.code,
+            "status": exp.status.value,
+            "selected_action": exp.selected_action.value,
+            "target_key": exp.target_key,
+            "primary_metric": data.primary_metric,
+            "created_at": now.isoformat(),
+        })
+    except Exception as exc:
+        log.warning("experiment.bus_publish_failed", error=str(exc))
+
+    await audit(session, "human", actor, "experiment", exp.id, "experiment.created", {
+        "name": data.name,
+        "action": action.value,
+        "primary_metric": data.primary_metric,
+        "target_key": target_key,
+        "campaign_id": data.campaign_id,
+        "auto_activate": data.auto_activate,
+    }, commit=True)
+
+    return await get_experiment(str(exp.id), session)
 
 
 async def _get(session, ident: str) -> Experiment:

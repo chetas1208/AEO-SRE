@@ -18,6 +18,8 @@ from app.api.routes import (
     campaigns,
     canonical_claims,
     change_checks,
+    control_plane,
+    control_policy,
     events,
     experiments,
     graph,
@@ -216,12 +218,14 @@ def create_app() -> FastAPI:
 
     for module in (
         campaigns,
+        control_plane,
         events,
         health,
         system,
         organizations,
         canonical_claims,
         change_checks,
+        control_policy,
         incidents,
         interventions,
         experiments,

@@ -560,6 +560,12 @@ async def collect_capabilities(session: AsyncSession, probe: bool = False) -> Ca
     except Exception as exc:
         log.warning("capability.history_failed", error=repr(exc))
         ingest = invest = policy_at = None
+    from app.control_policy.learner import ALGORITHM, POLICY_VERSION
+    from app.core.config import get_settings
+    from app.intelligence.laya.health import laya_capability_block
+
+    s = get_settings()
+    laya = laya_capability_block()
     return CapabilitiesOut(
         checked_at=utcnow(),
         overall=overall,
@@ -571,4 +577,10 @@ async def collect_capabilities(session: AsyncSession, probe: bool = False) -> Ca
         model_artifact_version=_artifact_version(),
         next_ingestion=_next_ingest(),
         graph=await graph_block(),
+        decision_engine={
+            "mode": (s.control_policy_mode or "SHADOW").upper(),
+            "policy_algorithm": ALGORITHM,
+            "policy_version": POLICY_VERSION,
+            "laya": laya,
+        },
     )

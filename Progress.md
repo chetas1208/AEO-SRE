@@ -43,6 +43,10 @@ Layers are kept distinct: IMPLEMENTED (code in tree), TEST VERIFIED (automated),
 
 Implemented by agents G1-G4 (committed `ac84d54` onward): `backend/app/changeguard/`, routes `change_checks.py` and `canonical_claims.py`, migration `0004_change_guard.py`, frontend `components/guard/`, tests and `make eval-guard`. Status: **IMPLEMENTED + TEST VERIFIED** (249 guard tests, eval-guard 24/24, release gate open). **Not LIVE VERIFIED** until a real Profound Agent calls `POST /api/change-checks` through a tunnel/deployment. API on `:8000` at 2026-10-03T21:46Z: `git_sha=4a33995`, OpenAPI includes change-checks, `profound_state=READY`, `neo4j_state=READY`.
 
+### Decision layer (AgentMatch campaign — phase 1, 2026-10-03)
+
+**IMPLEMENTED (local tree, not fully re-run in CI this pass):** Laya scaffold (`backend/app/intelligence/laya/`), LLM escalation gate (`escalation.py`), GraphLinUCB shadow learner (`control_policy/learner.py`), shadow persistence on each Change Check (`control_policy/shadow.py`), migration **0008** (Laya audit columns), `GET /api/control-policy/status`, `decision_engine` block on `/api/system/capabilities`. **DEC-047** records Laya-as-prior, Muse data not used for RL training. Laya weights remain optional (`LAYA_ENABLED=false` default); checkpoint load is stubbed until benchmark. **Phase 2 still open:** multi-tenant auth, Muse OAuth provider, public admin projection, graph features on live checks, bandit reward updates, frontend Decision Engine panel.
+
 ### Graph and policy (planned)
 
 Neo4j event graph and graph-aware policy are specified in `docs/GRAPH_SPEC.md` and recorded in DEC-043/DEC-044. Infrastructure is IN PROGRESS (agent N1); an uncommitted `backend/app/graph/` (client, capabilities, errors, health) and a `neo4j_state` field on `/api/health` were appearing in the working tree late in this pass, but no projector or outbox was seen, `.env.example` documents optional `NEO4J_*` variables, nothing is projected, and no live Neo4j connection is verified. Postgres stays the system of record.
