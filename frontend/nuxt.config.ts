@@ -2,30 +2,34 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { existsSync } from 'node:fs'
 import { config as loadDotenv } from 'dotenv'
+import { isLoopbackApiUrl, resolvePublicApiOrigin } from './utils/resolvePublicApi'
 
-// Single root .env (../.env). No frontend-local env file. Only the public API base URL is exposed to the client.
+// Single root .env (../.env). Public backend = Cloudflare tunnel (API_PUBLIC_URL). Browser uses same-origin /api when proxied.
 const here = dirname(fileURLToPath(import.meta.url))
-const rootEnv = resolve(here, '..', '.env')
+const repoRoot = resolve(here, '..')
+const rootEnv = resolve(repoRoot, '.env')
 if (existsSync(rootEnv)) loadDotenv({ path: rootEnv, quiet: true })
 
-const apiFromEnv = (process.env.NUXT_PUBLIC_API_BASE_URL || '').trim()
-const backendProxy = (process.env.NUXT_BACKEND_PROXY_URL || '').trim().replace(/\/+$/, '')
-const apiSameOrigin =
-  process.env.NUXT_PUBLIC_API_SAME_ORIGIN === '1'
-  || (process.env.VERCEL === '1' && backendProxy.length > 0)
-const isLoopback = (u: string) => /^(https?:\/\/)?(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?/i.test(u)
-/** Fallback to active Cloudflare tunnel when not using same-origin /api proxy. */
-const VERCEL_API_FALLBACK = 'https://somehow-air-animals-connectors.trycloudflare.com'
+const publicApiOrigin = resolvePublicApiOrigin(repoRoot)
+const explicitPublic = (process.env.NUXT_PUBLIC_API_BASE_URL || '').trim()
+const sameOriginPref = process.env.NUXT_PUBLIC_API_SAME_ORIGIN
+const apiSameOrigin = publicApiOrigin.length > 0 && (
+  sameOriginPref === '1' || (process.env.VERCEL === '1' && sameOriginPref !== '0')
+)
 const resolvedApiBase = apiSameOrigin
   ? ''
-  : (apiFromEnv && !isLoopback(apiFromEnv))
-    ? apiFromEnv
-    : (process.env.NODE_ENV === 'development' && !process.env.VERCEL ? 'http://localhost:8000' : VERCEL_API_FALLBACK)
+  : (explicitPublic && !isLoopbackApiUrl(explicitPublic))
+    ? explicitPublic.replace(/\/+$/, '')
+    : (publicApiOrigin || (process.env.NODE_ENV === 'development' && !process.env.VERCEL ? 'http://localhost:8000' : ''))
 
 const routeRules: Record<string, { proxy: string }> = {}
-if (backendProxy) {
-  routeRules['/api/**'] = { proxy: `${backendProxy}/api/**` }
+if (publicApiOrigin) {
+  routeRules['/api/**'] = { proxy: `${publicApiOrigin}/api/**` }
 }
+
+const viteProxy = publicApiOrigin && !process.env.VERCEL
+  ? { '/api': { target: publicApiOrigin, changeOrigin: true, secure: true } }
+  : undefined
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -39,7 +43,9 @@ export default defineNuxtConfig({
     public: {
       /** Empty when Vercel proxies /api to the backend (same-origin; no CORS). */
       apiBaseUrl: resolvedApiBase,
-      apiSameOrigin: apiSameOrigin
+      apiSameOrigin: apiSameOrigin,
+      /** Cloudflare tunnel (canonical backend URL); for display/diagnostics only. */
+      apiPublicOrigin: publicApiOrigin || resolvedApiBase
     }
   },
   app: {
@@ -50,5 +56,11 @@ export default defineNuxtConfig({
     }
   },
   typescript: { strict: true, typeCheck: false },
-  vite: { server: { fs: { allow: [here, resolve(here, '..')] }, watch: { ignored: ['**/test-artifacts/**', '**/e2e/**'] } } }
+  vite: {
+    server: {
+      fs: { allow: [here, repoRoot] },
+      watch: { ignored: ['**/test-artifacts/**', '**/e2e/**'] },
+      ...(viteProxy ? { proxy: viteProxy } : {})
+    }
+  }
 })

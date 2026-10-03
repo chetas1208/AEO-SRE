@@ -28,8 +28,6 @@ export function isLoopbackApiBase(base: string): boolean {
   return LOOPBACK.test(normalizeApiBase(base))
 }
 
-export const DEFAULT_PUBLIC_TUNNEL = 'https://somehow-air-animals-connectors.trycloudflare.com'
-
 /** True only when the SPA is on a public host and has no reachable API (neither configured nor fallback tunnel). */
 export function isBrowserApiMisconfigured(): boolean {
   if (typeof window === 'undefined') return false
@@ -39,8 +37,10 @@ export function isBrowserApiMisconfigured(): boolean {
   const host = window.location.hostname
   if (host === 'localhost' || host === '127.0.0.1') return false
   const raw = normalizeApiBase(String(config.public.apiBaseUrl || ''))
+  const fallback = normalizeApiBase(String(config.public.apiPublicOrigin || ''))
   if (raw && !isLoopbackApiBase(raw)) return false
-  return !DEFAULT_PUBLIC_TUNNEL
+  if (fallback && !isLoopbackApiBase(fallback)) return false
+  return true
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

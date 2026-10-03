@@ -187,10 +187,12 @@ NEO4J_URI=neo4j+s://...
 NEO4J_PASSWORD=...
 
 # Frontend Runtime (Vercel Production — required; redeploy after changing)
-NUXT_PUBLIC_API_BASE_URL=https://somehow-air-animals-connectors.trycloudflare.com
+API_PUBLIC_URL=https://YOUR_TUNNEL.trycloudflare.com
+NUXT_PUBLIC_API_SAME_ORIGIN=1
+NUXT_PUBLIC_API_BASE_URL=
 ```
 
-**Browser rule:** `NUXT_PUBLIC_API_BASE_URL` must be the **public Cloudflare HTTPS hostname**. Never `http://localhost:8000` in Vercel Production — the visitor's browser cannot reach your server's loopback. Local dev may use `http://localhost:8000` in root `.env` only.
+**Browser rule:** Set **`API_PUBLIC_URL`** to your **Cloudflare HTTPS tunnel** (canonical backend). On Vercel, leave **`NUXT_PUBLIC_API_BASE_URL` empty** and set **`NUXT_PUBLIC_API_SAME_ORIGIN=1`** so the app calls **`/api/*` on aeo-sre.vercel.app** and Nitro proxies to the tunnel (no CORS, SSE works). Run `scripts/sync-api-public-url.sh` after `start-cloudflare-prod.sh` to refresh root `.env`. Never `http://localhost:8000` in Vercel Production.
 
 **Topology:**
 
