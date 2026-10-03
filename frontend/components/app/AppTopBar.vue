@@ -7,10 +7,22 @@ const searchEl = ref<HTMLInputElement | null>(null)
 
 const headerMeta = computed(() => {
   const p = route.path
+  if (p.startsWith('/matches')) {
+    return {
+      title: 'Matches',
+      subtitle: 'Agent demand reconciliation: Verified Product Truth vs AI Perception'
+    }
+  }
+  if (p.startsWith('/discovery-gaps') || p.startsWith('/incidents')) {
+    return {
+      title: 'Discovery Gaps',
+      subtitle: 'High-signal discrepancies where your product wins but AI engines underrepresent it'
+    }
+  }
   if (p.startsWith('/experiments')) {
     return {
       title: 'Experiments',
-      subtitle: 'Every intervention becomes evidence for the next decision.'
+      subtitle: 'Closed-loop causal interventions with Profound measurement before/after'
     }
   }
   if (p.startsWith('/settings')) {
@@ -20,8 +32,8 @@ const headerMeta = computed(() => {
     }
   }
   return {
-    title: 'Incidents',
-    subtitle: 'High-signal changes in your AI discovery performance'
+    title: 'AgentMatch',
+    subtitle: 'Agent-native AI discovery command center'
   }
 })
 

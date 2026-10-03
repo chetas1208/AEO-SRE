@@ -2981,3 +2981,40 @@ Four primary cards:
 - **WebGL Lifecycle**: Clean disposal of geometries, textures, materials, and requestAnimationFrame loops on unmount. Graceful fallback to 2D view if WebGL is unavailable.
 - **Accessibility**: All status indicators use text labels and glyphs in addition to color; full keyboard navigation and screen-reader textual topology regions provided.
 - **Responsive Layout**: Designed for 1280–1600px desktop monitors with collapsible queue on smaller displays.
+
+
+---
+
+# 81. CURRENT UI — AGENTMATCH
+
+## 1. Vision & Architecture
+
+**AgentMatch** is an agent-native AI discovery command center that reconciles:
+- **Personal Agent Demand (Muse Intent Envelope)**: Real-time structured requirements and constraints captured from buyer personal agents.
+- **Product Truth (Neo4j / Canonical Knowledge Graph)**: Ground reality verified from official domain documentation and capability specifications.
+- **AI Perception (Profound AI Engine)**: Synthesized answers and citations across generative answer engines (ChatGPT, Claude, Perplexity, Gemini).
+
+When product truth satisfies personal agent constraints but AI engines underrepresent or misrepresent the brand, AgentMatch surfaces a **Discovery Gap** with measured percentage-point discrepancies and recommended causal actions.
+
+## 2. Information Architecture: Exactly 3 Primary Nav Pages
+
+1. **Matches (`/matches`)**:
+   - Queue: Intent envelopes with personal agent context badges (`MUSE`, `MANUAL`, `TEST`), countdowns (`Expires in 27m`), and gap counts.
+   - Fit Comparison Card: Actual Product Truth Fit (e.g. 94%) vs AI Perceived Engine Fit (e.g. 61%) and the resulting Discovery Gap callout (`+33pp Discovery Gap`).
+   - 3D AgentMatch Graph (`AgentMatchScene.vue`) with strict semantic z-depth layers (`z=-8` Intent, `z=-4` Constraints, `z=0` Product, `z=+4` Claims, `z=+7` AI Perception, `z=+10` Discovery Gap) plus toggle to Accessible Semantic DOM Hierarchy Tree (`AgentMatchGraphTree.vue`).
+   - Detailed Analysis: "Why It Matches", "Why AI Misses It", "Marketing Gap & Action", and "Verified Constraints" with expandable evidence proof drawer.
+
+2. **Discovery Gaps (`/discovery-gaps`)**:
+   - Queue: High-signal discovery gap issues filtered by type (`WRONG_TIER_PRICING`, `MISSING_CAPABILITY`, `STALE_INFORMATION`, `MISSING_CITATION`).
+   - Side-by-side Truth Comparison: Ground truth canonical claim & source proof vs AI engine perception & root stale citation.
+   - Compact Profound Panel: Brand Visibility, Citation Share, Prompt Coverage, Competitor Share, and dominant sources.
+   - Action Approval: Approve, Modify, and Reject controls linked directly to the Experiments engine.
+
+3. **Experiments (`/experiments`)**:
+   - Closed-loop causal measurement engine with 9-step causal spine (`ExperimentSpine.vue`), temporal protection windows, before/after Profound perception metrics, and contextual bandit policy learning.
+
+## 3. Bottom Controls & Integrations
+
+- **Muse Connector**: Live personal agent demand status and intent envelope sync.
+- **Profound Engine**: AI answer engine perception sync and visibility tracking.
+- **System**: Live system health, capability breakdown, and organization switcher.

@@ -47,9 +47,9 @@ function initScene() {
   const positions: number[] = []
   const colors: number[] = []
 
-  const colorA = new THREE.Color('#38bdf8') // cool blue
-  const colorB = new THREE.Color('#818cf8') // indigo
-  const colorC = new THREE.Color('#a855f7') // violet
+  const colorA = new THREE.Color('#38bdf8') // cyan Muse personal agent intent
+  const colorB = new THREE.Color('#818cf8') // violet Profound AI perception
+  const colorC = new THREE.Color('#10b981') // emerald verified Product Truth
 
   for (let c = 0; c < curves; c++) {
     const xOffset = (c - curves / 2) * 14

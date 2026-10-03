@@ -1,6 +1,7 @@
 // Hand-written mirror of the A12 API contract (UI.md §51 + extras). Wire format is snake_case; the API layer
 // camelizes keys (see utils/camelize.ts). String unions mirror backend/app/domain/enums.py.
 // If /openapi.json is reachable, `pnpm gen:api` writes types/api.generated.ts for cross-checking.
+export * from './agentmatch'
 
 export type Severity = 'critical' | 'high' | 'medium' | 'low'
 export type IncidentState =

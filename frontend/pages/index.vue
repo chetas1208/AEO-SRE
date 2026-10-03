@@ -1,5 +1,5 @@
 <script setup lang="ts">
-await navigateTo('/incidents', { replace: true })
+await navigateTo('/matches', { replace: true })
 </script>
 
 <template><div /></template>
