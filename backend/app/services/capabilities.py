@@ -22,7 +22,7 @@ from app.schemas.system import CapabilitiesOut, Capability
 log = structlog.get_logger()
 CHECK_TIMEOUT = 15.0
 ARTIFACT_DIR = ROOT / "backend" / "ml" / "artifacts" / "evidence_ranker"
-INGEST_KINDS = ("ingest_profound_signals",)
+INGEST_KINDS = ("ingest_profound_signals", "ingest_mixpanel_events")
 
 
 def _next_ingest() -> datetime:
@@ -224,6 +224,48 @@ async def check_profound(session: AsyncSession) -> Capability:
         last_success=ok, last_error=err, last_error_at=err_at,
         meta={**base_meta, "surfaces": surfaces, "health_state": health.value, "source_mode": "LIVE"},
     )  # fmt: skip
+
+
+async def check_mixpanel(session: AsyncSession) -> Capability:
+    from app.integrations.mixpanel.auth import mixpanel_configured
+    from app.integrations.mixpanel.client import MixpanelClient
+    from app.integrations.mixpanel.cursor import global_last_sync
+    from app.integrations.mixpanel.health import MixpanelHealth, derive_health
+
+    s = get_settings()
+    ok, err, err_at = await _job_history(session, ("ingest_mixpanel_events",))
+    last_sync = await global_last_sync(session)
+    lag = (utcnow() - last_sync).total_seconds() if last_sync else None
+    if not mixpanel_configured(s):
+        state, meta = derive_health(
+            configured=False, auth_ok=None, rate_limited=False,
+            last_sync_at=last_sync.isoformat() if last_sync else None, lag_seconds=lag,
+        )
+        return Capability(
+            key="mixpanel", label="Mixpanel", state=CS.UNAVAILABLE,
+            detail="Mixpanel service account not configured",
+            last_success=ok or last_sync, last_error=err, last_error_at=err_at,
+            meta={"health_state": state, **meta},
+        )
+    client = MixpanelClient(s)
+    auth_ok, latency_ms, auth_err = await client.ping_auth()
+    mp_state, meta = derive_health(
+        configured=True,
+        auth_ok=auth_ok,
+        rate_limited=auth_err == "rate limited",
+        last_sync_at=last_sync.isoformat() if last_sync else None,
+        lag_seconds=lag,
+        error=auth_err,
+    )
+    cs = CS.HEALTHY if mp_state == MixpanelHealth.READY else (
+        CS.UNAVAILABLE if mp_state in (MixpanelHealth.NOT_CONFIGURED, MixpanelHealth.AUTH_FAILED) else CS.DEGRADED
+    )
+    return Capability(
+        key="mixpanel", label="Mixpanel", state=cs,
+        detail=meta.get("detail") or ("Near real-time polling" if auth_ok else auth_err),
+        last_success=ok or last_sync, last_error=err or auth_err, last_error_at=err_at,
+        meta={"health_state": mp_state, "probe_latency_ms": latency_ms, "sync_mode": "near_real_time_polling", **meta},
+    )
 
 
 async def check_crawler(session: AsyncSession) -> Capability:
@@ -538,6 +580,7 @@ async def collect_capabilities(session: AsyncSession, probe: bool = False) -> Ca
         _guarded("redis", "Redis", check_redis()),
         _guarded("workers", "Workers", with_session(check_workers)),
         _guarded("profound", "Profound", with_session(check_profound)),
+        _guarded("mixpanel", "Mixpanel", with_session(check_mixpanel)),
         _guarded("crawler", "Crawler", with_session(check_crawler)),
         _guarded("ml_ranker", "Evidence model", check_ranker()),
         _guarded("policy", "Policy model", with_session(check_policy)),

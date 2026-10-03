@@ -70,4 +70,4 @@ def test_every_job_kind_has_handler_and_arq_function():
 
     assert set(JOB_KINDS) == set(HANDLERS)
     assert {f.__name__ for f in worker.JOB_FUNCTIONS} == set(JOB_KINDS)
-    assert len(worker.WorkerSettings.cron_jobs) == 5  # ingest, detect, discovery-gap, verify, reap-stale-jobs
+    assert len(worker.WorkerSettings.cron_jobs) == 7  # ingest, detect, discovery-gap, verify, reap, graph, mixpanel

@@ -72,6 +72,19 @@ async def detect_discovery_gaps(session: AsyncSession, p: dict[str, Any]) -> dic
     return await run_job(session, _id(p, "org_id"))
 
 
+async def ingest_mixpanel_events(session: AsyncSession, p: dict[str, Any]) -> dict[str, Any]:
+    from app.integrations.mixpanel.ingest import ingest_mixpanel
+
+    mode = str(p.get("mode") or "LIVE")
+    result = await ingest_mixpanel(
+        session,
+        org_id=_id(p, "org_id"),
+        mode=mode,
+        backfill_days=int(p["backfill_days"]) if p.get("backfill_days") else None,
+    )
+    return result.model_dump(mode="json")
+
+
 HANDLERS: dict[str, Handler] = {
     "ingest_profound_signals": ingest_profound_signals,
     "detect_incidents": detect_incidents,
@@ -85,4 +98,5 @@ HANDLERS: dict[str, Handler] = {
     "calculate_reward": calculate_reward,
     "update_policy": update_policy,
     "detect_discovery_gaps": detect_discovery_gaps,
+    "ingest_mixpanel_events": ingest_mixpanel_events,
 }

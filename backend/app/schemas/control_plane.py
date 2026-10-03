@@ -59,6 +59,12 @@ class DecisionCard(ApiModel):
     context: str = ""
     cost: float = 0.0
     created_at: str
+    decision_source: Literal["LAYA", "BANDIT", "RULE", "HUMAN"] = "RULE"
+    laya_distribution: dict[str, float] | None = None
+    laya_calibrated_confidence: float | None = None
+    laya_model: str | None = None
+    policy_mode: str = "SHADOW"
+    risk_score: float | None = None
 
 
 class ExperimentControlCard(ApiModel):
@@ -76,9 +82,9 @@ class ExperimentControlCard(ApiModel):
 
 class ControlPlaneGraphNode(ApiModel):
     id: str
-    type: Literal["agent", "campaign", "task", "decision", "asset", "experiment", "signal", "outcome"]
+    type: str = "agent"  # agent, campaign, decision, experiment, outcome, signal, asset, person, cost, revenue, reward, laya_decision
     label: str
-    status: Literal["positive", "negative", "uncertain", "neutral", "running"] = "neutral"
+    status: str = "neutral"  # positive, negative, uncertain, neutral, running
     meta: dict[str, Any] = {}
     x: float = 0.0
     y: float = 0.0
@@ -90,7 +96,7 @@ class ControlPlaneGraphEdge(ApiModel):
     source: str
     target: str
     label: str = ""
-    status: Literal["positive", "negative", "uncertain", "neutral", "active"] = "neutral"
+    status: str = "neutral"  # positive, negative, uncertain, neutral, active
     confidence: str | None = None
 
 
@@ -108,3 +114,4 @@ class ControlPlaneResponse(ApiModel):
     decisions: list[DecisionCard]
     experiments: list[ExperimentControlCard]
     graph: ControlPlaneGraph
+

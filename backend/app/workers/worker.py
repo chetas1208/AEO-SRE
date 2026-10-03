@@ -144,6 +144,14 @@ async def cron_discovery_gap(ctx: dict[str, Any]) -> int:
     return await _fan_out("detect_discovery_gaps")
 
 
+async def cron_mixpanel_ingest(ctx: dict[str, Any]) -> int:
+    from app.integrations.mixpanel.auth import mixpanel_configured
+
+    if not mixpanel_configured(get_settings()):
+        return 0
+    return await _fan_out("ingest_mixpanel_events")
+
+
 async def cron_verify(ctx: dict[str, Any]) -> int:
     """Enqueue verification for experiments whose observation window has opened and are not yet verified."""
     from app.services.pipeline import due_experiment_ids
@@ -195,6 +203,7 @@ class WorkerSettings:
         cron(cron_verify, minute={10, 25, 40, 55}, run_at_startup=False, unique=True),
         cron(cron_reap, minute={5, 35}, run_at_startup=True, unique=True),
         cron(cron_graph_project, run_at_startup=True, unique=True),  # every minute
+        cron(cron_mixpanel_ingest, minute=set(range(60)), run_at_startup=False, unique=True),
     ]
     redis_settings = redis_settings()
     on_startup = on_startup

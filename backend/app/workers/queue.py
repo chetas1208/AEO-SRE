@@ -28,6 +28,7 @@ JOB_KINDS = (
     "calculate_reward",
     "update_policy",
     "detect_discovery_gaps",
+    "ingest_mixpanel_events",
 )
 
 _pool: ArqRedis | None = None

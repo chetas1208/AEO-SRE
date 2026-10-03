@@ -66,6 +66,17 @@ class Settings(BaseSettings):
     model_task_overrides: str = ""  # JSON: {"HYPOTHESIS_GENERATION": {"temperature": 0.1, "timeout_s": 90}}
     profound_api_key: str = ""
     profound_base_url: str = ""
+    # Mixpanel live behavioral telemetry (read-only; service account).
+    mixpanel_enabled: bool = False
+    mixpanel_project_id: str = ""
+    mixpanel_api_host: str = ""
+    mixpanel_service_account_username: str = ""
+    mixpanel_service_account_secret: str = ""
+    mixpanel_region: str = "US"
+    mixpanel_poll_seconds: int = 60
+    mixpanel_backfill_days: int = 7
+    mixpanel_default_org_id: str = ""
+    mixpanel_org_domain: str = "mixpanel.com"
     github_token: str = ""
     github_owner: str = ""
     github_repo: str = ""

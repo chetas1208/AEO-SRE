@@ -1,12 +1,29 @@
-"""CampaignGraph ROI API Routes: Investment -> People & Agents -> Assets -> Distribution -> Profound & Muse -> Outcomes."""
-
+import json
+import os
+import re
 import uuid
+from pathlib import Path
 from typing import Any
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
 
+CAMPAIGNS_STORE_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "campaigns_store.json"
+
+class CampaignCreateRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=120)
+    objective: str | None = Field(default="", max_length=500)
+    budget: float = Field(default=10000.0, ge=0.0)
+    channels: list[str] = Field(default_factory=lambda: ["Search LLMs", "Developer Docs"])
+    primary_channel: str | None = None
+    agents: list[str] = Field(default_factory=lambda: ["agt-citation-recovery"])
+    primary_metric: str = Field(default="visibility")
+    date_range: str | None = None
+    owner: str = Field(default="Operations Lead")
+
 CAMPAIGNS_DB: list[dict[str, Any]] = [
+
     {
         "id": "cmp-ai-discovery-launch-01",
         "name": "Enterprise AI Discovery Launch",
@@ -463,10 +480,129 @@ CAMPAIGNS_DB: list[dict[str, Any]] = [
 ]
 
 
+def _load_custom_campaigns() -> None:
+    if CAMPAIGNS_STORE_PATH.exists():
+        try:
+            with open(CAMPAIGNS_STORE_PATH, "r", encoding="utf-8") as f:
+                custom = json.load(f)
+                existing_ids = {c["id"] for c in CAMPAIGNS_DB}
+                for c in custom:
+                    if c.get("id") not in existing_ids:
+                        CAMPAIGNS_DB.append(c)
+        except Exception:
+            pass
+
+def _save_custom_campaigns() -> None:
+    try:
+        CAMPAIGNS_STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        # Save campaigns that were dynamically created
+        built_in_ids = {
+            "cmp-ai-discovery-launch-01",
+            "cmp-sso-parity-q4",
+            "cmp-developer-experience-01",
+            "cmp-cloud-security-rebrand",
+            "cmp-saml-expansion-q3",
+        }
+        custom = [c for c in CAMPAIGNS_DB if c["id"] not in built_in_ids]
+        with open(CAMPAIGNS_STORE_PATH, "w", encoding="utf-8") as f:
+            json.dump(custom, f, indent=2)
+    except Exception:
+        pass
+
+# Initialize from disk
+_load_custom_campaigns()
+
+
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def create_campaign(req: CampaignCreateRequest):
+    """Create and persist a new marketing campaign initiative."""
+    slug = re.sub(r"[^a-z0-9]+", "-", req.name.lower()).strip("-")[:24]
+    cid = f"cmp-{slug}-{uuid.uuid4().hex[:6]}"
+    primary_ch = req.primary_channel or (req.channels[0] if req.channels else "Search LLMs & Docs")
+
+    new_campaign = {
+        "id": cid,
+        "name": req.name,
+        "owner": req.owner or "Operations Lead",
+        "objective": req.objective or f"Drive discoverability and growth for {req.name}",
+        "status": "ACTIVE",
+        "date_range": req.date_range or "Active Now",
+        "channels": req.channels,
+        "primary_channel": primary_ch,
+        "currency": "USD",
+        "budget": float(req.budget),
+        "total_cost": 0.0,
+        "attributed_return": 0.0,
+        "roi": 0.0,
+        "measurement_confidence": "HIGH",
+        "cost_completeness_pct": 100,
+        "outcome_coverage_pct": 100,
+        "assigned_agents": req.agents,
+        "primary_metric": req.primary_metric,
+        "return_sources": {
+            "direct": 0.0,
+            "attributed": 0.0,
+            "modeled": 0.0,
+            "proxy": "+0.0pp Profound visibility"
+        },
+        "operational_metrics": {
+            "gross_return": 0.0,
+            "net_return": 0.0,
+            "cost_per_output": 0.0,
+            "cost_per_agent_run": 0.0,
+            "cost_per_approved_asset": 0.0,
+            "cost_per_lead": 0.0,
+            "cost_per_ai_visibility_point": 0.0,
+            "cost_per_citation_gain": 0.0,
+            "agent_roi": {
+                "ratio": 1.0,
+                "attribution_label": "ATTRIBUTED (live campaign)"
+            },
+            "health_dimensions": {
+                "cost_completeness": 100,
+                "outcome_coverage": 100,
+                "attribution_quality": "High",
+                "ai_discovery_coverage": "High"
+            }
+        },
+        "cost_composition": [
+            {"category": "Agent Runs", "amount": 0.0, "pct": 0.0, "source": "OBSERVED"},
+            {"category": "Model APIs", "amount": 0.0, "pct": 0.0, "source": "OBSERVED"},
+        ],
+        "cost_lineage": {
+            "id": f"root-cost-{cid}",
+            "name": "Total Campaign Cost",
+            "amount": 0.0,
+            "children": []
+        },
+        "people_breakdown": [],
+        "agent_activity": [
+            {
+                "id": f"agt-run-{cid}",
+                "name": a,
+                "role": "Autonomous Operator",
+                "runs": 0,
+                "cost": 0.0,
+                "status": "RUNNING",
+                "outputs": []
+            }
+            for a in req.agents
+        ],
+        "timeline": [
+            {"time": "Just now", "event": f"Campaign '{req.name}' created with ${req.budget:,.0f} budget", "type": "budget"}
+        ]
+    }
+
+    CAMPAIGNS_DB.insert(0, new_campaign)
+    _save_custom_campaigns()
+    return new_campaign
+
+
 @router.get("")
 async def list_campaigns():
     """List all tracked campaigns with financial summaries and confidence scores."""
     return {"campaigns": CAMPAIGNS_DB, "total": len(CAMPAIGNS_DB)}
+
 
 
 @router.get("/{campaign_id}")

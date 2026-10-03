@@ -1,0 +1,359 @@
+[
+  {
+    "id": "cmp-q4-autonomous-aeo-expans-6a21eb",
+    "name": "Q4 Autonomous AEO Expansion",
+    "owner": "Operations Lead",
+    "objective": "Displace stale legacy claims and establish verified SCIM/SAML authority",
+    "status": "ACTIVE",
+    "date_range": "Active Now",
+    "channels": [
+      "Search LLMs",
+      "Developer Docs",
+      "LinkedIn"
+    ],
+    "primary_channel": "Search LLMs & Developer Docs",
+    "currency": "USD",
+    "budget": 35000.0,
+    "total_cost": 0.0,
+    "attributed_return": 0.0,
+    "roi": 0.0,
+    "measurement_confidence": "HIGH",
+    "cost_completeness_pct": 100,
+    "outcome_coverage_pct": 100,
+    "assigned_agents": [
+      "agt-citation-recovery",
+      "agt-claim-verifier"
+    ],
+    "primary_metric": "visibility",
+    "return_sources": {
+      "direct": 0.0,
+      "attributed": 0.0,
+      "modeled": 0.0,
+      "proxy": "+0.0pp Profound visibility"
+    },
+    "operational_metrics": {
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "cost_per_output": 0.0,
+      "cost_per_agent_run": 0.0,
+      "cost_per_approved_asset": 0.0,
+      "cost_per_lead": 0.0,
+      "cost_per_ai_visibility_point": 0.0,
+      "cost_per_citation_gain": 0.0,
+      "agent_roi": {
+        "ratio": 1.0,
+        "attribution_label": "ATTRIBUTED (live campaign)"
+      },
+      "health_dimensions": {
+        "cost_completeness": 100,
+        "outcome_coverage": 100,
+        "attribution_quality": "High",
+        "ai_discovery_coverage": "High"
+      }
+    },
+    "cost_composition": [
+      {
+        "category": "Agent Runs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      },
+      {
+        "category": "Model APIs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      }
+    ],
+    "cost_lineage": {
+      "id": "root-cost-cmp-q4-autonomous-aeo-expans-6a21eb",
+      "name": "Total Campaign Cost",
+      "amount": 0.0,
+      "children": []
+    },
+    "people_breakdown": [],
+    "agent_activity": [
+      {
+        "id": "agt-run-cmp-q4-autonomous-aeo-expans-6a21eb",
+        "name": "agt-citation-recovery",
+        "role": "Autonomous Operator",
+        "runs": 0,
+        "cost": 0.0,
+        "status": "RUNNING",
+        "outputs": []
+      },
+      {
+        "id": "agt-run-cmp-q4-autonomous-aeo-expans-6a21eb",
+        "name": "agt-claim-verifier",
+        "role": "Autonomous Operator",
+        "runs": 0,
+        "cost": 0.0,
+        "status": "RUNNING",
+        "outputs": []
+      }
+    ],
+    "timeline": [
+      {
+        "time": "Just now",
+        "event": "Campaign 'Q4 Autonomous AEO Expansion' created with $35,000 budget",
+        "type": "budget"
+      }
+    ]
+  },
+  {
+    "id": "cmp-security-blitz-02",
+    "name": "Q3 SAML & Security Verification Blitz",
+    "owner": "David Chen (Solutions Eng)",
+    "status": "COMPLETED",
+    "date_range": "Aug 01, 2026 \u2013 Aug 31, 2026",
+    "channels": [
+      "Security Documentation",
+      "Trust Portal",
+      "Profound Ingestion"
+    ],
+    "primary_channel": "Trust Portal & Documentation",
+    "currency": "USD",
+    "budget": 20000.0,
+    "total_cost": 18400.0,
+    "attributed_return": 54200.0,
+    "roi": 1.95,
+    "measurement_confidence": "HIGH",
+    "cost_completeness_pct": 98,
+    "outcome_coverage_pct": 88,
+    "return_sources": {
+      "direct": 32000.0,
+      "attributed": 22200.0,
+      "modeled": 0.0,
+      "proxy": "+14.0pp Profound citation share"
+    },
+    "operational_metrics": {
+      "gross_return": 54200.0,
+      "net_return": 35800.0,
+      "cost_per_output": 1226.67,
+      "cost_per_agent_run": 121.43,
+      "cost_per_approved_asset": 18400.0,
+      "cost_per_lead": 3066.67,
+      "cost_per_ai_visibility_point": 1483.87,
+      "cost_per_citation_gain": 1314.29,
+      "agent_roi": {
+        "ratio": 4.65,
+        "attribution_label": "DIRECT (schema adoption led to enterprise deal)"
+      },
+      "health_dimensions": {
+        "cost_completeness": 98,
+        "outcome_coverage": 88,
+        "attribution_quality": "High",
+        "ai_discovery_coverage": "High"
+      }
+    },
+    "cost_composition": [
+      {
+        "category": "People",
+        "amount": 9200.0,
+        "pct": 50.0,
+        "source": "ACTUAL"
+      },
+      {
+        "category": "Agent Runs",
+        "amount": 3400.0,
+        "pct": 18.5,
+        "source": "OBSERVED"
+      },
+      {
+        "category": "Paid Media",
+        "amount": 3000.0,
+        "pct": 16.3,
+        "source": "ACTUAL"
+      },
+      {
+        "category": "Tools & Hosting",
+        "amount": 1800.0,
+        "pct": 9.8,
+        "source": "ACTUAL"
+      },
+      {
+        "category": "Model APIs",
+        "amount": 1000.0,
+        "pct": 5.4,
+        "source": "OBSERVED"
+      }
+    ],
+    "cost_lineage": {
+      "id": "root-cost-2",
+      "name": "Total Campaign Cost",
+      "amount": 18400.0,
+      "children": [
+        {
+          "id": "c2-people",
+          "name": "Security & Eng Staff",
+          "amount": 9200.0
+        },
+        {
+          "id": "c2-agents",
+          "name": "Documentation & Schema Agents",
+          "amount": 3400.0
+        },
+        {
+          "id": "c2-paid",
+          "name": "Technical Syndicate Placements",
+          "amount": 3000.0
+        },
+        {
+          "id": "c2-tools",
+          "name": "Security Portal Hosting",
+          "amount": 1800.0
+        },
+        {
+          "id": "c2-api",
+          "name": "Model APIs",
+          "amount": 1000.0
+        }
+      ]
+    },
+    "people": [
+      {
+        "id": "person-sec-1",
+        "name": "David Chen",
+        "role": "Solutions Engineer",
+        "hours": 32.0,
+        "hourly_cost": 162.5,
+        "total_cost": 5200.0,
+        "source_quality": "ACTUAL",
+        "outputs": [
+          "Security Whitepaper",
+          "JSON-LD Trust Matrix"
+        ]
+      },
+      {
+        "id": "person-sec-2",
+        "name": "Marcus Vance",
+        "role": "Security Architect",
+        "hours": 20.0,
+        "hourly_cost": 200.0,
+        "total_cost": 4000.0,
+        "source_quality": "ACTUAL",
+        "outputs": [
+          "SOC2 Evidence Pack",
+          "SAML Spec Review"
+        ]
+      }
+    ],
+    "agents": [
+      {
+        "id": "agent-sec-audit",
+        "name": "Security Schema Synthesizer",
+        "runs": 28,
+        "successful_runs": 28,
+        "failed_runs": 0,
+        "tokens": 3100000,
+        "model_cost": 160.0,
+        "tool_cost": 240.0,
+        "total_cost": 400.0,
+        "outputs_produced": 14,
+        "approved_outputs": 14,
+        "approval_rate_pct": 100.0,
+        "cost_per_approved_output": 28.5
+      }
+    ],
+    "videos": [],
+    "assets": [
+      {
+        "id": "ast-sec-portal",
+        "title": "Canonical Security & Compliance Portal",
+        "type": "TrustPortal",
+        "created_by": "David Chen",
+        "generated_by_agent": "Security Schema Synthesizer",
+        "edited_by": "Marcus Vance",
+        "reviewed_by": "Security Architect",
+        "approved_by": "CISO",
+        "distributed_on": [
+          "trust.acme.example",
+          "Profound Ingest"
+        ],
+        "downstream_outcomes": [
+          "+14.0pp Citation share",
+          "$32K Direct deal signed"
+        ]
+      }
+    ],
+    "waste_breakdown": {
+      "potential_inefficiency": 1800.0,
+      "items": [
+        {
+          "category": "REWORK",
+          "label": "Schema re-indexing after domain redirect",
+          "amount": 1800.0
+        }
+      ]
+    },
+    "profound_impact": {
+      "attribution_note": "Verified experiment outcome across 8 security prompt clusters",
+      "visibility_shift_pp": 12.4,
+      "citation_share_shift_pp": 14.0,
+      "prompt_coverage_pct": 92,
+      "competitor_share_shift_pp": -11.2,
+      "ai_perception_status": "All AI synthesizers now cite official SAML tier docs",
+      "affected_clusters_count": 8
+    },
+    "muse_outcomes": {
+      "matched_intents": 184,
+      "shortlisted": 76,
+      "details_requested": 42,
+      "converted": 6,
+      "funnel": [
+        {
+          "step": "Personal Agent Demand",
+          "count": 184
+        },
+        {
+          "step": "Security Constraints Checked",
+          "count": 160
+        },
+        {
+          "step": "Shortlisted by Buyer Agent",
+          "count": 76
+        },
+        {
+          "step": "Direct Conversion",
+          "count": 6
+        }
+      ]
+    },
+    "roi_confidence_breakdown": {
+      "overall": "HIGH",
+      "cost_completeness": 98,
+      "revenue_coverage": 88,
+      "people_cost_quality": "ACTUAL",
+      "profound_contribution": "Verified experiment (+14.0pp citation share)",
+      "muse_feedback": "Observed verified agent shortlist events",
+      "known_costs": [
+        "All contractor and internal hours logged",
+        "Direct cloud bills"
+      ],
+      "partial_costs": [],
+      "missing_costs": []
+    },
+    "timeline": [
+      {
+        "time": "Aug 01, 10:00",
+        "event": "Campaign initialized with $20K budget",
+        "type": "budget"
+      },
+      {
+        "time": "Aug 10, 14:00",
+        "event": "Security Whitepaper & Schema published",
+        "type": "asset"
+      },
+      {
+        "time": "Aug 18, 12:00",
+        "event": "Profound verified +14pp citation share",
+        "type": "profound"
+      },
+      {
+        "time": "Aug 29, 16:30",
+        "event": "$32,000 direct expansion closed",
+        "type": "revenue"
+      }
+    ]
+  }
+]

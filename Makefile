@@ -1,6 +1,6 @@
 # AEO SRE. Rootless docker users: export DOCKER_HOST=unix:///tmp/xdg-$$UID/docker.sock (see README).
 VENV := backend/.venv/bin
-.PHONY: train-ranker help install infra infra-down migrate migration dev dev-api dev-worker dev-web test test-web lint typecheck build-web seed-fixture eval eval-model-live verify verify-live profound-smoke model-smoke ingest-live audit-db browser-smoke alembic-check verify-experiment eval-guard
+.PHONY: train-ranker help install infra infra-down migrate migration dev dev-api dev-worker dev-web test test-web lint typecheck build-web seed-fixture eval eval-model-live verify verify-live profound-smoke mixpanel-smoke model-smoke ingest-live audit-db browser-smoke alembic-check verify-experiment eval-guard
 
 help:
 	@grep -E '^[a-z-]+:' Makefile | cut -d: -f1 | tr '\n' ' '; echo
@@ -69,6 +69,9 @@ verify-live:
 
 profound-smoke:
 	cd backend && .venv/bin/python -m app.devtools.profound_smoke
+
+mixpanel-smoke:
+	cd backend && .venv/bin/python -m app.devtools.mixpanel_smoke
 
 model-smoke:
 	cd backend && .venv/bin/python -m app.devtools.model_smoke

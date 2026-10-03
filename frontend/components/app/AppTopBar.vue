@@ -5,48 +5,15 @@ const sel = useIncidentSelectionStore()
 defineEmits<{ toggleNav: [] }>()
 const searchEl = ref<HTMLInputElement | null>(null)
 
-const headerMeta = computed(() => {
+const pageSection = computed(() => {
   const p = route.path
-  if (p === '/') {
-    return {
-      title: 'AgentMatch',
-      subtitle: 'Understand demand. Fix AI perception. Measure what marketing actually produces.'
-    }
-  }
-  if (p.startsWith('/matches')) {
-    return {
-      title: 'Matches',
-      subtitle: 'Agent demand reconciliation: Verified Product Truth vs AI Perception'
-    }
-  }
-  if (p.startsWith('/discovery-gaps') || p.startsWith('/incidents')) {
-    return {
-      title: 'Discovery Gaps',
-      subtitle: 'High-signal discrepancies where your product wins but AI engines underrepresent it'
-    }
-  }
-  if (p.startsWith('/campaigns')) {
-    return {
-      title: 'Campaigns',
-      subtitle: 'Where did the money go, what work did it produce, and what came back?'
-    }
-  }
-  if (p.startsWith('/experiments')) {
-    return {
-      title: 'Experiments',
-      subtitle: 'Closed-loop causal interventions with Profound measurement before/after'
-    }
-  }
-  if (p.startsWith('/settings')) {
-    return {
-      title: 'Settings',
-      subtitle: 'System configuration & platform integration capabilities.'
-    }
-  }
-  return {
-    title: 'AgentMatch',
-    subtitle: 'Agent-native AI discovery command center'
-  }
+  if (p === '/') return 'Control Plane'
+  if (p.startsWith('/matches')) return 'Matches'
+  if (p.startsWith('/discovery-gaps') || p.startsWith('/incidents')) return 'Discovery Gaps'
+  if (p.startsWith('/campaigns')) return 'Campaigns'
+  if (p.startsWith('/experiments')) return 'Experiments'
+  if (p.startsWith('/settings')) return 'Settings'
+  return ''
 })
 
 const pill = computed(() => {
@@ -84,9 +51,12 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); live.stopG
       </svg>
     </button>
 
-    <div class="title-block">
-      <h1 class="title">{{ headerMeta.title }}</h1>
-      <span class="subtitle">{{ headerMeta.subtitle }}</span>
+    <div class="topbar-left">
+      <NuxtLink to="/" class="brand-link">
+        <span class="brand-name">AgentMatch</span>
+      </NuxtLink>
+      <span v-if="pageSection" class="section-divider" aria-hidden="true">/</span>
+      <span v-if="pageSection" class="section-name">{{ pageSection }}</span>
     </div>
 
     <div class="search-wrap">
@@ -100,34 +70,130 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); live.stopG
         ref="searchEl"
         v-model="sel.query"
         type="search"
-        placeholder="Search incidents, topics, competitors…"
+        placeholder="Search agents, campaigns, claims, queries…"
       >
       <kbd class="kbd-hint">/</kbd>
     </div>
 
-    <span :class="['live-pill', `tone-${pill.tone}`, { active: pill.active }]" role="status" data-testid="live-pill" :data-state="live.liveState" :title="live.lastHeartbeatAt ? `Last heartbeat ${live.heartbeatAgeSeconds}s ago` : 'No heartbeat received'">
-      <span class="pulse-dot" aria-hidden="true" />
-      <span>{{ pill.label }}</span>
-    </span>
+    <div class="topbar-right">
+      <span :class="['live-pill', `tone-${pill.tone}`, { active: pill.active }]" role="status" data-testid="live-pill" :data-state="live.liveState" :title="live.lastHeartbeatAt ? `Last heartbeat ${live.heartbeatAgeSeconds}s ago` : 'No heartbeat received'">
+        <span class="pulse-dot" aria-hidden="true" />
+        <span>{{ pill.label }}</span>
+      </span>
 
-    <div class="date-range-wrap">
-      <svg class="calendar-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-      <label class="sr-only" for="range">Time range</label>
-      <select id="range" v-model="sel.range" class="date-select">
-        <option value="24h">Last 24 hours</option>
-        <option value="7d">Last 7 days</option>
-        <option value="30d">Last 30 days</option>
-      </select>
+      <div class="date-range-wrap">
+        <svg class="calendar-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+        <label class="sr-only" for="range">Time range</label>
+        <select id="range" v-model="sel.range" class="date-select">
+          <option value="24h">Last 24 hours</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select>
+      </div>
     </div>
   </header>
 </template>
 
 <style scoped>
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 24px;
+  height: var(--topbar-height, 56px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(10, 14, 26, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: var(--z-sticky, 10);
+  box-sizing: border-box;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #f8fafc;
+}
+
+.section-divider {
+  color: var(--text-faint);
+  font-size: 14px;
+  font-weight: 300;
+}
+
+.section-name {
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 440px;
+  margin: 0 16px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.search-wrap input[type='search'] {
+  width: 100%;
+  background: rgba(15, 21, 38, 0.85);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 32px 6px 30px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.kbd-hint {
+  position: absolute;
+  right: 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
 .live-pill {
   display: inline-flex;
   align-items: center;
@@ -140,32 +206,38 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); live.stopG
   border: 1px solid var(--border);
   color: var(--text-dim);
 }
+
 .live-pill.tone-good {
   background: rgba(16, 185, 129, 0.12);
   border-color: rgba(16, 185, 129, 0.35);
   color: #34d399;
 }
+
 .live-pill .pulse-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
+
 .live-pill.active .pulse-dot {
   animation: pulse-glow 2s infinite ease-in-out;
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
 }
+
 .date-range-wrap {
   position: relative;
   display: flex;
   align-items: center;
 }
+
 .calendar-icon {
   position: absolute;
   left: 10px;
   color: var(--text-faint);
   pointer-events: none;
 }
+
 .date-select {
   padding-left: 30px;
   background: rgba(15, 21, 38, 0.85);

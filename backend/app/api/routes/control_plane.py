@@ -237,8 +237,44 @@ async def get_control_plane(session: SessionDep):
     # 3. Model cost today
     model_cost_today = sum(a["model_cost"] for a in AGENTS_REGISTRY)
 
-    # 4. Decisions needing review
-    pending_decisions = len([d for d in DECISIONS_REGISTRY if d["status"] == "PENDING_REVIEW"])
+    # 4. Decisions with Laya non-autoregressive evaluation
+    from app.intelligence.laya.runtime import get_laya_runtime
+    laya_rt = get_laya_runtime()
+
+    enriched_decisions: list[DecisionCard] = []
+    for d in DECISIONS_REGISTRY:
+        # Context based on decision characteristics
+        ctx = {
+            "action_type": d.get("action_type", "update"),
+            "risk": "low" if d["id"] == "dec-saml-canonical" else ("medium" if d["id"] == "dec-scim-jsonld" else "high"),
+            "claims_count": 3 if d["id"] == "dec-saml-canonical" else 1,
+            "campaign_roi": 1.76 if d["id"] == "dec-saml-canonical" else 0.8,
+            "active_experiment_collision": d["id"] == "dec-legacy-deprecate",
+        }
+        laya_eval = laya_rt.evaluate_decision(action_name=d["title"], context=ctx)
+
+        enriched_decisions.append(DecisionCard(
+            id=d["id"],
+            title=d["title"],
+            recommended_by=d["recommended_by"],
+            campaign_id=d["campaign_id"],
+            campaign_name=d["campaign_name"],
+            action_type=d["action_type"],
+            policy_version=d["policy_version"],
+            status=d["status"],
+            observed_outcome=d["observed_outcome"],
+            context=d["context"],
+            cost=d["cost"],
+            created_at=d["created_at"],
+            decision_source="LAYA",
+            laya_distribution=laya_eval["distribution"],
+            laya_calibrated_confidence=laya_eval["calibrated_confidence"],
+            laya_model=laya_eval["model_version"],
+            policy_mode=laya_eval["policy_mode"],
+            risk_score=laya_eval["risk_score"],
+        ))
+
+    pending_decisions = len([d for d in enriched_decisions if d.status == "PENDING_REVIEW"])
 
     # 5. Experiments measuring
     measuring_exps = len([
@@ -255,33 +291,44 @@ async def get_control_plane(session: SessionDep):
     )
 
     # 6. Build the 3D Flight Deck Topology
-    # Positions are structured in semantic 3D coordinate space:
-    # Agents: left/back (x ~ -8..-5, z ~ -4..-2)
-    # Campaigns: center (x ~ 0, z ~ 0)
-    # Decisions/Actions: right/mid (x ~ 4..6, z ~ 2..4)
-    # Experiments: right/front (x ~ 7..9, z ~ 5..7)
-    # Outcomes: far right/front (x ~ 10..12, z ~ 8..10)
+    # Semantic 3D coordinate space:
+    # Signals: left / back (x ~ -11.0, z ~ -4.0)
+    # Agents: left / mid-back (x ~ -7.0, z ~ -2.5)
+    # Campaigns: center gravity (x ~ 0.0, z ~ 0.0)
+    # Costs: amber satellites (x ~ -2.0, y ~ -3.0, z ~ -0.5)
+    # Decisions: mid right (x ~ 4.5, z ~ 2.0)
+    # Laya Gate: decision marker (x ~ 6.0, z ~ 3.0)
+    # Experiments: right (x ~ 8.5, z ~ 4.5)
+    # Observations & Outcomes: far right / front (x ~ 11.5, z ~ 6.5)
+    # Rewards: learning return loop (x ~ 9.0, y ~ -4.0, z ~ 4.0)
     nodes: list[ControlPlaneGraphNode] = []
     edges: list[ControlPlaneGraphEdge] = []
 
-    # Add Campaign Nodes (Center)
-    for idx, c in enumerate(campaign_cards[:3]):
-        y_pos = (idx - 1) * 3.5
-        c_status = "positive" if c.financial_status == "POSITIVE" else ("negative" if c.financial_status == "NEGATIVE" else "neutral")
-        nodes.append(ControlPlaneGraphNode(
-            id=c.id,
-            type="campaign",
-            label=c.name,
-            status=c_status,
-            meta={"cost": c.total_cost, "return": c.attributed_return, "roi": c.roi_pct, "status": c.financial_status},
-            x=0.0,
-            y=y_pos,
-            z=0.0,
-        ))
+    # 6.1 Signals (Perception & Search Gaps)
+    nodes.append(ControlPlaneGraphNode(
+        id="sig-profound-saml",
+        type="signal",
+        label="Profound Gap: SAML Omission",
+        status="running",
+        meta={"source": "Profound Perception Engine", "query_cluster": "Enterprise SAML 2.0 SCIM Auth", "gap_severity": "HIGH"},
+        x=-11.0,
+        y=-2.0,
+        z=-4.0,
+    ))
+    nodes.append(ControlPlaneGraphNode(
+        id="sig-muse-scim-gap",
+        type="signal",
+        label="Muse Intent: SCIM Provisioning",
+        status="running",
+        meta={"source": "Muse Buyer Agent Intent", "intent_type": "Identity Provider Integration", "match_confidence": 0.88},
+        x=-11.0,
+        y=2.0,
+        z=-4.0,
+    ))
 
-    # Add Agent Nodes (Left/Back)
+    # 6.2 Agent Nodes
     for idx, a in enumerate(AGENTS_REGISTRY[:4]):
-        y_pos = (idx - 1.5) * 2.8
+        y_pos = (idx - 1.5) * 2.6
         a_status = "running" if a["state"] == "RUNNING" else ("positive" if a["attributed_outcome"] == "POSITIVE" else "neutral")
         nodes.append(ControlPlaneGraphNode(
             id=a["id"],
@@ -291,80 +338,224 @@ async def get_control_plane(session: SessionDep):
             meta={"role": a["role"], "cost": a["model_cost"], "runs": a["runs"], "task": a["current_task"]},
             x=-7.0,
             y=y_pos,
-            z=-3.5,
-        ))
-        # Edge: Agent -> Campaign
-        edges.append(ControlPlaneGraphEdge(
-            id=f"e-{a['id']}-{a['campaign_id']}",
-            source=a["id"],
-            target=a["campaign_id"],
-            label="contributes",
-            status="active" if a["state"] == "RUNNING" else "neutral",
+            z=-2.5,
         ))
 
-    # Add Decision Nodes (Right/Mid)
-    for idx, d in enumerate(DECISIONS_REGISTRY):
-        y_pos = (idx - 1) * 2.6
-        d_status = "positive" if d["observed_outcome"] == "POSITIVE" else ("negative" if d["observed_outcome"] == "NEGATIVE" else "uncertain")
+    # Edges: Signals -> Agents
+    edges.append(ControlPlaneGraphEdge(
+        id="e-sig-profound-agt-citation",
+        source="sig-profound-saml",
+        target="agt-citation-recovery",
+        label="OBSERVED",
+        status="active",
+    ))
+    edges.append(ControlPlaneGraphEdge(
+        id="e-sig-muse-agt-claim",
+        source="sig-muse-scim-gap",
+        target="agt-claim-verifier",
+        label="OBSERVED",
+        status="active",
+    ))
+
+    # 6.3 Campaign Nodes (Center Gravity)
+    for idx, c in enumerate(campaign_cards[:4]):
+        y_pos = (idx - 1.5) * 3.2
+        c_status = "positive" if c.financial_status == "POSITIVE" else ("negative" if c.financial_status == "NEGATIVE" else "uncertain")
         nodes.append(ControlPlaneGraphNode(
-            id=d["id"],
-            type="decision",
-            label=d["title"],
-            status=d_status,
-            meta={"recommended_by": d["recommended_by"], "status": d["status"], "outcome": d["observed_outcome"]},
-            x=5.0,
+            id=c.id,
+            type="campaign",
+            label=c.name,
+            status=c_status,
+            meta={"cost": c.total_cost, "return": c.attributed_return, "roi": c.roi_pct, "status": c.financial_status, "confidence": c.measurement_confidence},
+            x=0.0,
             y=y_pos,
-            z=2.5,
+            z=0.0,
+        ))
+
+    # Edges: Agents -> Campaigns
+    for a in AGENTS_REGISTRY[:4]:
+        if any(c.id == a["campaign_id"] for c in campaign_cards):
+            edges.append(ControlPlaneGraphEdge(
+                id=f"e-{a['id']}-{a['campaign_id']}",
+                source=a["id"],
+                target=a["campaign_id"],
+                label="WORKING_ON",
+                status="active" if a["state"] == "RUNNING" else "neutral",
+            ))
+
+    # 6.4 Cost Satellites
+    nodes.append(ControlPlaneGraphNode(
+        id="cost-model-tokens",
+        type="cost",
+        label="Model Cost: $142.50",
+        status="neutral",
+        meta={"category": "Model APIs", "amount": 142.50, "router": "Haiku 4.5 first"},
+        x=-2.2,
+        y=-3.2,
+        z=-0.8,
+    ))
+    edges.append(ControlPlaneGraphEdge(
+        id="e-cost-model-agt-citation",
+        source="cost-model-tokens",
+        target="agt-citation-recovery",
+        label="COST_OF",
+        status="neutral",
+    ))
+
+    # 6.5 Decision Nodes & Laya Gate
+    for idx, d in enumerate(enriched_decisions):
+        y_pos = (idx - 1) * 2.5
+        d_status = "positive" if d.observed_outcome == "POSITIVE" else ("negative" if d.observed_outcome == "NEGATIVE" else "uncertain")
+        nodes.append(ControlPlaneGraphNode(
+            id=d.id,
+            type="decision",
+            label=d.title,
+            status=d_status,
+            meta={
+                "recommended_by": d.recommended_by,
+                "status": d.status,
+                "outcome": d.observed_outcome,
+                "laya_model": d.laya_model,
+                "laya_distribution": d.laya_distribution,
+                "laya_confidence": d.laya_calibrated_confidence,
+                "policy_mode": d.policy_mode,
+            },
+            x=4.5,
+            y=y_pos,
+            z=2.0,
         ))
         # Edge: Campaign -> Decision
-        edges.append(ControlPlaneGraphEdge(
-            id=f"e-{d['campaign_id']}-{d['id']}",
-            source=d["campaign_id"],
-            target=d["id"],
-            label="action",
-            status=d_status,
-        ))
+        if any(c.id == d.campaign_id for c in campaign_cards):
+            edges.append(ControlPlaneGraphEdge(
+                id=f"e-{d.campaign_id}-{d.id}",
+                source=d.campaign_id,
+                target=d.id,
+                label="ACTION",
+                status=d_status,
+            ))
 
-    # Add Experiment Nodes (Right/Front)
-    for idx, e in enumerate(exp_cards[:2]):
-        y_pos = (idx - 0.5) * 3.0
+    # Dedicated Laya Typed Decision Gate Node
+    nodes.append(ControlPlaneGraphNode(
+        id="laya-decision-gate",
+        type="laya_decision",
+        label="Laya Decision: 74% ALLOW",
+        status="positive",
+        meta={
+            "model": "convaiinnovations/laya-typed-decisions",
+            "choice": "ALLOW",
+            "distribution": {"ALLOW": 0.74, "DELAY": 0.14, "REVIEW": 0.09, "BLOCK": 0.03},
+            "calibrated_confidence": 0.74,
+            "policy_mode": "SHADOW",
+            "eval": "Non-autoregressive typed probability gate",
+        },
+        x=6.2,
+        y=-1.5,
+        z=3.2,
+    ))
+    edges.append(ControlPlaneGraphEdge(
+        id="e-dec-saml-laya-gate",
+        source="dec-saml-canonical",
+        target="laya-decision-gate",
+        label="EVALUATED_BY",
+        status="positive",
+    ))
+
+    # 6.6 Experiment Nodes (Right/Front)
+    for idx, e in enumerate(exp_cards[:3]):
+        y_pos = (idx - 1.0) * 2.8
         nodes.append(ControlPlaneGraphNode(
             id=e.id,
             type="experiment",
             label=e.code,
             status="running" if e.protection_active else "neutral",
-            meta={"hypothesis": e.hypothesis, "metric": e.primary_metric, "status": e.status},
+            meta={"hypothesis": e.hypothesis, "metric": e.primary_metric, "status": e.status, "protection": e.protection_active},
             x=8.5,
             y=y_pos,
-            z=5.5,
+            z=4.5,
         ))
-        # Edge: Decision -> Experiment
+
+    # Edges: Decision / Laya -> Experiments
+    if exp_cards:
         edges.append(ControlPlaneGraphEdge(
-            id=f"e-dec-saml-canonical-{e.id}",
-            source="dec-saml-canonical",
-            target=e.id,
-            label="tests",
+            id=f"e-laya-gate-{exp_cards[0].id}",
+            source="laya-decision-gate",
+            target=exp_cards[0].id,
+            label="TESTED_BY",
             status="active",
         ))
 
-    # Add Outcome Node
+    # 6.7 Outcomes & Returns (Far Right / Front)
     nodes.append(ControlPlaneGraphNode(
         id="out-deal-pipeline",
         type="outcome",
         label="Attributed Revenue: +$118K",
         status="positive",
-        meta={"direct": 46000.0, "attributed": 51000.0, "modeled": 21000.0},
+        meta={"direct": 46000.0, "attributed": 51000.0, "modeled": 21000.0, "confidence": "HIGH"},
         x=11.5,
-        y=0.0,
-        z=8.0,
+        y=-1.0,
+        z=6.5,
+    ))
+    nodes.append(ControlPlaneGraphNode(
+        id="out-visibility-lift",
+        type="outcome",
+        label="Profound Lift: +9.2pp",
+        status="positive",
+        meta={"metric": "AI Search Visibility", "pre": 14.2, "post": 23.4, "change": 9.2},
+        x=11.5,
+        y=1.8,
+        z=6.5,
+    ))
+
+    # Edge: Experiment -> Visibility Lift -> Deal Pipeline
+    if exp_cards:
+        edges.append(ControlPlaneGraphEdge(
+            id=f"e-{exp_cards[0].id}-out-visibility",
+            source=exp_cards[0].id,
+            target="out-visibility-lift",
+            label="MEASURED_BY",
+            status="positive",
+        ))
+    edges.append(ControlPlaneGraphEdge(
+        id="e-visibility-deal-pipeline",
+        source="out-visibility-lift",
+        target="out-deal-pipeline",
+        label="RESULTED_IN",
+        status="positive",
+        confidence="HIGH",
     ))
     edges.append(ControlPlaneGraphEdge(
         id="e-cmp-ai-discovery-launch-01-out-deal-pipeline",
         source="cmp-ai-discovery-launch-01",
         target="out-deal-pipeline",
-        label="yields",
+        label="YIELDS",
         status="positive",
         confidence="HIGH",
+    ))
+
+    # 6.8 Reward & Policy Learning Node
+    nodes.append(ControlPlaneGraphNode(
+        id="rew-saml-causal",
+        type="reward",
+        label="Policy Reward: +0.74",
+        status="positive",
+        meta={"causal_lift": 9.2, "reward_score": 0.74, "target_policy": "v0.3.1", "bandit_updated": True},
+        x=8.5,
+        y=-3.8,
+        z=3.5,
+    ))
+    edges.append(ControlPlaneGraphEdge(
+        id="e-out-deal-rew-saml",
+        source="out-deal-pipeline",
+        target="rew-saml-causal",
+        label="REWARDED",
+        status="positive",
+    ))
+    edges.append(ControlPlaneGraphEdge(
+        id="e-rew-saml-laya-gate",
+        source="rew-saml-causal",
+        target="laya-decision-gate",
+        label="LEARNED_FROM",
+        status="active",
     ))
 
     return ControlPlaneResponse(
@@ -373,10 +564,11 @@ async def get_control_plane(session: SessionDep):
         summary=summary,
         agents=[AgentActivity(**a) for a in AGENTS_REGISTRY],
         campaigns=campaign_cards,
-        decisions=[DecisionCard(**d) for d in DECISIONS_REGISTRY],
+        decisions=enriched_decisions,
         experiments=exp_cards,
         graph=ControlPlaneGraph(nodes=nodes, edges=edges),
     )
+
 
 
 @router.get("/events", response_class=EventSourceResponse)
