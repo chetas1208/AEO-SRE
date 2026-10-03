@@ -323,7 +323,7 @@ async def list_discovery_gaps(ctx: ToolContext, a: ListGapsIn) -> ListGapsOut:
     q = select(Incident).where(Incident.org_id == ctx.org_id,
                                Incident.category == IncidentCategory.FACTUAL_CONFLICT.value)
     if not a.include_dismissed:
-        q = q.where(Incident.state != IncidentState.DISMISSED.value)
+        q = q.where(func.lower(Incident.state) != IncidentState.DISMISSED.value)
     rows = (await ctx.session.execute(q.order_by(Incident.detected_at.desc(), Incident.id.desc()).limit(2000))
             ).scalars().all()
     gaps = [r for r in rows if isinstance((r.context or {}).get("discovery_gap"), dict)]

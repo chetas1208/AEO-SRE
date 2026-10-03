@@ -41,6 +41,7 @@ backend/ml/artifacts/*
 !backend/ml/artifacts/evidence_ranker/
 backend/ml/datasets/raw/
 experiments/evals/
+experiments/guard_evals/
 .hacp/
 
 # Cloudflare credentials and certificates
