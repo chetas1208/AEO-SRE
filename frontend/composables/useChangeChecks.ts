@@ -19,10 +19,12 @@ export function useChangeChecks(opts: { experimentCode?: MaybeRefOrGetter<string
       query: { org_id: org.currentId, experiment_code: code.value, decision: decision.value, limit: pageSize, offset: page.value * pageSize }
     }),
     normChangeCheckList,
-    { enabled: () => org.loaded }
+    { enabled: () => org.loaded && Boolean(org.currentId) }
   )
   watch([code, decision], () => { page.value = 0 })
-  watch(() => live.changeCheckTick, () => res.refresh())
+  watch(() => live.changeCheckTick, () => {
+    if (!res.pending.value && res.error.value?.kind !== 'unavailable') res.refresh()
+  })
   const total = computed(() => res.data.value?.total ?? null)
   const hasNext = computed(() => {
     const d = res.data.value

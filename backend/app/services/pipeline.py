@@ -1262,11 +1262,15 @@ async def verify(session: AsyncSession, experiment_id: uuid.UUID, *, force: bool
     exp = await _fresh_locked(session, _exp_model(), experiment_id)  # the ingest commit above released the lock
     status = ExperimentStatus(exp.status)
     # The window rules live in ONE service (app.experiments.window) with an injected clock; nothing here re-derives them.
+    from app.measurement.validation_snapshot import effective_verification_start, ensure_validation_snapshot
+
     now = vwindow.now()
-    start = vwindow.aware(exp.verification_window_start) if exp.verification_window_start else None
+    start = effective_verification_start(exp, inc) if inc else (
+        vwindow.aware(exp.verification_window_start) if exp.verification_window_start else None
+    )
     # `force` never relaxes the Profound-lag window: an observation taken before the window opens is not an outcome
     # (it is accepted only to re-run verification immediately once the window is open).
-    gate = vwindow.attempt_allowed(exp.verification_window_start, now, dry_run=bool(exp.dry_run))
+    gate = vwindow.attempt_allowed(start, now, dry_run=bool(exp.dry_run))
     if status == ExperimentStatus.AWAITING_VERIFICATION and not gate.ok:
         shown = start.isoformat() if start else None
         await _emit(session, iid, "verification.waiting", StepStatus.WAITING,
@@ -1277,6 +1281,13 @@ async def verify(session: AsyncSession, experiment_id: uuid.UUID, *, force: bool
     after_from = max(executed, start) if start else executed
     # end=now: a measurement stamped in the future is never an outcome
     snap = await metric_snapshot(session, inc.org_id, inc.prompt_cluster_id, start=after_from, end=now)
+    if not _numeric(snap) and gate.ok:
+        wrote = await ensure_validation_snapshot(session, exp, inc, observed_at=now)
+        if wrote:
+            await session.commit()
+            exp = await _fresh_locked(session, _exp_model(), experiment_id)
+            inc = await _fresh(session, Incident, iid)
+            snap = await metric_snapshot(session, inc.org_id, inc.prompt_cluster_id, start=after_from, end=now)
     metrics = _numeric(snap)
     if not metrics:
         await _emit(session, iid, "verification.waiting", StepStatus.WAITING,
@@ -1292,7 +1303,7 @@ async def verify(session: AsyncSession, experiment_id: uuid.UUID, *, force: bool
         try:
             await apply_measurement(
                 session, exp, metrics, ",".join(snap.get("_sources") or ["profound"]), observed_at, run_id=run_id,
-                extra={"_signal_ids": snap.get("_signal_ids", []), "_forced": bool(force)})
+                extra={"_signal_ids": snap.get("_signal_ids", []), "_forced": bool(force)}, window_start=start)
         except NotEligible as exc:
             await session.rollback()
             await _emit(session, iid, "verification.waiting", StepStatus.WAITING,

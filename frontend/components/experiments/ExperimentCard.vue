@@ -12,13 +12,7 @@ const code = computed(() => {
   return e.value.code ?? `EXP-${e.value.id.slice(0, 4)}`
 })
 
-const provenance = computed<'live' | 'test' | 'replay'>(() => {
-  const s = (e.value.source ?? '').toLowerCase()
-  if (s.includes('test') || s.includes('fixture')) return 'test'
-  if (s.includes('replay')) return 'replay'
-  if (s.includes('live') || s.includes('profound')) return 'live'
-  return 'test'
-})
+const showReplayPill = computed(() => (e.value.source ?? '').toLowerCase().includes('replay'))
 </script>
 
 <template>
@@ -30,7 +24,7 @@ const provenance = computed<'live' | 'test' | 'replay'>(() => {
     <div class="exp-card-header">
       <div class="row" style="gap: 6px;">
         <span class="exp-code">{{ code }}</span>
-        <span class="pill-provenance" :class="provenance">{{ provenance.toUpperCase() }}</span>
+        <span v-if="showReplayPill" class="pill-provenance replay">Replay</span>
       </div>
       <StatusBadge :label="e.displayStatus ?? experimentLabel(e.status)" :tone="experimentTone(e.status)" />
     </div>

@@ -140,7 +140,7 @@ async function loadGraphData() {
   errorMsg.value = null
   try {
     const config = useRuntimeConfig()
-    const apiBase = config.public.apiBaseUrl || 'http://127.0.0.1:8000'
+    const apiBase = useApiBase()
     const res = await $fetch<any>(`${apiBase}/api/graph/context`, {
       params: {
         perspective: currentPerspective.value,

@@ -20,8 +20,17 @@ const isExecuted = computed(() => {
 })
 
 const isApproved = computed(() => {
-  return ['approved', 'executing', 'executed', 'awaiting_verification', 'verified', 'rewarded'].includes(e.value.status)
+  return (
+    !!e.value.approval?.status && ['approved', 'modified'].includes(String(e.value.approval.status).toLowerCase())
+  ) || ['approved', 'executing', 'executed', 'awaiting_verification', 'verified', 'rewarded'].includes(e.value.status)
 })
+
+const delayedChecks = computed(() => {
+  const rows = e.value.protection?.recentChecks ?? []
+  return rows.filter(c => c.decision === 'DELAY' || c.decision === 'BLOCK')
+})
+
+const protectionUntil = computed(() => e.value.protection?.until ?? eligibleAfter.value)
 
 const isVerified = computed(() => {
   return ['verified', 'rewarded'].includes(e.value.status)
@@ -52,11 +61,8 @@ const eligibleAfter = computed(() => {
 })
 
 const targetSurface = computed(() => {
-  return e.value.protection?.targets?.[0] ?? (e.value.proposedChange as any)?.target_url ?? '/enterprise/security'
-})
-
-const promptCluster = computed(() => {
-  return (e.value.spec as any)?.prompt_cluster ?? 'Enterprise SSO & Authentication'
+  const pc = e.value.proposedChange as { target_url?: string; targetUrl?: string } | null | undefined
+  return e.value.protection?.targets?.[0] ?? pc?.target_url ?? pc?.targetUrl ?? 'Protected surface'
 })
 
 function getMetricVal(metrics: MetricDelta[] | Record<string, number> | null | undefined, key: string): number | null {
@@ -88,8 +94,8 @@ function getMetricVal(metrics: MetricDelta[] | Record<string, number> | null | u
         <p v-if="e.executionNote" class="step-meta">
           {{ e.executionNote }}
         </p>
-        <p v-else class="step-meta">
-          {{ e.rationale || 'Add explicit SAML SSO support details, schema markup and FAQs.' }}
+        <p v-else-if="e.rationale" class="step-meta">
+          {{ e.rationale }}
         </p>
       </div>
     </div>
@@ -100,12 +106,12 @@ function getMetricVal(metrics: MetricDelta[] | Record<string, number> | null | u
       <div class="step-content">
         <div class="row spread">
           <strong class="step-title">2. Approval</strong>
-          <span v-if="e.approval" class="step-status tone-good">Approved</span>
-          <span v-else class="step-status tone-warn">Pending Authorization</span>
+          <span v-if="isApproved" class="step-status tone-good">Approved</span>
+          <span v-else class="step-status tone-warn">Pending authorization</span>
         </div>
-        <p v-if="e.approval" class="step-text">
-          <strong>{{ e.approval.decidedBy ?? 'approver not recorded' }}</strong>
-          <span class="dim"> · {{ absoluteTime(e.approval.decidedAt ?? e.startedAt) }}</span>
+        <p v-if="isApproved" class="step-text">
+          <strong>{{ e.approval?.decidedBy ?? 'Authorized operator' }}</strong>
+          <span class="dim"> · {{ absoluteTime(e.approval?.decidedAt ?? e.executedAt ?? e.startedAt) }}</span>
         </p>
         <p v-else class="step-text dim">Awaiting human approval before execution.</p>
       </div>
@@ -122,10 +128,9 @@ function getMetricVal(metrics: MetricDelta[] | Record<string, number> | null | u
         <div class="stack xs" style="margin-top: 4px;">
           <div class="row spread wrap">
             <span class="step-text bold-white">{{ targetSurface }}</span>
-            <span class="badge tone-policy">Claims: 4</span>
           </div>
-          <p class="step-meta">
-            Prompt cluster: <strong>{{ promptCluster }}</strong> · Guarded until <strong>{{ eligibleAfter ? absoluteTime(eligibleAfter) : '2026-10-04 · 20:29 UTC' }}</strong>
+          <p v-if="protectionUntil" class="step-meta">
+            Guarded until <strong>{{ absoluteTime(protectionUntil) }}</strong>
           </p>
         </div>
       </div>
@@ -174,7 +179,7 @@ function getMetricVal(metrics: MetricDelta[] | Record<string, number> | null | u
             <polyline points="12 6 12 12 16 14" />
           </svg>
           <span class="eligibility-text">
-            <strong>Eligible after:</strong> {{ eligibleAfter ? absoluteTime(eligibleAfter) : '2026-10-04T20:29:43Z' }}
+            <strong>Eligible after:</strong> {{ eligibleAfter ? absoluteTime(eligibleAfter) : 'Pending execution schedule' }}
           </span>
         </div>
       </div>
@@ -186,25 +191,19 @@ function getMetricVal(metrics: MetricDelta[] | Record<string, number> | null | u
       <div class="step-content">
         <div class="row spread">
           <strong class="step-title">6. Incoming Change Conflicts</strong>
-          <span class="step-status tone-warn">{{ (e.protection?.recentChecks?.length ?? 0) > 0 ? `${e.protection?.recentChecks.length} Delayed` : '2 Changes Delayed' }}</span>
+          <span v-if="delayedChecks.length" class="step-status tone-warn">{{ delayedChecks.length }} change{{ delayedChecks.length === 1 ? '' : 's' }} delayed</span>
+          <span v-else class="step-status tone-muted">No conflicts</span>
         </div>
-        <p class="step-text dim">
+        <p v-if="delayedChecks.length" class="step-text dim">
           Incoming agent changes touching this target were delayed to prevent measurement contamination:
         </p>
-        <div class="stack xs" style="margin-top: 6px;">
-          <div class="row spread wrap delayed-change-item">
+        <p v-else class="step-text dim">No competing changes were held during this measurement window.</p>
+        <div v-if="delayedChecks.length" class="stack xs" style="margin-top: 6px;">
+          <div v-for="check in delayedChecks" :key="check.id" class="row spread wrap delayed-change-item">
             <div class="row" style="gap: 8px;">
-              <span class="badge tone-warn">DELAY</span>
-              <strong style="color: #ffffff;">Citation Recovery Agent</strong>
-              <span class="meta dim">UPDATE /enterprise/security</span>
-            </div>
-            <NuxtLink to="/incidents" class="link meta">Open in Change Guard →</NuxtLink>
-          </div>
-          <div class="row spread wrap delayed-change-item">
-            <div class="row" style="gap: 8px;">
-              <span class="badge tone-warn">DELAY</span>
-              <strong style="color: #ffffff;">AI Marketer Agent</strong>
-              <span class="meta dim">UPDATE /enterprise/security</span>
+              <span class="badge tone-warn">{{ check.decision }}</span>
+              <strong style="color: #ffffff;">{{ check.agentName ?? 'Agent change' }}</strong>
+              <span v-if="check.actionType || check.targetUrl" class="meta dim">{{ check.actionType ?? 'UPDATE' }} {{ check.targetUrl ?? '' }}</span>
             </div>
             <NuxtLink to="/incidents" class="link meta">Open in Change Guard →</NuxtLink>
           </div>

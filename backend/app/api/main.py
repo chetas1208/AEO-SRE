@@ -15,6 +15,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.api.errors import Unavailable, register_error_handlers
 from app.api.logging import configure_logging
 from app.api.routes import (
+    auth,
     campaigns,
     canonical_claims,
     change_checks,
@@ -27,6 +28,7 @@ from app.api.routes import (
     incidents,
     interventions,
     muse,
+    oauth,
     organizations,
     policy,
     settings,
@@ -156,6 +158,15 @@ async def lifespan(app: FastAPI):
     from app.graph import close_graph_client, startup_graph
 
     await startup_graph()  # verifies Neo4j separately; never raises (Postgres is the system of record)
+    try:
+        from app.core.db import get_sessionmaker
+        from app.oauth.service import ensure_muse_client
+
+        async with get_sessionmaker()() as sess:
+            await ensure_muse_client(sess)
+            await sess.commit()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("oauth.client_bootstrap_failed", error=repr(exc))
     yield
     await close_graph_client()
     await get_event_bus().close()
@@ -183,7 +194,7 @@ def create_app() -> FastAPI:
         description="Incident-response control plane for AI discovery. JSON is snake_case.",
         lifespan=lifespan,
     )
-    origins = {s.app_base_url.rstrip("/")}
+    origins = {s.app_base_url.rstrip("/"), s.app_public_url.rstrip("/")}
     if s.cors_allowed_origins:
         for orig in s.cors_allowed_origins.split(","):
             if orig.strip():
@@ -232,9 +243,16 @@ def create_app() -> FastAPI:
         graph,
         policy,
         settings,
+        auth,
+        oauth,
     ):
         app.include_router(module.router, responses=ERROR_RESPONSES)
-    app.include_router(muse.router)  # Muse connector: its own error envelope, bearer key + one org
+    from app.integrations.muse.v1.router import router as muse_v1_router
+    from app.api.routes.muse_openapi import register_muse_openapi
+
+    app.include_router(muse_v1_router, responses=ERROR_RESPONSES)
+    app.include_router(muse.router)  # legacy bearer /muse/tools (deprecated for multi-user)
+    register_muse_openapi(app)
     return app
 
 

@@ -37,6 +37,7 @@ class Organization(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     name: Mapped[str] = mapped_column(String(255))
+    slug: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True, index=True)
     domain: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     competitor_domains: Mapped[list] = mapped_column(JSONType, default=list)
     canonical_domains: Mapped[list] = mapped_column(JSONType, default=list)

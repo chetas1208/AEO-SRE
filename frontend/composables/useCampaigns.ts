@@ -477,7 +477,7 @@ export function useCampaigns() {
   const loadCampaignsFromApi = async () => {
     try {
       const config = useRuntimeConfig()
-      const apiBase = config.public?.apiBaseUrl || ''
+      const apiBase = useApiBase()
       const res = await $fetch<{ campaigns: Campaign[] }>(`${apiBase}/api/campaigns`)
       if (res && res.campaigns && res.campaigns.length > 0) {
         campaigns.value = res.campaigns
@@ -490,7 +490,7 @@ export function useCampaigns() {
   const loadCampaignGraph = async (campaignId: string) => {
     try {
       const config = useRuntimeConfig()
-      const apiBase = config.public?.apiBaseUrl || ''
+      const apiBase = useApiBase()
       const res = await $fetch<CampaignGraphData>(`${apiBase}/api/campaigns/${campaignId}/graph`)
       if (res && res.nodes && res.edges) {
         graphData.value = res

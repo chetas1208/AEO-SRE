@@ -113,6 +113,7 @@ class Settings(BaseSettings):
     backend_base_url: str = "http://localhost:8000"
     # Profound data lags 24-48h: hours to wait after a real execution before post-intervention metrics count.
     verification_delay_hours: float = 48.0
+    allow_test_run_mode: bool = True  # set false in production unless CI needs sandbox creates
     auto_investigate: bool = True
     policy_seed: int | None = None  # tests/dev only: makes the bandit's action sampling reproducible
     # Investigation stops and reports insufficient rather than looping. Defaults match the previous collector cap.
@@ -131,6 +132,19 @@ class Settings(BaseSettings):
     laya_confidence_accept: float = 0.72
     laya_confidence_review: float = 0.55
     laya_confidence_escalate: float = 0.40
+    # Auth + Muse OAuth connector (docs/MUSE_CONNECTOR.md).
+    auth_secret: str = ""  # session signing; empty -> derived insecure default in dev only
+    app_public_url: str = "http://localhost:3000"
+    api_public_url: str = "http://localhost:8000"
+    oauth_issuer: str = ""  # empty -> api_public_url
+    oauth_authorization_code_ttl_seconds: int = 600
+    oauth_access_token_ttl_seconds: int = 3600
+    oauth_refresh_token_ttl_seconds: int = 60 * 60 * 24 * 30
+    muse_connector_enabled: bool = True
+    muse_read_rpm: int = 120
+    muse_write_rpm: int = 30
+    muse_oauth_client_id: str = "muse-agentmatch"
+    muse_oauth_redirect_uris: str = ""  # comma-separated allowlist for Muse OAuth client bootstrap
 
 
 # Backward-compatible protocol aliases (older .env files used anthropic | openai).

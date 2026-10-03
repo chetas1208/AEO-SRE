@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import type { SystemHealth, ApiErrorInfo } from '~/types'
+import { isBrowserApiMisconfigured } from '~/utils/apiBase'
 
 export type StreamState = 'idle' | 'connecting' | 'connected' | 'disconnected'
 export type GlobalStreamState = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
@@ -82,6 +83,15 @@ export const useLiveSystemStore = defineStore('liveSystem', () => {
     es?.close()
     es = null
     if (typeof EventSource === 'undefined') { globalStream.value = 'disconnected'; return }
+    if (isBrowserApiMisconfigured()) {
+      globalStream.value = 'disconnected'
+      apiReachable.value = false
+      error.value = {
+        kind: 'unavailable',
+        message: 'API is misconfigured for production (localhost). Set NUXT_PUBLIC_API_BASE_URL on Vercel and redeploy.',
+      }
+      return
+    }
     if (globalStream.value === 'idle') globalStream.value = 'connecting'
     const src = new EventSource(`${useApiBase()}/api/events`)
     es = src

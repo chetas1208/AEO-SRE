@@ -106,7 +106,7 @@ async def record_observation(
 
 async def apply_measurement(
     session: AsyncSession, experiment: Experiment, metrics: Any, source: str, observed_at: datetime, *,
-    run_id: str = "", extra: dict[str, Any] | None = None,
+    run_id: str = "", extra: dict[str, Any] | None = None, window_start: datetime | None = None,
 ) -> Observation:
     """THE verification path: the only code that sets `Experiment.after_metrics` and moves the experiment to VERIFIED.
 
@@ -117,7 +117,7 @@ async def apply_measurement(
     status = ExperimentStatus(experiment.status)
     if status not in (ExperimentStatus.AWAITING_VERIFICATION, ExperimentStatus.VERIFIED, ExperimentStatus.REWARDED):
         raise ExperimentStateError(f"experiment is {status.value}; nothing to verify")
-    elig = vwindow.experiment_eligibility(experiment, observed_at)
+    elig = vwindow.experiment_eligibility(experiment, observed_at, window_start=window_start)
     if not elig.ok:
         raise NotEligible(elig)
     obs = await record_observation(session, experiment.id, metrics, source, observed_at, run_id)

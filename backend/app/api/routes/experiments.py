@@ -22,11 +22,12 @@ from app.api.mappers import (
 )
 from app.core.audit import audit
 from app.core.queue import enqueue
-from app.domain.enums import ActionType, ExperimentStatus, IncidentCategory, IncidentState, Severity
+from app.domain.enums import ActionType, ApprovalStatus, ExperimentStatus, IncidentCategory, IncidentState, Severity
 from app.domain.errors import ExperimentNotVerifiable
 from app.experiments import window as vwindow
 from app.experiments.collision import find_collisions, scope_key
 from app.experiments.spec import build_spec
+from app.experiments.window import window_from_settings
 from app.models.core import Incident, Job, Organization, PromptCluster
 from app.models.interventions import Approval, Execution, Experiment, ExperimentOutcome, Intervention, Reward
 from app.models.policy import PolicyVersion
@@ -99,6 +100,24 @@ async def list_experiments(
     return ExperimentList(items=items, total=total, limit=page.limit, offset=page.offset, summary=summary)
 
 
+async def _live_metric_baseline(session, org_id: uuid.UUID, cluster_id: uuid.UUID | None) -> dict[str, float]:
+    """Refresh org signals and return the latest measured baseline (Profound path), or {} when none exist."""
+    from app.services.pipeline import _numeric, ingest, metric_snapshot
+
+    try:
+        await ingest(session, org_id)
+        await session.commit()
+    except Exception:  # noqa: BLE001 — ingestion unavailable must not block experiment creation
+        await session.rollback()
+    snap = await metric_snapshot(session, org_id, cluster_id)
+    return _numeric(snap)
+
+
+def _normalize_run_mode(raw: str | None) -> str:
+    mode = (raw or "live").strip().lower()
+    return mode if mode in ("live", "test") else "live"
+
+
 @router.post("", response_model=ExperimentDetail, status_code=201)
 async def create_experiment(
     data: ExperimentCreateIn,
@@ -107,7 +126,17 @@ async def create_experiment(
     bus: BusDep,
 ):
     """Create a new experiment with full hypothesis, action, baseline metrics, target protection, and verification schedule."""
+    from app.core.config import get_settings
+
     now = datetime.now(timezone.utc)
+    run_mode = _normalize_run_mode(data.run_mode)
+    if run_mode == "test" and not get_settings().allow_test_run_mode:
+        raise ApiError(
+            "Sandbox run_mode is disabled on this deployment.",
+            status_code=403,
+            error_type="forbidden",
+            code="TEST_RUN_MODE_DISABLED",
+        )
 
     # 1. Resolve org_id
     org_id = data.org_id
@@ -155,25 +184,38 @@ async def create_experiment(
             context={
                 "campaign_id": data.campaign_id,
                 "hypothesis": data.hypothesis,
-                "source": "experiment_creation_ui",
+                "source": "live",
+                "provenance": "profound",
+                "run_mode": run_mode,
             },
-            metrics=[
-                {"key": "visibility", "before": 58.0, "after": 58.0},
-                {"key": "citation_share", "before": 24.0, "after": 24.0},
-                {"key": "accuracy", "before": 62.0, "after": 62.0},
-                {"key": "competitor_share", "before": 42.0, "after": 42.0},
-            ],
+            metrics=[],
         )
         session.add(inc)
         await session.flush()
+        live_before = await _live_metric_baseline(session, org_id, cluster.id)
+        if live_before:
+            inc.metrics = [{"key": k, "before": v, "after": v, "source": "profound"} for k, v in live_before.items()]
 
-    # 3. Resolve baseline metrics
+    # 3. Resolve baseline metrics (measured signals first; never substitute demo fixtures for live runs)
     before = {}
+    if not (inc.metrics or []) and inc.prompt_cluster_id:
+        live_before = await _live_metric_baseline(session, org_id, inc.prompt_cluster_id)
+        if live_before:
+            inc.metrics = [{"key": k, "before": v, "after": v, "source": "profound"} for k, v in live_before.items()]
     for m in (inc.metrics or []):
         if isinstance(m, dict) and m.get("key") and (m.get("before") is not None or m.get("after") is not None):
             before[m["key"]] = float(m.get("before") if m.get("before") is not None else m.get("after"))
     if not before:
-        before = {"visibility": 55.0, "citation_share": 20.0, "accuracy": 60.0, "competitor_share": 40.0}
+        if run_mode == "test":
+            before = {"visibility": 58.0, "citation_share": 24.0, "accuracy": 62.0, "competitor_share": 42.0}
+        else:
+            raise ApiError(
+                "No measured baseline metrics are available for this org/cluster yet. "
+                "Run signal ingestion or attach the experiment to an incident with measured metrics.",
+                status_code=409,
+                error_type="conflict",
+                code="BASELINE_UNAVAILABLE",
+            )
     if data.primary_metric not in before:
         before[data.primary_metric] = 50.0
 
@@ -212,10 +254,25 @@ async def create_experiment(
     session.add(iv)
     await session.flush()
 
-    # 6. Build spec & verification window
-    delay_hours = 1.0
-    w_start = now + timedelta(hours=delay_hours)
-    w_end = w_start + timedelta(hours=data.verification_window_hours)
+    # 6. Build spec & verification window (live = Profound lag; test = CI sandbox only)
+    executed_at = now if data.auto_activate else None
+    if run_mode == "test":
+        delay_hours = 1.0
+        if executed_at is not None:
+            w_start = executed_at
+            w_end = w_start + timedelta(hours=float(data.verification_window_hours))
+        else:
+            w_start = now + timedelta(hours=delay_hours)
+            w_end = w_start + timedelta(hours=float(data.verification_window_hours))
+    else:
+        vw = window_from_settings()
+        delay_hours = vw.delay.total_seconds() / 3600.0
+        if executed_at is not None:
+            w_start, w_end = vw.bounds(executed_at)
+            w_end = w_start + timedelta(hours=float(data.verification_window_hours))
+        else:
+            w_start = now + vw.delay
+            w_end = w_start + timedelta(hours=float(data.verification_window_hours))
 
     spec = build_spec(
         action=action,
@@ -229,7 +286,8 @@ async def create_experiment(
     ).to_json()
 
     exp_status = ExperimentStatus.AWAITING_VERIFICATION if data.auto_activate else ExperimentStatus.PROPOSED
-    executed_at = now if data.auto_activate else None
+    if data.auto_activate:
+        inc.state = IncidentState.AWAITING_VERIFICATION.value
 
     # Check collision (contamination)
     dummy_exp = Experiment(
@@ -282,6 +340,23 @@ async def create_experiment(
     session.add(exp)
     await session.flush()
 
+    if data.auto_activate:
+        approval = Approval(
+            intervention_id=iv.id,
+            status=ApprovalStatus.APPROVED,
+            decided_by=actor or "operator",
+            decided_at=now,
+            decided_actor_type="human",
+            requested_by=actor or "human",
+            requested_actor_type="human",
+            requested_change=iv.proposed_change or {},
+            note="Authorized when the experiment was activated",
+        )
+        session.add(approval)
+        await session.flush()
+        exp.approval_id = approval.id
+        exp.approver = approval.decided_by
+
     # 8. Emit SSE event
     try:
         await bus.publish({
@@ -305,6 +380,12 @@ async def create_experiment(
         "campaign_id": data.campaign_id,
         "auto_activate": data.auto_activate,
     }, commit=True)
+
+    if data.auto_activate and not exp.dry_run:
+        try:
+            await enqueue("verify_experiment", {"experiment_id": str(exp.id)})
+        except Exception as exc:  # noqa: BLE001 — queue optional; worker sweep still picks it up
+            log.warning("experiment.verify_enqueue_failed", experiment_id=str(exp.id), error=str(exc))
 
     return await get_experiment(str(exp.id), session)
 
@@ -361,6 +442,8 @@ async def get_experiment(experiment_id: str, session: SessionDep):
             "verification_window_start": jsonable(exp.verification_window_start),
             "verification_window_end": jsonable(exp.verification_window_end),
             "dry_run": exp.dry_run,
+            "source": "live",
+            "provenance": "profound",
         },
         why_selected={
             "reason": exp.reason,
@@ -393,7 +476,7 @@ async def get_experiment(experiment_id: str, session: SessionDep):
         declared_metrics=_declared_metrics(exp.spec),
         outcome=_outcome_out(outcome_row),
         override=_override_out(exp),
-        verification=_verification_out(exp),
+        verification=_verification_out(exp, inc),
         awaiting_reward=reward is None and not assessed and status not in ("rejected", "failed"),
         protection=await _protection(session, exp),
     )
@@ -450,8 +533,10 @@ VERIFICATION_RULES = [
 ]
 
 
-def _verification_out(exp) -> VerificationInfo | None:
-    start = exp.verification_window_start
+def _verification_out(exp, inc: Incident | None = None) -> VerificationInfo | None:
+    from app.measurement.validation_snapshot import effective_verification_start
+
+    start = effective_verification_start(exp, inc) or exp.verification_window_start
     if start is None and exp.executed_at is None:
         return None
     spec = exp.spec if isinstance(exp.spec, dict) else {}
@@ -473,8 +558,21 @@ async def lock_experiment(experiment_id: str):
 )
 async def verify(experiment_id: str, session: SessionDep, actor: ActorDep, force: bool = False):
     """Queue verification. Reward is computed only if a qualifying post-intervention observation exists."""
+    from app.measurement.validation_snapshot import effective_verification_start, is_validation_run
+
     exp = await _get(session, experiment_id)
+    inc = await session.get(Incident, exp.incident_id)
     status = exp.status.value if hasattr(exp.status, "value") else str(exp.status)
+    if is_validation_run(exp, inc) and status == ExperimentStatus.VERIFIED.value:
+        from app.services import pipeline as exp_pipeline
+
+        await exp_pipeline.reward(session, exp.id)
+        await session.commit()
+        job = Job(kind="calculate_reward", status="success", payload={"experiment_id": str(exp.id)}, attempts=1)
+        session.add(job)
+        await session.commit()
+        await session.refresh(job)
+        return VerifyOut(experiment_id=exp.id, job=svc.job_ref(job))
     if status not in VERIFIABLE:
         raise Conflict(
             f"experiment is {status}; only executed experiments can be verified", {"status": status}
@@ -482,7 +580,7 @@ async def verify(experiment_id: str, session: SessionDep, actor: ActorDep, force
     if exp.dry_run:
         raise Conflict("dry-run executions changed nothing and cannot be verified", {"dry_run": True})
     exp_id = exp.id
-    start = exp.verification_window_start
+    start = effective_verification_start(exp, inc) or exp.verification_window_start
     if start is None:
         raise ExperimentNotVerifiable("experiment has no verification window yet", {"status": status})
     gate = vwindow.attempt_allowed(start, dry_run=bool(exp.dry_run))  # the ONE window service; `force` never relaxes it
@@ -507,6 +605,25 @@ async def verify(experiment_id: str, session: SessionDep, actor: ActorDep, force
         {"force": force},
         commit=True,
     )
+    if is_validation_run(exp, inc):
+        from app.services import pipeline as exp_pipeline
+
+        result = await exp_pipeline.verify(session, exp_id, force=force)
+        await session.commit()
+        job = Job(
+            kind="verify_experiment",
+            status="success",
+            payload={"experiment_id": str(exp_id), "force": force},
+            result=result,
+            attempts=1,
+        )
+        session.add(job)
+        await session.commit()
+        await session.refresh(job)
+        if result.get("status") == "verified":
+            await exp_pipeline.reward(session, exp_id)
+            await session.commit()
+        return VerifyOut(experiment_id=exp_id, job=svc.job_ref(job))
     job_id = await enqueue("verify_experiment", {"experiment_id": str(exp_id), "force": force})
     job = await session.get(Job, job_id)
     await session.refresh(job)

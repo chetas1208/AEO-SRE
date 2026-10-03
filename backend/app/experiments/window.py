@@ -119,10 +119,17 @@ def measurement_eligible(
                        opens_at=start)
 
 
-def experiment_eligibility(experiment, observed_at: datetime | None = None, at: datetime | None = None) -> Eligibility:
+def experiment_eligibility(
+    experiment,
+    observed_at: datetime | None = None,
+    at: datetime | None = None,
+    *,
+    window_start: datetime | None = None,
+) -> Eligibility:
     """Convenience wrapper over an Experiment row: attempt check, plus the measurement check when `observed_at` given."""
+    start = window_start if window_start is not None else experiment.verification_window_start
     if observed_at is None:
-        return attempt_allowed(experiment.verification_window_start, at, dry_run=bool(experiment.dry_run))
+        return attempt_allowed(start, at, dry_run=bool(experiment.dry_run))
     return measurement_eligible(
-        window_start=experiment.verification_window_start, window_end=experiment.verification_window_end,
+        window_start=start, window_end=experiment.verification_window_end,
         executed_at=experiment.executed_at, observed_at=observed_at, at=at, dry_run=bool(experiment.dry_run))

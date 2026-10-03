@@ -12,6 +12,8 @@ AgentMatch is the **resource server**. Muse is the client.
 
 **Target (V1):** OAuth 2.0 authorization code + PKCE, per-user tokens bound to one organization.
 
+**Implemented (V1 API):** `POST/GET /api/muse/v1/*` with Bearer OAuth tokens. Legacy `POST /muse/tools/*` + single `MUSE_CONNECTOR_API_KEY` remains for backward compatibility only.
+
 ## Scopes (minimal)
 
 | Scope | Access |

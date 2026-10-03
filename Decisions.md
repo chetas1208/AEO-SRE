@@ -1579,3 +1579,29 @@ End-to-end LLM for every decision; PPO/DQN on sparse rewards; training bandit on
 ### Revisit When
 
 Shadow eval graduation criteria pass and ACTIVE mode is approved; or Muse OAuth V1 ships.
+
+---
+
+## DEC-048 — Production API Routing & Change-Check Read Semantics
+
+**Status:** ACCEPTED  
+**Date:** 2026-10-03  
+**Supersedes:** None
+
+### Context
+
+Production Vercel builds embedded `http://localhost:8000` when `NUXT_PUBLIC_API_BASE_URL` was unset, causing browser loopback blocks. The experiments UI called `GET /api/change-checks`, which shared the agent bearer gate with POST and returned **503 CHANGE_GUARD_NOT_CONFIGURED** when `CHANGE_GUARD_TOKEN` was unset — not a Neo4j failure.
+
+### Decision
+
+1. **Canonical browser API base:** `NUXT_PUBLIC_API_BASE_URL` → `runtimeConfig.public.apiBaseUrl`; all HTTP/SSE via `useApiBase()` / `apiFetch()`. Vercel Production build fails if unset; client plugin rejects loopback in production bundles.
+2. **Change checks:** POST `/api/change-checks` still requires `CHANGE_GUARD_TOKEN`. GET list is PostgreSQL read-only, requires `org_id`, no agent token (UI control plane).
+3. **409 on experiment verify:** Preserved when verification window closed; UI disables verify using `verification.isOpen` and shows `eligibleAt`.
+
+### Consequences
+
+Muse/API submission uses the Cloudflare public hostname. Named tunnel migration remains operational follow-up (avoid long-lived `trycloudflare.com` for Meta review).
+
+### Revisit When
+
+Stable named tunnel hostname is provisioned and Vercel Production env is updated + redeployed.

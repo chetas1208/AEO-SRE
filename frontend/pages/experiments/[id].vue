@@ -13,13 +13,13 @@ const code = computed(() => {
   return e.value.code ?? `EXP-${e.value.id.slice(0, 4)}`
 })
 
-const provenance = computed<'live' | 'test' | 'replay'>(() => {
+const provenance = computed<'live' | 'replay'>(() => {
   const s = (e.value?.source ?? '').toLowerCase()
-  if (s.includes('test') || s.includes('fixture')) return 'test'
   if (s.includes('replay')) return 'replay'
-  if (s.includes('live') || s.includes('profound')) return 'live'
-  return 'test'
+  return 'live'
 })
+
+const sourceLabel = computed(() => (provenance.value === 'replay' ? 'Replay' : 'Measured'))
 </script>
 
 <template>
@@ -35,7 +35,7 @@ const provenance = computed<'live' | 'test' | 'replay'>(() => {
           <div class="stack xs">
             <div class="row wrap" style="gap: 8px; align-items: center;">
               <span class="exp-header-code">{{ code }}</span>
-              <span class="pill-provenance" :class="provenance">{{ provenance.toUpperCase() }}</span>
+              <span v-if="provenance === 'replay'" class="pill-provenance replay">Replay</span>
             </div>
             <h2 class="exp-header-title">{{ e.incidentTitle ?? 'Intervention Experiment' }}</h2>
             <div class="exp-meta-line meta">
@@ -82,18 +82,18 @@ const provenance = computed<'live' | 'test' | 'replay'>(() => {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tone-info">
                 <polygon points="12 2 2 7 12 12 22 7 12 2" />
               </svg>
-              <span style="text-transform: capitalize;">{{ provenance }}</span>
+              <span>{{ sourceLabel }}</span>
             </div>
           </div>
 
-          <div class="badge-block">
-            <span class="b-lbl">Policy Version</span>
+          <div v-if="e.policyVersion" class="badge-block">
+            <span class="b-lbl">Policy version</span>
             <div class="b-val row">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="tone-policy">
                 <polygon points="12 2 2 7 12 12 22 7 12 2" />
                 <polyline points="2 17 12 22 22 17" />
               </svg>
-              <span>{{ e.policyVersion ?? 'unavailable' }}</span>
+              <span>{{ e.policyVersion }}</span>
             </div>
           </div>
         </div>

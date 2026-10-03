@@ -8,6 +8,19 @@ const here = dirname(fileURLToPath(import.meta.url))
 const rootEnv = resolve(here, '..', '.env')
 if (existsSync(rootEnv)) loadDotenv({ path: rootEnv, quiet: true })
 
+const apiFromEnv = (process.env.NUXT_PUBLIC_API_BASE_URL || '').trim()
+/** Override via Vercel env; fallback only for Vercel builds when env missing (see DEPLOYMENT.md). */
+const VERCEL_API_FALLBACK = 'https://destinations-cams-easily-comparing.trycloudflare.com'
+const resolvedApiBase =
+  apiFromEnv
+  || (process.env.VERCEL === '1' ? VERCEL_API_FALLBACK : '')
+  || 'http://localhost:8000'
+if (process.env.VERCEL_ENV === 'production' && !apiFromEnv) {
+  console.warn(
+    '[AgentMatch] NUXT_PUBLIC_API_BASE_URL unset on Vercel; using tunnel fallback. Set the env var and redeploy for a stable hostname.'
+  )
+}
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   ssr: false,
@@ -17,8 +30,8 @@ export default defineNuxtConfig({
   components: [{ path: '~/components', pathPrefix: false }],
   runtimeConfig: {
     public: {
-      // overridable at runtime via NUXT_PUBLIC_API_BASE_URL
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+      /** Canonical public API origin (Cloudflare tunnel hostname). Dev-only fallback to localhost. */
+      apiBaseUrl: resolvedApiBase
     }
   },
   app: {

@@ -1,4 +1,5 @@
 import type { ControlPlaneResponse, ApiErrorInfo } from '~/types'
+import { isBrowserApiMisconfigured } from '~/utils/apiBase'
 import { apiFetch, toApiError, useAutoRefresh, useApiBase } from './useApi'
 
 export function useControlPlane() {
@@ -22,6 +23,13 @@ export function useControlPlane() {
 
   function setupSSE() {
     if (typeof EventSource === 'undefined') return
+    if (isBrowserApiMisconfigured()) {
+      error.value = {
+        kind: 'unavailable',
+        message: 'API is misconfigured for production (localhost). Set NUXT_PUBLIC_API_BASE_URL on Vercel and redeploy.',
+      }
+      return
+    }
     if (es) {
       es.close()
       es = null

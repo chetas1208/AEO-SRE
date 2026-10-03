@@ -1,9 +1,9 @@
 """Change Guard HTTP API: agents post intended ChangeSets, one decision comes back.
 
-Auth for POST: `Authorization: Bearer <CHANGE_GUARD_TOKEN>` (constant-time compare). With the env var unset the endpoint
-answers 503 CHANGE_GUARD_NOT_CONFIGURED (secure by default). Reading checks (GET) needs the same token: the UI reads `protection` on the experiment detail and
-`change_guard` on interventions instead. UI-originated checks never use this path or the token:
-they call `app.changeguard.service` directly (see the interventions routes).
+Auth for POST: `Authorization: Bearer <CHANGE_GUARD_TOKEN>` (constant-time compare). With the env var unset, POST
+answers 503 CHANGE_GUARD_NOT_CONFIGURED (secure by default). GET list is read-only from PostgreSQL for the control-plane
+UI: requires `org_id` and does not use the agent bearer token (external agents still POST with the token).
+UI-originated evaluations never use POST here; they call `app.changeguard.service` directly (interventions routes).
 """
 from __future__ import annotations
 
@@ -57,12 +57,16 @@ def _digest(s: str) -> bytes:
     return hashlib.sha256(s.encode("utf-8")).digest()
 
 
+async def rate_limit(request: Request) -> None:
+    _rate_limit(request)
+
+
 async def require_token(request: Request, authorization: Annotated[str | None, Header()] = None) -> None:
     configured = get_settings().change_guard_token
     if not configured:
         raise ChangeGuardNotConfigured(
             "Change Guard is not configured: set CHANGE_GUARD_TOKEN to enable POST /api/change-checks")
-    _rate_limit(request)
+    await rate_limit(request)
     scheme, _, supplied = (authorization or "").partition(" ")
     ok = scheme.lower() == "bearer" and bool(supplied.strip())
     # compare fixed-length digests in constant time; always compare, even when the header is malformed
@@ -71,7 +75,7 @@ async def require_token(request: Request, authorization: Annotated[str | None, H
         raise ChangeGuardUnauthorized("missing or invalid bearer token")
 
 
-router = APIRouter(prefix="/api/change-checks", tags=["change-guard"], dependencies=[Depends(require_token)])
+router = APIRouter(prefix="/api/change-checks", tags=["change-guard"])
 
 
 def check_out(cs: ChangeSet, check: ChangeCheck, *, replayed: bool = False) -> ChangeCheckOut:
@@ -104,7 +108,7 @@ async def publish_events(bus, check: ChangeCheck, cs: ChangeSet) -> None:
             log.warning("change_check.event_failed", error=type(exc).__name__)
 
 
-@router.post("", response_model=ChangeCheckOut, status_code=201)
+@router.post("", response_model=ChangeCheckOut, status_code=201, dependencies=[Depends(require_token)])
 async def create_change_check(body: ChangeSetIn, response: Response, session: SessionDep, bus: BusDep):
     """Create + evaluate a ChangeSet. 201 = new decision; 200 + `replayed: true` = same idempotency key and digest
     (the stored decision). Same key with a different proposal -> 409 CHANGE_CHECK_KEY_CONFLICT."""
@@ -127,9 +131,9 @@ async def create_change_check(body: ChangeSetIn, response: Response, session: Se
     return out
 
 
-@router.get("", response_model=ChangeCheckList)
+@router.get("", response_model=ChangeCheckList, dependencies=[Depends(rate_limit)])
 async def list_change_checks(
-    session: SessionDep, page: PageDep, org_id: uuid.UUID | None = None, decision: str | None = None,
+    session: SessionDep, page: PageDep, org_id: uuid.UUID, decision: str | None = None,
     target: str | None = None, experiment_code: str | None = None, source_mode: str | None = None,
     origin: str | None = None,
 ):

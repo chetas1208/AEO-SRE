@@ -8,7 +8,16 @@ const v = computed(() => e.value.verification ?? null)
 const ov = computed(() => e.value.override ?? null)
 
 const api = useVerifyExperiment(() => props.experiment.id)
-const canVerify = computed(() => !e.value.dryRun && ['executed', 'awaiting_verification'].includes(e.value.status))
+const canVerify = computed(() =>
+  !e.value.dryRun
+  && ['executed', 'awaiting_verification'].includes(e.value.status)
+  && v.value?.isOpen === true)
+const verifyHint = computed(() => {
+  if (e.value.dryRun || !['executed', 'awaiting_verification'].includes(e.value.status)) return null
+  if (v.value?.isOpen === true) return null
+  if (v.value?.eligibleAt) return `Verification unavailable until ${absoluteTime(v.value.eligibleAt)}.`
+  return 'Verification is not open yet; the backend sets the measurement window after execution.'
+})
 
 const LABELS: Record<string, string> = { favorable: 'Favorable', unfavorable: 'Unfavorable', neutral: 'Neutral', inconclusive: 'Inconclusive' }
 const TONES: Record<string, string> = { favorable: 'tone-good', unfavorable: 'tone-bad', neutral: 'tone-muted', inconclusive: 'tone-warn' }
@@ -42,7 +51,8 @@ const TONES: Record<string, string> = { favorable: 'tone-good', unfavorable: 'to
         <dt>Window ends</dt><dd>{{ v.windowEnd ? absoluteTime(v.windowEnd) : 'Unavailable' }}</dd>
         <dt>Executed</dt><dd>{{ v.executedAt ? absoluteTime(v.executedAt) : 'Not executed yet' }}</dd>
       </dl>
-      <div v-if="canVerify" class="stack xs">
+      <p v-if="verifyHint" class="meta tone-warn" data-testid="verify-blocked">{{ verifyHint }}</p>
+      <div v-else-if="canVerify" class="stack xs">
         <button type="button" :disabled="api.submitting.value" data-testid="verify-request" @click="api.verify()">
           {{ api.submitting.value ? 'Requesting…' : 'Request verification' }}
         </button>

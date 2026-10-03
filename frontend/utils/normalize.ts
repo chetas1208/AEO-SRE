@@ -369,7 +369,12 @@ export function normExperimentDetail(r: R): ExperimentDetail {
     executedBy: act.execution?.executedBy ?? null,
     executionNote: act.execution?.note ?? null,
     package: normPackage(act.execution?.package),
-    approval: apr ? { status: apr.status, decidedBy: apr.decidedBy ?? null, decidedAt: apr.decidedAt ?? null, note: apr.note ?? null } : null,
+    approval: apr ? {
+      status: apr.status,
+      decidedBy: apr.decidedBy ?? apr.decided_by ?? null,
+      decidedAt: apr.decidedAt ?? apr.decided_at ?? null,
+      note: apr.note ?? null
+    } : null,
     beforeMetrics: normMetricList(r.beforeMetrics),
     afterMetrics: normMetricList(r.afterMetrics),
     outcomeLabel: isObj(r.outcome) ? r.outcome.label ?? null : null,
@@ -405,7 +410,8 @@ export function normExperimentDetail(r: R): ExperimentDetail {
     evaluatedAt: sum.evaluatedAt ?? null,
     timeline: unwrapList<R>(r.timeline).map((t) => ({ at: t.at ?? null, event: t.event, actor: t.actor ?? null })),
     awaitingReward: !!r.awaitingReward,
-    protection: normProtection(r.protection)
+    protection: normProtection(r.protection),
+    source: str(sum.source ?? why.source ?? 'live')
   }
 }
 
@@ -531,10 +537,10 @@ export function normChangeCheck(raw: unknown): ChangeCheck {
     changeSetId: str(r.changeSetId),
     decision: normDecision(r.decision),
     agentId: str(agent.id ?? r.agentId),
-    agentName: str(agent.name ?? r.agentName),
+    agentName: str(agent.name ?? r.agentName ?? r.agent_name),
     sourceMode: sm === 'LIVE' || sm === 'SIMULATED' ? sm : null,
-    targetUrl: str(r.targetUrl ?? r.target),
-    actionType: str(r.actionType),
+    targetUrl: str(r.targetUrl ?? r.target_url ?? r.target),
+    actionType: str(r.actionType ?? r.action_type),
     findings,
     eligibleAfter: str(r.eligibleAfter),
     semanticCheck: typeof sem === 'string' ? sem : isObj(sem) ? str(sem.state ?? sem.status) : null,
@@ -560,8 +566,8 @@ export function normProtection(raw: unknown): ExperimentProtection | null {
     protected: typeof raw.protected === 'boolean' ? raw.protected : null,
     until: str(raw.until ?? raw.eligibleAfter),
     targets: Array.isArray(raw.targets) ? raw.targets.map(String) : [],
-    checksBlockedCount: num(raw.checksBlockedCount),
-    recentChecks: unwrapList(raw.recentChecks).map(normChangeCheck)
+    checksBlockedCount: num(raw.checksBlockedCount ?? raw.checks_blocked_count),
+    recentChecks: unwrapList(raw.recentChecks ?? raw.recent_checks).map(normChangeCheck)
   }
 }
 

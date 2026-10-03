@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 import structlog
-from sqlalchemy import String, cast, func, select, text
+from sqlalchemy import String, cast, func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -708,12 +708,16 @@ async def protection_for(session: AsyncSession, exp: Experiment) -> dict[str, An
     targets = await experiment_targets(session, exp, inc)
     protected = ExperimentStatus(exp.status) in PROTECTING and not exp.dry_run
     until, basis = eligible_for(exp, now) if protected else (None, None)
-    needle = cast(ChangeCheck.experiment_refs, String).contains(f'"{exp.id}"')
+    from app.api.mappers import exp_code
+
+    code = exp_code(exp.number, exp.id)
+    col = cast(ChangeCheck.experiment_refs, String)
+    ref_match = or_(col.contains(f'"{exp.id}"'), col.contains(f'"{code}"'))
     held = (await session.execute(select(func.count()).select_from(ChangeCheck).where(
-        needle, ChangeCheck.decision.in_([Decision.DELAY.value, Decision.BLOCK.value])))).scalar_one()
+        ref_match, ChangeCheck.decision.in_([Decision.DELAY.value, Decision.BLOCK.value])))).scalar_one()
     rows = (await session.execute(
         select(ChangeSet, ChangeCheck).join(ChangeCheck, ChangeCheck.change_set_id == ChangeSet.id)
-        .where(needle).order_by(ChangeCheck.created_at.desc(), ChangeCheck.id.desc()).limit(10))).all()
+        .where(ref_match).order_by(ChangeCheck.created_at.desc(), ChangeCheck.id.desc()).limit(10))).all()
     return {"protected": protected, "until": iso(until), "until_basis": basis, "targets": targets,
             "checks_blocked_count": int(held),
             "recent_checks": [check_summary(cs, ck, experiment_ref=str(exp.id)) for cs, ck in rows]}

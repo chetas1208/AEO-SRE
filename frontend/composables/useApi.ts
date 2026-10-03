@@ -1,8 +1,9 @@
 import type { ApiErrorInfo } from '~/types'
+import { normalizeApiBase } from '~/utils/apiBase'
 import { guardErrorMessage } from '~/utils/guard'
 
 export function useApiBase(): string {
-  return String(useRuntimeConfig().public.apiBaseUrl || '').replace(/\/+$/, '')
+  return normalizeApiBase(String(useRuntimeConfig().public.apiBaseUrl || ''))
 }
 
 /** Error codes the UI branches on (see docs/UI_API_CONTRACT.md). */
@@ -67,6 +68,7 @@ export async function apiFetch<T = any>(
       query,
       body: opts.body as any,
       signal: opts.signal,
+      credentials: 'include',
       headers: { Accept: 'application/json', ...(opts.headers ?? {}) }
     })
     return camelize<T>(raw)

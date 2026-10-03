@@ -186,6 +186,14 @@ ANTHROPIC_API_KEY=...
 NEO4J_URI=neo4j+s://...
 NEO4J_PASSWORD=...
 
-# Frontend Runtime
+# Frontend Runtime (Vercel Production — required; redeploy after changing)
 NUXT_PUBLIC_API_BASE_URL=https://destinations-cams-easily-comparing.trycloudflare.com
+```
+
+**Browser rule:** `NUXT_PUBLIC_API_BASE_URL` must be the **public Cloudflare HTTPS hostname**. Never `http://localhost:8000` in Vercel Production — the visitor's browser cannot reach your server's loopback. Local dev may use `http://localhost:8000` in root `.env` only.
+
+**Topology:**
+
+```text
+aeo-sre.vercel.app  →  NUXT_PUBLIC_API_BASE_URL (HTTPS)  →  cloudflared  →  127.0.0.1:8000  →  FastAPI
 ```

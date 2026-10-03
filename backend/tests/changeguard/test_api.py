@@ -19,13 +19,13 @@ def code(r):
 
 
 # ---------------------------------------------------------------- auth
-async def test_unset_token_is_503_not_configured_for_every_method(app_client, org, monkeypatch):
+async def test_unset_token_is_503_for_post_only(app_client, org, monkeypatch):
     monkeypatch.delenv("CHANGE_GUARD_TOKEN", raising=False)
     get_settings.cache_clear()
     for r in (await app_client.post("/api/change-checks", json=body(org), headers=AUTH),
-              await app_client.post("/api/change-checks", json=body(org)),
-              await app_client.get("/api/change-checks")):
+              await app_client.post("/api/change-checks", json=body(org))):
         assert r.status_code == 503 and code(r) == "CHANGE_GUARD_NOT_CONFIGURED", r.text
+    assert (await app_client.get("/api/change-checks", params={"org_id": str(org.id)})).status_code == 200
 
 
 async def test_missing_or_wrong_token_is_401_and_stores_nothing(app_client, org, token, session):
@@ -34,7 +34,7 @@ async def test_missing_or_wrong_token_is_401_and_stores_nothing(app_client, org,
         r = await app_client.post("/api/change-checks", json=body(org), headers=headers)
         assert r.status_code == 401 and code(r) == "CHANGE_GUARD_UNAUTHORIZED", (headers, r.text)
     assert (await session.execute(select(func.count()).select_from(ChangeSet))).scalar() == 0
-    assert (await app_client.get("/api/change-checks")).status_code == 401
+    assert (await app_client.get("/api/change-checks", params={"org_id": str(org.id)})).status_code == 200
 
 
 async def test_auth_runs_before_body_validation(app_client, token):
@@ -66,9 +66,10 @@ def test_log_redaction_scrubs_the_configured_token(monkeypatch):
 async def test_rate_limit_returns_429(app_client, org, token, monkeypatch):
     monkeypatch.setenv("CHANGE_GUARD_RATE_LIMIT_PER_MINUTE", "3")
     get_settings.cache_clear()
-    codes = [(await app_client.get("/api/change-checks", headers=AUTH)).status_code for _ in range(5)]
+    params = {"org_id": str(org.id)}
+    codes = [(await app_client.get("/api/change-checks", params=params, headers=AUTH)).status_code for _ in range(5)]
     assert codes == [200, 200, 200, 429, 429]
-    r = await app_client.get("/api/change-checks", headers=AUTH)
+    r = await app_client.get("/api/change-checks", params=params, headers=AUTH)
     assert code(r) == "RATE_LIMITED" and r.json()["error"]["details"]["retry_after_seconds"] >= 1
 
 
@@ -140,17 +141,17 @@ async def test_list_filters_and_pagination(app_client, org, token, session):
     await app_client.post("/api/change-checks", json=body(org, target_url="https://testco.example/x"), headers=AUTH)
     await app_client.post("/api/change-checks", json=body(other), headers=AUTH)
 
-    r = await app_client.get("/api/change-checks", headers=AUTH)
-    assert r.json()["total"] == 5 and r.json()["limit"] == 50
-    assert (await app_client.get("/api/change-checks", params={"org_id": str(org.id)}, headers=AUTH)).json()["total"] == 4
-    assert (await app_client.get("/api/change-checks", params={"decision": "delay"}, headers=AUTH)).json()["total"] == 3
-    t = await app_client.get("/api/change-checks", params={"target": PAGE + "/"}, headers=AUTH)
+    oid = str(org.id)
+    r = await app_client.get("/api/change-checks", params={"org_id": oid}, headers=AUTH)
+    assert r.json()["total"] == 4 and r.json()["limit"] == 50
+    assert (await app_client.get("/api/change-checks", params={"org_id": oid, "decision": "delay"}, headers=AUTH)).json()["total"] == 3
+    t = await app_client.get("/api/change-checks", params={"org_id": oid, "target": PAGE + "/"}, headers=AUTH)
     assert t.json()["total"] == 3
-    e = await app_client.get("/api/change-checks", params={"experiment_code": "exp-0001"}, headers=AUTH)
+    e = await app_client.get("/api/change-checks", params={"org_id": oid, "experiment_code": "exp-0001"}, headers=AUTH)
     assert e.json()["total"] == 3
-    p = await app_client.get("/api/change-checks", params={"limit": 2, "offset": 4}, headers=AUTH)
-    assert len(p.json()["items"]) == 1 and p.json()["total"] == 5
-    assert (await app_client.get("/api/change-checks", params={"limit": 0}, headers=AUTH)).status_code == 422
+    p = await app_client.get("/api/change-checks", params={"org_id": oid, "limit": 2, "offset": 2}, headers=AUTH)
+    assert len(p.json()["items"]) == 2 and p.json()["total"] == 4
+    assert (await app_client.get("/api/change-checks", params={"org_id": oid, "limit": 0}, headers=AUTH)).status_code == 422
     first = r.json()["items"][0]
     one = await app_client.get(f"/api/change-checks/{first['id']}", headers=AUTH)
     assert one.status_code == 200 and one.json()["id"] == first["id"]

@@ -64,6 +64,7 @@ async function save() {
     </section>
 
     <section v-else-if="tab === 'integrations'" class="stack">
+      <p><NuxtLink to="/settings/connections">Muse OAuth connections →</NuxtLink></p>
       <LoadingState v-if="settings.pending.value && !settings.data.value" message="Checking integrations…" />
       <ErrorState v-else-if="settings.error.value && !settings.data.value" :error="settings.error.value" surface="Integration status" @retry="settings.refresh()" />
       <EmptyState v-else-if="!integrations.length" title="The API reported no integrations." />

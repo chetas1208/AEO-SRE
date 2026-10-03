@@ -36,9 +36,9 @@ function getScoreWidth(score: number): string {
     <div class="row spread">
       <div class="row" style="gap: 8px;">
         <h3>Policy Learning</h3>
-        <span class="meta faint">(Contextual Bandit)</span>
+        <span class="meta faint">Adaptive selection</span>
       </div>
-      <span class="badge tone-policy">Version {{ e.policyVersion ?? 'unavailable' }}</span>
+      <span v-if="e.policyVersion" class="badge tone-policy">Version {{ e.policyVersion }}</span>
     </div>
 
     <div class="policy-sub meta dim">

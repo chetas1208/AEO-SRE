@@ -164,3 +164,7 @@ class ExperimentCreateIn(ApiModel):
     notes: str | None = None
     dry_run: bool = False
     auto_activate: bool = True
+    run_mode: str = Field(
+        default="live",
+        description="Internal automation only: live (Profound baseline + worker verify) or test (CI sandbox).",
+    )
