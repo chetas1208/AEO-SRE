@@ -250,8 +250,11 @@ async def _profound_evidence(session: AsyncSession, inc: Incident, origin: Metri
     name Profound only when the cited signals actually came from Profound.
     """
     origin = origin or await _metric_origin(session, inc)
+    # Only the metric-change rows this function rebuilds; other PROFOUND evidence (e.g. discovery-gap perception
+    # rows from factcheck/answers) must survive an investigation start.
     await session.execute(delete(Evidence).where(Evidence.incident_id == inc.id,
-                                                 Evidence.type == EvidenceType.PROFOUND.value))
+                                                 Evidence.type == EvidenceType.PROFOUND.value,
+                                                 Evidence.retrieval_method.like("%.signal_series")))
     detection = {d.get("metric"): d for d in (inc.context or {}).get("detection", [])}
     signal_ids = (inc.context or {}).get("signal_ids", [])
     now = utcnow()

@@ -93,7 +93,8 @@ async def _category(session: AsyncSession, client: Any, org: Organization, categ
 def _brand_terms(org: Organization) -> list[str]:
     from app.connectors.profound.normalize import domain_of
 
-    terms = {(org.name or "").strip().lower(), domain_of(org.domain).split(".")[0]}
+    name = (org.name or "").strip().lower()
+    terms = {name, name.split()[0] if name else "", domain_of(org.domain).split(".")[0]}
     return sorted(t for t in terms if len(t) >= 3)
 
 
