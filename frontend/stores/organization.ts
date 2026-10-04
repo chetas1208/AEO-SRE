@@ -10,12 +10,18 @@ export const useOrganizationStore = defineStore('organization', () => {
 
   const current = computed(() => orgs.value.find((o) => o.id === currentId.value) ?? orgs.value[0] ?? null)
 
+  function defaultOrgId(list: Organization[]): string | null {
+    return list.find((o) => o.domain === 'mixpanel.com')?.id ?? list[0]?.id ?? null
+  }
+
   async function load() {
     loading.value = true
     try {
       const raw = await apiFetch('/api/organizations')
       orgs.value = unwrapList(raw, 'organizations').map(normOrganization)
-      if (!orgs.value.some((o) => o.id === currentId.value)) currentId.value = orgs.value[0]?.id ?? null
+      if (!orgs.value.some((o) => o.id === currentId.value)) {
+        currentId.value = defaultOrgId(orgs.value)
+      }
       error.value = null
     } catch (e) {
       error.value = e as ApiErrorInfo

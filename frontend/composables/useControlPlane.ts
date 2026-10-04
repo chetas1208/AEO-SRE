@@ -23,6 +23,8 @@ export function useControlPlane() {
 
   function setupSSE() {
     if (typeof EventSource === 'undefined') return
+    const config = useRuntimeConfig()
+    if (config.public.apiSameOrigin) return
     if (isBrowserApiMisconfigured()) {
       error.value = {
         kind: 'unavailable',

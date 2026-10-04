@@ -60,6 +60,37 @@ const form = reactive<{
   autoActivate: true,
 })
 
+const mixpanelMetricOptions = ref<Array<{ value: string; label: string; expected: string }>>([])
+const baselinePreview = ref<{ status?: string; metrics?: Record<string, number>; primary_value?: number | null } | null>(null)
+const baselineLoading = ref(false)
+
+async function loadBaselinePreview() {
+  baselineLoading.value = true
+  try {
+    const org = useOrganizationStore()
+    const q: Record<string, string> = { primary_metric: form.primaryMetric }
+    if (org.currentId) q.org_id = org.currentId
+    baselinePreview.value = await apiFetch('/api/experiments/baseline-preview', { query: q })
+  } catch {
+    baselinePreview.value = { status: 'ERROR', metrics: {} }
+  } finally {
+    baselineLoading.value = false
+  }
+}
+
+async function loadMixpanelCatalog() {
+  try {
+    const cat = await apiFetch<{ metrics?: Array<{ id: string; label: string }> }>('/api/integrations/mixpanel/catalog')
+    mixpanelMetricOptions.value = (cat.metrics ?? []).map((m) => ({
+      value: m.id,
+      label: `Mixpanel · ${m.label}`,
+      expected: 'event count',
+    }))
+  } catch {
+    mixpanelMetricOptions.value = []
+  }
+}
+
 // Sync props to form on open
 watch(
   () => props.modelValue,
@@ -77,9 +108,17 @@ watch(
       form.verificationHours = 48
       form.autoActivate = true
       void loadMixpanelCatalog()
+      void loadBaselinePreview()
     }
   },
   { immediate: true }
+)
+
+watch(
+  () => form.primaryMetric,
+  () => {
+    if (props.modelValue) void loadBaselinePreview()
+  }
 )
 
 const ACTION_OPTIONS = [
@@ -98,22 +137,7 @@ const PROFOUND_METRICS = [
   { value: 'competitor_share', label: 'Competitor Share of Voice', expected: 'decrease' },
 ]
 
-const mixpanelMetricOptions = ref<Array<{ value: string; label: string; expected: string }>>([])
-
 const METRIC_OPTIONS = computed(() => [...PROFOUND_METRICS, ...mixpanelMetricOptions.value])
-
-async function loadMixpanelCatalog() {
-  try {
-    const cat = await apiFetch<{ metrics?: Array<{ id: string; label: string }> }>('/api/integrations/mixpanel/catalog')
-    mixpanelMetricOptions.value = (cat.metrics ?? []).map((m) => ({
-      value: m.id,
-      label: `Mixpanel · ${m.label}`,
-      expected: 'event count',
-    }))
-  } catch {
-    mixpanelMetricOptions.value = []
-  }
-}
 
 const WINDOW_OPTIONS = [
   { hours: 24, label: '24 Hours (Fast verification)' },
@@ -277,8 +301,16 @@ async function submit() {
                 <span class="baseline-val font-mono">{{ form.primaryMetric }}</span>
               </div>
               <div class="baseline-item">
+                <span class="baseline-label">Live baseline</span>
+                <span v-if="baselineLoading" class="baseline-val">Syncing…</span>
+                <span v-else-if="baselinePreview?.primary_value != null" class="baseline-val">
+                  {{ baselinePreview.primary_value <= 1.5 ? (baselinePreview.primary_value * 100).toFixed(2) + '%' : baselinePreview.primary_value }}
+                </span>
+                <span v-else class="baseline-val tone-warn">No signals — run Profound sync</span>
+              </div>
+              <div class="baseline-item">
                 <span class="baseline-label">Source</span>
-                <span class="baseline-val">Profound LIVE</span>
+                <span class="baseline-val">{{ baselinePreview?.status === 'OK' ? 'Profound LIVE' : (baselinePreview?.status ?? '—') }}</span>
               </div>
             </div>
             <p class="baseline-note">Captured live from backend telemetry. Never fabricated or manually inflated.</p>
@@ -588,6 +620,11 @@ async function submit() {
   font-weight: 700;
   color: #38bdf8;
   font-family: monospace;
+}
+.baseline-val.tone-warn {
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .baseline-note {

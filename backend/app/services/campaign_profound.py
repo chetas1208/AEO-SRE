@@ -9,17 +9,13 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.core import Organization, Signal
+from app.models.core import Signal
+from app.services.org_defaults import resolve_live_brand_org_id
 from app.services.pipeline import _canon, metric_snapshot
-
-DEFAULT_ORG_DOMAIN = "mixpanel.com"
 
 
 async def resolve_brand_org_id(session: AsyncSession) -> uuid.UUID | None:
-    row = (
-        await session.execute(select(Organization.id).where(Organization.domain == DEFAULT_ORG_DOMAIN))
-    ).first()
-    return row[0] if row else None
+    return await resolve_live_brand_org_id(session)
 
 
 def _pp_delta(now: float | None, before: float | None) -> float | None:

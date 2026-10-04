@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
 from fastapi import APIRouter, Request
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import BusDep, SessionDep
 from app.api.routes.campaigns import CAMPAIGNS_DB
 from app.domain.enums import ExperimentStatus
-from app.graph.sse import merge_streams
+from app.graph.sse import graph_projected_events, merge_streams
+from app.models.core import Incident
 from app.models.interventions import Experiment
 from app.schemas.control_plane import (
     AgentActivity,
@@ -165,7 +166,7 @@ DECISIONS_REGISTRY: list[dict[str, Any]] = [
 @router.get("", response_model=ControlPlaneResponse)
 async def get_control_plane(session: SessionDep):
     """Aggregated flight deck state: summary KPIs, active agents, campaign financial health, decisions, and 3D topology."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # 1. Campaigns summary & financial cards
     campaign_cards: list[CampaignFinancialCard] = []
@@ -208,8 +209,37 @@ async def get_control_plane(session: SessionDep):
             return_source="ATTRIBUTED",
             primary_channel=c.get("primary_channel", "Search LLMs & Docs"),
             active_agents_count=len([a for a in AGENTS_REGISTRY if a["campaign_id"] == c["id"]]),
-            active_experiments_count=1 if c["id"] == "cmp-ai-discovery-launch-01" else 0,
+            active_experiments_count=0,  # filled below from DB
         ))
+
+    # Live experiment counts per campaign_id (from incident context + proposed_change)
+    campaign_exp_counts: dict[str, int] = {}
+    all_exps = (await session.execute(select(Experiment))).scalars().all()
+    active_statuses = {
+        ExperimentStatus.PROPOSED.value,
+        ExperimentStatus.APPROVED.value,
+        ExperimentStatus.EXECUTING.value,
+        ExperimentStatus.EXECUTED.value,
+        ExperimentStatus.AWAITING_VERIFICATION.value,
+    }
+    for e in all_exps:
+        st = e.status.value if hasattr(e.status, "value") else str(e.status)
+        if st not in active_statuses:
+            continue
+        inc_row = await session.get(Incident, e.incident_id) if e.incident_id else None
+        cid = None
+        if inc_row and isinstance(inc_row.context, dict):
+            cid = inc_row.context.get("campaign_id")
+        if not cid and e.intervention_id:
+            from app.models.interventions import Intervention
+
+            iv = await session.get(Intervention, e.intervention_id)
+            if iv and isinstance(iv.proposed_change, dict):
+                cid = iv.proposed_change.get("campaign_id")
+        if cid:
+            campaign_exp_counts[str(cid)] = campaign_exp_counts.get(str(cid), 0) + 1
+    for card in campaign_cards:
+        card.active_experiments_count = campaign_exp_counts.get(card.id, 0)
 
     # 2. Query actual Experiments from DB
     exp_rows = (await session.execute(
@@ -277,9 +307,13 @@ async def get_control_plane(session: SessionDep):
     pending_decisions = len([d for d in enriched_decisions if d.status == "PENDING_REVIEW"])
 
     # 5. Experiments measuring
-    measuring_exps = len([
-        e for e in exp_cards if e.status in ("awaiting_verification", "executing", "running", "executed")
-    ])
+    measuring_statuses = {
+        ExperimentStatus.APPROVED.value,
+        ExperimentStatus.EXECUTING.value,
+        ExperimentStatus.EXECUTED.value,
+        ExperimentStatus.AWAITING_VERIFICATION.value,
+    }
+    measuring_exps = len([e for e in exp_cards if e.status in measuring_statuses])
 
     summary = ControlPlaneSummary(
         active_agents=len([a for a in AGENTS_REGISTRY if a["state"] in ("RUNNING", "REVIEW")]),
@@ -576,7 +610,7 @@ async def control_plane_events(request: Request, bus: BusDep):
     """Real-time SSE event stream for the Agent Control Plane flight deck."""
 
     async def stream():
-        async for item in merge_streams(bus.subscribe_global(heartbeat_seconds=8)):
+        async for item in merge_streams(bus.subscribe_global(heartbeat_seconds=8), graph_projected_events()):
             yield {"event": item.get("type", "message"), "data": json.dumps(item)}
 
     return EventSourceResponse(

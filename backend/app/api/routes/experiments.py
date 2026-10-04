@@ -1,11 +1,11 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 
-from datetime import datetime, timedelta, timezone
 from app.api.deps import ActorDep, BusDep, PageDep, SessionDep
 from app.api.errors import ApiError, Conflict, NotFound
 from app.api.locks import entity_lock
@@ -22,7 +22,14 @@ from app.api.mappers import (
 )
 from app.core.audit import audit
 from app.core.queue import enqueue
-from app.domain.enums import ActionType, ApprovalStatus, ExperimentStatus, IncidentCategory, IncidentState, Severity
+from app.domain.enums import (
+    ActionType,
+    ApprovalStatus,
+    ExperimentStatus,
+    IncidentCategory,
+    IncidentState,
+    Severity,
+)
 from app.domain.errors import ExperimentNotVerifiable
 from app.experiments import window as vwindow
 from app.experiments.collision import find_collisions, scope_key
@@ -53,6 +60,28 @@ VERIFIABLE = {ExperimentStatus.EXECUTED.value, ExperimentStatus.AWAITING_VERIFIC
 
 def _status_values(group_or_status: str) -> list[str]:
     return list(SUMMARY_GROUPS.get(group_or_status, (group_or_status,)))
+
+
+@router.get("/baseline-preview")
+async def experiment_baseline_preview(
+    session: SessionDep,
+    primary_metric: str = "visibility",
+    org_id: uuid.UUID | None = None,
+):
+    """Live Profound (+ optional Mixpanel) baselines for the create-experiment UI."""
+    from app.services.org_defaults import resolve_live_brand_org_id
+
+    oid = org_id or await resolve_live_brand_org_id(session)
+    if oid is None:
+        return {"status": "NO_ORG", "metrics": {}, "primary_metric": primary_metric}
+    metrics = await _live_metric_baseline(session, oid, None)
+    return {
+        "status": "OK" if metrics else "NO_SIGNALS",
+        "organization_id": str(oid),
+        "primary_metric": primary_metric,
+        "metrics": metrics,
+        "primary_value": metrics.get(primary_metric),
+    }
 
 
 @router.get("", response_model=ExperimentList)
@@ -128,7 +157,7 @@ async def create_experiment(
     """Create a new experiment with full hypothesis, action, baseline metrics, target protection, and verification schedule."""
     from app.core.config import get_settings
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     run_mode = _normalize_run_mode(data.run_mode)
     if run_mode == "test" and not get_settings().allow_test_run_mode:
         raise ApiError(
@@ -138,7 +167,7 @@ async def create_experiment(
             code="TEST_RUN_MODE_DISABLED",
         )
 
-    # 1. Resolve org_id
+    # 1. Resolve org_id (live Profound brand org, not arbitrary first row in Postgres)
     org_id = data.org_id
     if not org_id:
         if data.incident_id:
@@ -147,10 +176,14 @@ async def create_experiment(
                 raise NotFound(f"incident {data.incident_id} not found")
             org_id = existing_inc.org_id
         else:
-            first_org = (await session.execute(select(Organization).limit(1))).scalar()
-            if not first_org:
-                raise Conflict("No organization found to bind experiment")
-            org_id = first_org.id
+            from app.services.org_defaults import resolve_live_brand_org_id
+
+            org_id = await resolve_live_brand_org_id(session)
+            if org_id is None:
+                first_org = (await session.execute(select(Organization).limit(1))).scalar()
+                if not first_org:
+                    raise Conflict("No organization found to bind experiment")
+                org_id = first_org.id
 
     # 2. Resolve or create Incident
     inc: Incident | None = None
@@ -192,14 +225,14 @@ async def create_experiment(
         )
         session.add(inc)
         await session.flush()
-        live_before = await _live_metric_baseline(session, org_id, cluster.id)
+        live_before = await _live_metric_baseline(session, org_id, None)
         if live_before:
             inc.metrics = [{"key": k, "before": v, "after": v, "source": "profound"} for k, v in live_before.items()]
 
     # 3. Resolve baseline metrics (measured signals first; never substitute demo fixtures for live runs)
     before = {}
-    if not (inc.metrics or []) and inc.prompt_cluster_id:
-        live_before = await _live_metric_baseline(session, org_id, inc.prompt_cluster_id)
+    if not (inc.metrics or []):
+        live_before = await _live_metric_baseline(session, org_id, None)
         if live_before:
             inc.metrics = [{"key": k, "before": v, "after": v, "source": "profound"} for k, v in live_before.items()]
     for m in (inc.metrics or []):
@@ -220,7 +253,7 @@ async def create_experiment(
 
     mp_event = parse_mixpanel_metric_key(data.primary_metric)
     if mp_event and data.primary_metric not in before:
-        end = datetime.now(timezone.utc)
+        end = datetime.now(UTC)
         start = end - timedelta(days=7)
         before[data.primary_metric] = float(
             await count_events(session, org_id=org_id, event_name=mp_event, start=start, end=end)
@@ -302,9 +335,20 @@ async def create_experiment(
         declared_at=now,
     ).to_json()
 
-    exp_status = ExperimentStatus.AWAITING_VERIFICATION if data.auto_activate else ExperimentStatus.PROPOSED
+    exp_status = ExperimentStatus.PROPOSED
     if data.auto_activate:
-        inc.state = IncidentState.AWAITING_VERIFICATION.value
+        from app.incidents.state_machine import can_transition, transition as inc_transition
+
+        for dst in (
+            IncidentState.AWAITING_APPROVAL,
+            IncidentState.APPROVED,
+            IncidentState.EXECUTING,
+            IncidentState.EXECUTED,
+            IncidentState.AWAITING_VERIFICATION,
+        ):
+            if can_transition(inc.state, dst):
+                inc_transition(inc, dst, actor or "human", "activated on experiment creation")
+                await session.flush()
 
     # Check collision (contamination)
     dummy_exp = Experiment(
@@ -312,7 +356,7 @@ async def create_experiment(
         incident_id=inc.id,
         intervention_id=iv.id,
         selected_action=action,
-        status=exp_status,
+        status=ExperimentStatus.PROPOSED,
         target_key=target_key,
         dry_run=data.dry_run,
     )
@@ -336,7 +380,7 @@ async def create_experiment(
         evidence_snapshot={},
         before_metrics=before,
         after_metrics=None,
-        status=exp_status,
+        status=ExperimentStatus.PROPOSED,
         verification_window_start=w_start,
         verification_window_end=w_end,
         executed_at=executed_at,
@@ -348,7 +392,6 @@ async def create_experiment(
         approved_change=iv.proposed_change if data.auto_activate else None,
         timeline=[
             {"from": None, "to": ExperimentStatus.PROPOSED.value, "actor": actor or "human", "reason": "experiment created", "at": now.isoformat()},
-            *([{"from": ExperimentStatus.PROPOSED.value, "to": exp_status.value, "actor": actor or "human", "reason": "activated on creation", "at": now.isoformat()}] if data.auto_activate else []),
         ],
         spec=spec,
         target_key=target_key,
@@ -373,6 +416,19 @@ async def create_experiment(
         await session.flush()
         exp.approval_id = approval.id
         exp.approver = approval.decided_by
+        await session.flush()
+
+    if data.auto_activate:
+        from app.experiments.status import transition as exp_transition
+
+        for dst in (
+            ExperimentStatus.APPROVED,
+            ExperimentStatus.EXECUTING,
+            ExperimentStatus.EXECUTED,
+            ExperimentStatus.AWAITING_VERIFICATION,
+        ):
+            exp_transition(exp, dst, actor or "human", "activated on creation", now=now)
+            await session.flush()
 
     # 8. Emit SSE event
     try:
