@@ -74,13 +74,20 @@ async def experiment_baseline_preview(
     oid = org_id or await resolve_live_brand_org_id(session)
     if oid is None:
         return {"status": "NO_ORG", "metrics": {}, "primary_metric": primary_metric}
+    from app.experiments.spec import resolve_primary_metric
+
     metrics = await _live_metric_baseline(session, oid, None)
+    resolved = resolve_primary_metric(category=None, before=metrics, requested=primary_metric) if metrics else None
+    primary_value = metrics.get(primary_metric) if metrics else None
+    if primary_value is None and resolved and metrics:
+        primary_value = metrics.get(resolved)
     return {
         "status": "OK" if metrics else "NO_SIGNALS",
         "organization_id": str(oid),
         "primary_metric": primary_metric,
+        "resolved_primary_metric": resolved,
         "metrics": metrics,
-        "primary_value": metrics.get(primary_metric),
+        "primary_value": primary_value,
     }
 
 
@@ -250,6 +257,7 @@ async def create_experiment(
                 code="BASELINE_UNAVAILABLE",
             )
     from app.integrations.mixpanel.metrics import count_events, parse_mixpanel_metric_key
+    from app.experiments.spec import resolve_primary_metric
 
     mp_event = parse_mixpanel_metric_key(data.primary_metric)
     if mp_event and data.primary_metric not in before:
@@ -258,16 +266,29 @@ async def create_experiment(
         before[data.primary_metric] = float(
             await count_events(session, org_id=org_id, event_name=mp_event, start=start, end=end)
         )
-    if data.primary_metric not in before:
+
+    effective_primary = resolve_primary_metric(
+        category=inc.category, before=before, requested=data.primary_metric
+    )
+    if effective_primary is None:
         if run_mode == "test":
             before[data.primary_metric] = 50.0
+            effective_primary = data.primary_metric
         else:
             raise ApiError(
-                f"No measured baseline for primary metric '{data.primary_metric}'.",
+                f"No measured baseline for primary metric '{data.primary_metric}' "
+                "(and no fallback metrics are available for this org yet).",
                 status_code=409,
                 error_type="conflict",
                 code="BASELINE_UNAVAILABLE",
             )
+    elif effective_primary != (data.primary_metric or "").strip().lower() and mp_event is None:
+        log.info(
+            "experiment.primary_metric_fallback",
+            requested=data.primary_metric,
+            effective=effective_primary,
+            incident_id=str(inc.id),
+        )
 
     # 4. Resolve ActionType
     try:

@@ -109,6 +109,16 @@ def choose_primary(category: str | None, before: Mapping[str, Any]) -> str | Non
     return have[0] if have else None
 
 
+def resolve_primary_metric(
+    *, category: str | None, before: Mapping[str, Any], requested: str | None
+) -> str | None:
+    """Prefer a measured requested metric; otherwise pick deterministically from category + snapshot."""
+    req = canonical_metric(requested or "") if requested else None
+    if req and metric_value(before, req) is not None:
+        return req
+    return choose_primary(category, before)
+
+
 def build_spec(
     *, action: ActionType | str, root_cause: str | None, category: str | None, before_metrics: Mapping[str, Any],
     window_start: datetime, window_end: datetime | None, executed_after: timedelta | None = None,

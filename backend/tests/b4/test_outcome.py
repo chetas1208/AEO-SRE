@@ -1,7 +1,7 @@
 """Outcome methodology (B4 task 5 + 9): labels, observe mapping, inconclusive handling, causal wording."""
 from app.domain.enums import ActionType, Risk
 from app.experiments.outcome import ObserveOutcome, Outcome, assess
-from app.experiments.spec import build_spec, validate_spec
+from app.experiments.spec import build_spec, resolve_primary_metric, validate_spec
 
 BEFORE = {"visibility": 0.40, "citation_share": 0.20, "accuracy": 0.90, "competitor_share": 0.50}
 
@@ -94,3 +94,9 @@ def test_nothing_comparable_at_all_is_not_an_outcome_it_keeps_waiting():
 
     with pytest.raises(NoObservation):
         _a({"unrelated_metric": 5.0})
+
+
+def test_resolve_primary_metric_falls_back_when_requested_not_measured():
+    before = {"visibility": 0.83, "citation_share": 0.02}
+    assert resolve_primary_metric(category="factual_conflict", before=before, requested="accuracy") == "citation_share"
+    assert resolve_primary_metric(category="visibility_drop", before=before, requested="accuracy") == "visibility"

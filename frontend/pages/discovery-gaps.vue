@@ -356,7 +356,7 @@ function submitModify() {
       :initial-action="experimentSeed.action"
       :initial-target-url="experimentSeed.targetUrl"
       :initial-target-key="experimentSeed.targetKey"
-      initial-primary-metric="accuracy"
+      :initial-primary-metric="experimentSeed.primaryMetric"
       :initial-incident-id="experimentSeed.incidentId"
       @created="onExperimentCreated"
     />
