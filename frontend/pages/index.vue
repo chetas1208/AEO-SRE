@@ -4,7 +4,10 @@ import type { ControlPlaneGraphNode, ExperimentDetail } from '~/types'
 import ControlPlaneGraph from '~/components/control-plane/ControlPlaneGraph.vue'
 import CampaignCreateDrawer from '~/components/campaigns/CampaignCreateDrawer.vue'
 import ExperimentCreateDrawer from '~/components/experiments/ExperimentCreateDrawer.vue'
+import ProfoundLiveRail from '~/components/profound/ProfoundLiveRail.vue'
 import MixpanelStatusRail from '~/components/mixpanel/MixpanelStatusRail.vue'
+
+const showOptionalMixpanel = ref(false)
 
 const { data, isLoading, error, refresh } = useControlPlane()
 
@@ -173,8 +176,14 @@ function formatCost(val?: number | null): string {
       </div>
     </section>
 
-    <!-- MIXPANEL LIVE BEHAVIORAL EVENT FEED -->
-    <MixpanelStatusRail />
+    <!-- LIVE DATA: Profound API (primary) -->
+    <ProfoundLiveRail />
+
+    <!-- Optional: Mixpanel product analytics (separate from Profound; not required for live discovery) -->
+    <details class="optional-mixpanel" @toggle="showOptionalMixpanel = ($event.target as HTMLDetailsElement).open">
+      <summary>Optional Mixpanel export (not your live Profound feed)</summary>
+      <MixpanelStatusRail v-if="showOptionalMixpanel" />
+    </details>
 
     <!-- CENTERPIECE: LIVING CONTROL PLANE GRAPH (60-70% OF VIEWPORT) -->
     <main class="control-plane-centerpiece" aria-label="Control Plane Knowledge Graph">
@@ -205,6 +214,23 @@ function formatCost(val?: number | null): string {
 </template>
 
 <style scoped>
+.optional-mixpanel {
+  font-size: 12px;
+  color: #64748b;
+}
+.optional-mixpanel summary {
+  cursor: pointer;
+  padding: 8px 4px;
+  list-style: none;
+}
+.optional-mixpanel summary::-webkit-details-marker {
+  display: none;
+}
+.optional-mixpanel[open] summary {
+  margin-bottom: 8px;
+  color: #94a3b8;
+}
+
 .control-plane-page {
   display: flex;
   flex-direction: column;

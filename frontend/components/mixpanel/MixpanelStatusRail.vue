@@ -147,21 +147,21 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- NOT_CONFIGURED state: clear actionable guidance -->
-    <div v-if="badge === 'NOT_CONFIGURED'" class="state-panel state-unconfigured">
-      <div class="state-icon">⬡</div>
+    <!-- NOT_CONFIGURED: optional add-on only (live discovery = Profound API on control plane above) -->
+    <div v-if="badge === 'NOT_CONFIGURED'" class="state-panel state-unconfigured compact">
       <div class="state-body">
-        <p class="state-title">Mixpanel not connected</p>
+        <p class="state-title">Mixpanel export not enabled</p>
         <p class="state-desc">
-          Add your Profound Mixpanel service account credentials to <code>.env</code> and restart the backend:
+          Live campaign and experiment metrics come from the <strong>Profound API</strong>, not Mixpanel.
+          Mixpanel is an optional second rail for product event export (e.g. hackathon org analytics).
         </p>
-        <pre class="state-code">MIXPANEL_ENABLED=true
+        <details class="env-hint">
+          <summary>Enable optional Mixpanel ingest (.env)</summary>
+          <pre class="state-code">MIXPANEL_ENABLED=true
 MIXPANEL_PROJECT_ID=&lt;project-id&gt;
-MIXPANEL_SERVICE_ACCOUNT_USERNAME=&lt;sa@….mixpanel.com&gt;
+MIXPANEL_SERVICE_ACCOUNT_USERNAME=&lt;service-account&gt;
 MIXPANEL_SERVICE_ACCOUNT_SECRET=&lt;secret&gt;</pre>
-        <p class="state-footnote">
-          Get credentials → Mixpanel → Organization Settings → Service Accounts
-        </p>
+        </details>
       </div>
     </div>
 
@@ -376,5 +376,18 @@ MIXPANEL_SERVICE_ACCOUNT_SECRET=&lt;secret&gt;</pre>
   color: #334155;
   margin: 6px 0 0;
   text-align: right;
+}
+
+.state-panel.compact {
+  padding: 10px 12px;
+}
+.env-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+.env-hint summary {
+  cursor: pointer;
+  color: #818cf8;
 }
 </style>
