@@ -25,7 +25,7 @@ Profound account org "Chetas Nikunjbhai Parekh (Hackathon)", 4 categories:
 | SF Hackathon Participant 29 - CPG | Polar Seltzer (polarseltzer.com) | none | 8 |
 | SF Hackathon Participant 29 - SaaS | Mixpanel (mixpanel.com) | none | 8 |
 | SF Hackathon Participant 29 - Travel | lake.com | none | 8 |
-The category named after the user is empty, so the account's own brand has no data. A real org already existed from the earlier live-debug session and was kept: **Mixpanel / mixpanel.com**, id `f0e7939a-615a-4e4c-92d8-a1253d50f23a`, category SaaS `30222f94-d10d-46ec-b93d-5a7d2a1a7eb6`. **Needs user confirmation** that Mixpanel (SaaS, closest to the auth0 fixture domain and the AEO SRE thesis) is the intended brand.
+The category named after the user is empty, so the account's own brand has no data. A real org already existed from the earlier live-debug session and was kept: **Mixpanel / mixpanel.com**, id `f0e7939a-615a-4e4c-92d8-a1253d50f23a`, category SaaS `30222f94-d10d-46ec-b93d-5a7d2a1a7eb6`. **Needs user confirmation** that Mixpanel (SaaS, closest to the auth0 fixture domain and the Profound Lift thesis) is the intended brand.
 Competitor domains `amplitude.com, heap.io` on that org are OPERATOR-supplied, not from Profound (Profound tracks no competitor assets here), so no Profound `competitor_share` series exists.
 
 ## 4. Ingestion (same service as the scheduler)

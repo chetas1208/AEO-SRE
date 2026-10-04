@@ -23,7 +23,7 @@ OAuth 2.0 authorization code + **PKCE (S256)**. Public client `muse-agentmatch` 
 
 ## Reviewer flow
 
-1. Create an AgentMatch account (or use the dedicated reviewer workspace — credentials issued out-of-band).
+1. Create an Profound Lift account (or use the dedicated reviewer workspace — credentials issued out-of-band).
 2. Settings → Connections → Connect Muse (or complete OAuth from Muse).
 3. Approve **Read Only** or include feedback scope.
 4. Exercise tools (see example prompts in campaign master doc).

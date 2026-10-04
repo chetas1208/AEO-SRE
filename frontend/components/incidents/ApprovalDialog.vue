@@ -38,7 +38,7 @@ async function approve() {
   <dialog ref="el" aria-labelledby="approval-title" @close="$emit('close')" @cancel="$emit('close')">
     <div v-if="c" class="dlg">
       <p class="dim" data-testid="approval-explainer">
-        Approving activates an experiment. {{ isObserve ? 'Nothing is changed: the system starts observing.' : 'The change below is applied by you (the manual executor) or by an adapter you select; AEO SRE records the exact action and then measures the outcome. Nothing is changed until then.' }}
+        Approving activates an experiment. {{ isObserve ? 'Nothing is changed: the system starts observing.' : 'The change below is applied by you (the manual executor) or by an adapter you select; Profound Lift records the exact action and then measures the outcome. Nothing is changed until then.' }}
       </p>
       <h2 id="approval-title">{{ isObserve ? 'Confirm: Observe' : 'Approve & Start Experiment' }}</h2>
       <dl class="kv">

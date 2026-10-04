@@ -952,7 +952,7 @@ async def propose(session: AsyncSession, incident_id: uuid.UUID) -> dict[str, An
 
 
 async def _guard_proposal(session: AsyncSession, iv: Any) -> None:
-    """Change Guard runs on AEO SRE's own proposal when it is proposed (verdict shown before approval) and again at
+    """Change Guard runs on Profound Lift's own proposal when it is proposed (verdict shown before approval) and again at
     approval. Best effort here: a guard problem never fails the proposal (approval re-runs it and refuses on BLOCK)."""
     from app.changeguard.service import evaluate_intervention
 

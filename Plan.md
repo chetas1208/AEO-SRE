@@ -1,8 +1,8 @@
-# AEO SRE — Build Plan
+# Profound Lift — Build Plan
 
 **An incident-response and reinforcement-learning control plane for AI discovery.**
 
-> AEO SRE continuously detects commercially important failures in how AI systems represent a brand, investigates the root cause across Profound and the public web, proposes the safest remediation, tracks the intervention as an experiment, and learns which remediation works for which type of incident.
+> Profound Lift continuously detects commercially important failures in how AI systems represent a brand, investigates the root cause across Profound and the public web, proposes the safest remediation, tracks the intervention as an experiment, and learns which remediation works for which type of incident.
 
 Positioning: **Marketing SRE for AI discovery.** Sentry / Datadog / PagerDuty, but for AI answer engines.
 
@@ -135,7 +135,7 @@ reward = 0.35·norm_visibility_delta + 0.30·citation_delta
 Weights are config, components stored separately, computed only from post-intervention Profound observations. Delayed-reward worker updates policy only after measured outcomes.
 
 ### 4.8 Intervention approval + experiment activation
-AEO SRE is a closed-loop learning system: signal → incident → importance → investigation → evidence → intervention selection → human approval → execute/recommend → observe outcome → reward → learn policy. **GitHub was never the thesis**; execution is an interface and the core app works completely with only the manual executor.
+Profound Lift is a closed-loop learning system: signal → incident → importance → investigation → evidence → intervention selection → human approval → execute/recommend → observe outcome → reward → learn policy. **GitHub was never the thesis**; execution is an interface and the core app works completely with only the manual executor.
 
 Flow: the policy recommends → the human understands WHY (evidence, root cause, exact proposed change/diff, risk, alternatives + bandit scores) → **Approve / Modify / Reject** → an approved intervention **becomes an experiment** → the system records the exact action → verification begins.
 
@@ -284,10 +284,10 @@ The durable asset is the **intervention-outcome dataset**: `context → problem 
 
 ## 12. README top-of-page copy
 
-> **AEO SRE is an adaptive incident-response system for AI discovery.**
+> **Profound Lift is an adaptive incident-response system for AI discovery.**
 >
 > Modern marketing teams can measure how brands appear across AI answer engines, but every visibility loss, citation shift, factual error and competitive displacement still creates the same questions: Does this matter? What caused it? What should we do? And did our intervention work?
 >
-> AEO SRE converts those signals into evidence-backed incidents, investigates their root causes, selects safe interventions using a learning policy, executes only after human approval, and measures the resulting outcome.
+> Profound Lift converts those signals into evidence-backed incidents, investigates their root causes, selects safe interventions using a learning policy, executes only after human approval, and measures the resulting outcome.
 >
 > Every intervention becomes an experiment. Every experiment improves the next decision.

@@ -45,7 +45,7 @@ class ImmutableChangeGuardError(Exception):
 
 
 class ChangeSet(Base):
-    """Immutable proposal posted by an agent (origin=external) or built from AEO SRE's own intervention."""
+    """Immutable proposal posted by an agent (origin=external) or built from Profound Lift's own intervention."""
 
     __tablename__ = "change_sets"
     __table_args__ = (

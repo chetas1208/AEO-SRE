@@ -1,6 +1,6 @@
 <template>
   <div class="stack prose">
-    <h1>AgentMatch Muse Connector</h1>
+    <h1>Profound Lift Muse Connector</h1>
     <p>OAuth 2.0 + PKCE. API base: configure <code>API_PUBLIC_URL</code> on the backend.</p>
     <h2>Scopes</h2>
     <table>

@@ -1,6 +1,6 @@
 # Third-party software and attribution
 
-This file lists (1) the third-party software, datasets and models AEO SRE incorporates, with licenses, and (2) the
+This file lists (1) the third-party software, datasets and models Profound Lift incorporates, with licenses, and (2) the
 research and prior work that informed the design. **Audit result (2026-10-03):** no source code from any studied
 open-source or hackathon project is present in this repository; the application code under `backend/app` and
 `frontend/` was written for this project. A mechanical comparison of the studied repositories against production source
@@ -10,7 +10,7 @@ gitignored and not part of this repository. There is therefore no copied-code li
 
 ## Incorporated third-party software, data and models
 
-Only items that AEO SRE actually uses, trains on or distributes. Licenses are as recorded from the upstream dataset/model cards and package metadata on the dates shown; ShareAlike obligations are noted where they apply.
+Only items that Profound Lift actually uses, trains on or distributes. Licenses are as recorded from the upstream dataset/model cards and package metadata on the dates shown; ShareAlike obligations are noted where they apply.
 
 | Item | Version | License | Use | Notes |
 |---|---|---|---|---|
@@ -26,8 +26,8 @@ Only items that AEO SRE actually uses, trains on or distributes. Licenses are as
 
 ## Research and architectural inspiration
 
-AEO SRE was informed by studying existing open-source and hackathon projects, research papers and engineering patterns.
-These were read for ideas only; they are not dependencies, none is distributed with AEO SRE, and no license obligation
+Profound Lift was informed by studying existing open-source and hackathon projects, research papers and engineering patterns.
+These were read for ideas only; they are not dependencies, none is distributed with Profound Lift, and no license obligation
 arises from studying them. The AEO-specific architecture and the implementation were developed for this project.
 
 | Area | What was studied (ideas only) | Where it landed here |

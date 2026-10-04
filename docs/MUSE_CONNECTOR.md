@@ -1,12 +1,12 @@
-# Muse connector (AgentMatch as OAuth provider)
+# Muse connector (Profound Lift as OAuth provider)
 
 ## Relationship
 
 ```text
-Muse user → Connect AgentMatch → OAuth → scoped token → /muse/tools/*
+Muse user → Connect Profound Lift → OAuth → scoped token → /muse/tools/*
 ```
 
-AgentMatch is the **resource server**. Muse is the client.
+Profound Lift is the **resource server**. Muse is the client.
 
 **Current (V0):** single org bearer key (`MUSE_CONNECTOR_API_KEY`). Suitable for hackathon demo only.
 

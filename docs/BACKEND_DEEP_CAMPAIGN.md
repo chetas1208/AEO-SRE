@@ -1,9 +1,9 @@
-# AEO SRE — Backend Deep Engineering Campaign (shared brief for A1–A5)
+# Profound Lift — Backend Deep Engineering Campaign (shared brief for A1–A5)
 
 Baseline: commit 5c6848a. Backend 822 passed/1 skipped, ruff clean, frontend typecheck + 34 Vitest + build, Alembic 0001 head, eval 25/25 (`make eval`). Fixture DB: 60 `dev_fixture` signals, 1 incident, 1 experiment (OBSERVE, awaiting_verification, baseline metrics set, 0 observations, 0 rewards). **Experiment 1 must NOT verify/reward before 2026-10-04T20:29:43Z and must not be altered.** Profound is `not_configured` (key arriving soon): adding `PROFOUND_API_KEY` + restart must be the only cutover step. Final model provider unknown.
 
 ## Thesis (do not drift)
-OBSERVE → DETECT → PRIORITIZE → INVESTIGATE → PROVE → DECIDE → APPROVE → EXPERIMENT → VERIFY → LEARN. Profound supplies much of OBSERVE; AEO SRE owns the control loop. Not the product: GitHub (optional executor only, never required), generic content/SEO tools, chatbot, CRM, Slack/Jira/Notion, agent swarms. No new tabs/UI features, no PPO, no new ML model, no Kafka/K8s/Temporal, no live-data invention, no early verification, no manual reward, no causal claims.
+OBSERVE → DETECT → PRIORITIZE → INVESTIGATE → PROVE → DECIDE → APPROVE → EXPERIMENT → VERIFY → LEARN. Profound supplies much of OBSERVE; Profound Lift owns the control loop. Not the product: GitHub (optional executor only, never required), generic content/SEO tools, chatbot, CRM, Slack/Jira/Notion, agent swarms. No new tabs/UI features, no PPO, no new ML model, no Kafka/K8s/Temporal, no live-data invention, no early verification, no manual reward, no causal claims.
 
 ## Principle
 LLMs may extract, classify, summarize, generate hypotheses, draft explanations/interventions. LLMs must NOT own: state transitions, timestamps, metric arithmetic, evidence existence, authorization, reward, verification eligibility, policy versioning, DB identity, incident dedup, experiment immutability. Deterministic logic stays deterministic.

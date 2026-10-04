@@ -59,7 +59,7 @@ returns DELAY with `eligible_after = 2026-10-04T20:29:43.187727Z`.
 `recent_checks[] = {id, change_set_id, decision, agent_id, agent_name, source_mode (LIVE|SIMULATED), origin, target, action_type, reasons[], eligible_after, created_at}`.
 Show a SIMULATED badge when `source_mode == "SIMULATED"`. `protected: false` once the experiment is verified/rejected/failed.
 
-## `change_guard` on interventions (AEO SRE's own proposals)
+## `change_guard` on interventions (Profound Lift's own proposals)
 `{check_id, decision, findings[], eligible_after, merged_proposal, semantic_check, guard_version, digest, evaluated_at, stale, blocks_approval, requires_review_reason}`.
 The guard runs when the intervention is proposed (pipeline) and again at approve. The UI never decides: `blocks_approval` (BLOCK/DELAY; never true for
 `observe`) disables Approve and the findings explain why; `requires_review_reason` (REQUIRE_REVIEW) shows a warning and a required text box sent as
@@ -86,7 +86,7 @@ ORM guards plus Postgres triggers refuse UPDATE/DELETE on `change_sets`/`change_
 
 ## Decisions and honest limits
 - "Pending" external ChangeSets (check 2) = created within `CHANGE_GUARD_PENDING_TTL_HOURS` (72) whose latest decision is ALLOW or REQUIRE_REVIEW; agents do not report completion, so TTL is the only expiry. BLOCK/DELAY/MERGE decisions are not pending (they were told to stop or fold in).
-- AEO SRE's own pending interventions (selected, incident awaiting approval/approved, non-observe) are compared on the same target.
+- Profound Lift's own pending interventions (selected, incident awaiting approval/approved, non-observe) are compared on the same target.
 - Cluster overlap for external ChangeSets is explicit (`prompt_cluster_ids`, `prompts`) or inferred from the cluster topic named in claims/text (`topic_mention`, reported as inferred).
 - Bare site root is not a prefix of the whole site (root only matches root).
 - Check 3 uses G2's `evaluate_canonical`; with no model/ranker the check reports `semantic_check: degraded` (rules decided), which is the normal state in this dev environment.

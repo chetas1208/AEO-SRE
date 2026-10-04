@@ -1,6 +1,6 @@
-# AEO SRE / AgentMatch — Production Deployment Architecture & Runbook
+# Profound Lift / Profound Lift — Production Deployment Architecture & Runbook
 
-This document describes the public deployment architecture, process management, logging retention policy, health checks, reboot recovery, and rollback procedures for the AEO SRE / AgentMatch control plane.
+This document describes the public deployment architecture, process management, logging retention policy, health checks, reboot recovery, and rollback procedures for the Profound Lift / Profound Lift control plane.
 
 ---
 

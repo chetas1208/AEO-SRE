@@ -387,7 +387,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="agentmatch-scene-wrap">
-    <div ref="canvasContainer" class="canvas-container" role="img" aria-label="AgentMatch 3D Semantic Graph">
+    <div ref="canvasContainer" class="canvas-container" role="img" aria-label="Profound Lift 3D semantic graph">
       <!-- Overlay controls -->
       <div class="scene-overlay-controls">
         <button class="scene-btn" type="button" title="Reset Camera View" @click="resetCamera">

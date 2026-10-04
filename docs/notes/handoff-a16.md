@@ -1,6 +1,6 @@
 # Handoff A16 (execution-architecture refactor: manual executor first, GitHub optional)
 
-Product direction change: GitHub was never the thesis (it leaked in from the BlackBox reference). AEO SRE is a closed-loop
+Product direction change: GitHub was never the thesis (it leaked in from the BlackBox reference). Profound Lift is a closed-loop
 learning system; execution is an interface and the app works fully with ONLY the ManualExecutor.
 
 ## What changed

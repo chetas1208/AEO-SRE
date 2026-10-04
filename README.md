@@ -1,12 +1,12 @@
-# AEO SRE
+# Profound Lift
 
-**AEO SRE is an adaptive incident-response system for AI discovery.**
+**Profound Lift is an adaptive incident-response system for AI discovery.**
 
 Modern marketing teams can measure how brands appear across AI answer engines, but every visibility loss, citation
 shift, factual error and competitive displacement still creates the same questions: Does this matter? What caused it?
 What should we do? And did our intervention work?
 
-AEO SRE converts those signals into evidence-backed incidents, investigates their root causes, selects safe
+Profound Lift converts those signals into evidence-backed incidents, investigates their root causes, selects safe
 interventions using a learning policy, executes only after human approval, and measures the resulting outcome. Every
 intervention becomes an experiment. Every experiment improves the next decision.
 
@@ -33,14 +33,14 @@ Profound signals + public web
 ```
 
 ```
-Profound  ->  AI-discovery observability  ->  AEO SRE  ->  incident response + experimentation + learning
+Profound  ->  AI-discovery observability  ->  Profound Lift  ->  incident response + experimentation + learning
 ```
 
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## What the system does
 
-- **Live 3D Agent Control Plane (`/`).** The homepage serves as an operational Flight Deck connecting personal agent intent (Muse), verified product truth, Profound AI-search intelligence, campaign unit economics, and Change Guard-protected experiments into one live control plane. Built with Three.js (`AgentControlGraphScene.vue`), it features spatial depth stratification (Agents z=-10, Campaigns z=0, Decisions z=+5, Experiments z=+10, Outcomes z=+15), real-time SSE streaming (`/api/control-plane/events`), semantic color coding (emerald positive return, rose negative issue, amber pending review, sky blue running), raycast hover tooltips, and an interactive DOM entity inspector.
+- **Live 3D Control Plane (`/`).** The homepage serves as an operational Flight Deck connecting personal agent intent (Muse), verified product truth, Profound AI-search intelligence, campaign unit economics, and Change Guard-protected experiments into one live control plane. Built with Three.js (`AgentControlGraphScene.vue`), it features spatial depth stratification (Agents z=-10, Campaigns z=0, Decisions z=+5, Experiments z=+10, Outcomes z=+15), real-time SSE streaming (`/api/control-plane/events`), semantic color coding (emerald positive return, rose negative issue, amber pending review, sky blue running), raycast hover tooltips, and an interactive DOM entity inspector.
 - **Real Experiment Creation Engine.** Experiment creation is a complete frontend-to-backend workflow (`POST /api/experiments`), accessible directly from `/`, from Discovery Gaps (`/discovery-gaps`), and from Campaigns (`/campaigns`). The stepped creation drawer (`ExperimentCreateDrawer.vue`) enforces domain invariants: mandatory causal hypotheses, frozen baseline metrics from live backend telemetry, temporal verification window scheduling (24h to 14 days), and automatic Change Guard target-protection registration.
 - **Change Guard experiment protection.** Change Guard coordinates concurrent changes across autonomous agents and human editors. It blocks conflicting modifications (`409 Conflict`) on protected target URLs or active prompt clusters while an experiment is awaiting verification, preventing experiment contamination and ensuring causal measurement integrity.
 - **Profound's role.** Profound is the observability substrate: visibility, citation share, prompt volume, competitor
@@ -83,10 +83,10 @@ Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Change Guard (experiment protection)
 
-Change Guard lets a Profound Agent post an intended change (a structured ChangeSet) to AEO SRE through a Call API node and
+Change Guard lets a Profound Agent post an intended change (a structured ChangeSet) to Profound Lift through a Call API node and
 get one decision back: ALLOW, MERGE, DELAY, REQUIRE_REVIEW or BLOCK. It exists to coordinate **across runs**: this change versus
 other pending changes, versus the organisation's canonical claims, and versus experiments still being measured. It is a
-feature of AEO SRE, not a separate product ([DEC-041](Decisions.md)).
+feature of Profound Lift, not a separate product ([DEC-041](Decisions.md)).
 
 ```
 Profound Agent -> Call API node -> POST /api/change-checks -> Change Guard -> decision -> the Agent continues accordingly
@@ -142,7 +142,7 @@ Create an organisation: `curl -XPOST localhost:8000/api/organizations -H 'conten
 
 ### Cost-Aware Model Runtime
 
-AEO SRE uses an intelligent, cost-aware two-tier architecture (`ModelRouter`) inside the provider-neutral `ModelGateway`:
+Profound Lift uses an intelligent, cost-aware two-tier architecture (`ModelRouter`) inside the provider-neutral `ModelGateway`:
 - **FAST Tier (Default — Claude Haiku 4.5):** Priced at $1/M input and $5/M output (~1/3 of Sonnet), Haiku handles ~80–95% of semantic calls including prompt intent classification, claim extraction, evidence/incident summarization, prompt cluster labeling, intervention drafting, and baseline hypothesis generation.
 - **DEEP Tier (Claude Sonnet 4.6):** Priced at $3/M input and $15/M output, Sonnet is reserved strictly for high-complexity incidents where the deterministic complexity score exceeds `model_complexity_threshold` (0.65) or when FAST-tier structured validation fails after retry.
 - **Opus is not used by default.**
@@ -179,7 +179,7 @@ another way and use `make dev-api` / `make dev-worker` / `make dev-web` without 
 ## Truthful status and limitations
 
 - **Profound is live-verified for ingestion** (488 signals for Mixpanel, 7 of 8 surfaces; the account tracks no competitor assets, so there is no competitor series), and contract tests with synthetic, labelled fixtures remain. Score scales were read from live responses but are not independently validated. Scheduled ingest is four times a day (01:15, 07:15, 13:15, 19:15 UTC) plus an immediate ingest when an organization is created. Query fanouts are ingested on that path and only a material share change becomes investigation evidence; that behavior is unit-tested, not live-verified. 
-- **The default executor is manual**: AEO SRE never changes a site itself. The optional GitHub PR executor was never run
+- **The default executor is manual**: Profound Lift never changes a site itself. The optional GitHub PR executor was never run
   against real GitHub (HTTP flow tested against mocks). The Profound Agent executor is an unavailable stub; the CMS
   executor is not built.
 - **The model gateway is live-verified** with `anthropic_messages` (fast tier `claude-haiku-4-5`, deep tier `claude-sonnet-4-6`); real incidents #2-#7 were investigated with it and stopped at `awaiting_approval` with `observe`. It is also contract-tested against fake OpenAI-compatible and Anthropic servers. The model only proposes; deterministic code decides.
@@ -208,7 +208,7 @@ another way and use `make dev-api` / `make dev-worker` / `make dev-web` without 
 
 ## Provenance
 
-AEO SRE is an original implementation developed for the Profound Marketing Engineering Hackathon. It was informed by
+Profound Lift is an original implementation developed for the Profound Marketing Engineering Hackathon. It was informed by
 studying existing open-source and hackathon projects, research papers and engineering patterns in incident response,
 provenance and experimentation; its AEO-specific architecture and the majority of the implementation were developed
 for this project. Third-party software, datasets and models that are actually used are listed with their licenses in

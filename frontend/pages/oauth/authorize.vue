@@ -36,7 +36,7 @@ async function approve(approved: boolean) {
 
 <template>
   <div class="stack card" style="max-width: 520px; margin: 2rem auto">
-    <h1>Connect Muse to AgentMatch</h1>
+    <h1>Connect Muse to Profound Lift</h1>
     <p v-if="!state" class="tone-bad">Missing oauth_state.</p>
     <template v-else-if="pending">
       <p><strong>{{ pending.client_name }}</strong> is requesting access:</p>

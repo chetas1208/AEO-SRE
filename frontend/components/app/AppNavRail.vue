@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { APP_NAME, APP_TAGLINE } from '~/utils/brand'
+
 defineProps<{ open?: boolean }>()
 defineEmits<{ navigate: [] }>()
 
@@ -21,7 +23,7 @@ const isExperiments = computed(() => route.path.startsWith('/experiments'))
 
 <template>
   <aside :class="['rail', { open }]" aria-label="Primary navigation">
-    <NuxtLink to="/" class="logo" aria-label="AgentMatch home" @click="$emit('navigate')">
+    <NuxtLink to="/" class="logo" :aria-label="`${APP_NAME} home`" @click="$emit('navigate')">
       <svg class="logo-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
           <linearGradient id="agentmatch-grad" x1="2" y1="2" x2="30" y2="30" gradientUnits="userSpaceOnUse">
@@ -41,8 +43,8 @@ const isExperiments = computed(() => route.path.startsWith('/experiments'))
         </g>
       </svg>
       <div class="logo-text">
-        <span class="logo-title">AgentMatch</span>
-        <span class="logo-sub">Agent-Native AI Discovery</span>
+        <span class="logo-title">{{ APP_NAME }}</span>
+        <span class="logo-sub">{{ APP_TAGLINE }}</span>
       </div>
     </NuxtLink>
 
@@ -54,7 +56,7 @@ const isExperiments = computed(() => route.path.startsWith('/experiments'))
             <circle cx="12" cy="12" r="6" />
             <circle cx="12" cy="12" r="2" />
           </svg>
-          AgentMatch
+          Intent Match
         </span>
         <span v-if="matchesCount" class="nav-badge tone-info" :aria-label="`${matchesCount} active intent envelopes`">{{ matchesCount }}</span>
       </NuxtLink>

@@ -57,7 +57,7 @@ log = structlog.get_logger()
 
 PROTECTING = (ExperimentStatus.EXECUTING, ExperimentStatus.EXECUTED, ExperimentStatus.AWAITING_VERIFICATION)
 OWN_AGENT_ID = "aeo-sre"
-OWN_AGENT_NAME = "AEO SRE"
+OWN_AGENT_NAME = "Profound Lift"
 PENDING_INCIDENT_STATES = (IncidentState.INTERVENTION_PROPOSED, IncidentState.AWAITING_APPROVAL, IncidentState.APPROVED)
 MAX_PROTECTED_TARGETS = 50
 
@@ -65,7 +65,7 @@ MAX_PROTECTED_TARGETS = 50
 # ------------------------------------------------------------------------------------------------ proposal
 @dataclass
 class ChangeInput:
-    """What the guard evaluates (API body, or an AEO SRE intervention converted by `proposal_from_intervention`)."""
+    """What the guard evaluates (API body, or an Profound Lift intervention converted by `proposal_from_intervention`)."""
 
     org_id: uuid.UUID
     agent_id: str
@@ -577,7 +577,7 @@ def _change_text(change: dict[str, Any]) -> str:
 def proposal_input_from_change(change: dict[str, Any], *, org_id: uuid.UUID, action: str,
                                intervention_id: uuid.UUID | None = None, title: str = "", risk: str | None = None
                                ) -> ChangeInput:
-    """AEO SRE's own proposed_change as a ChangeInput. Claims = sentences of the proposed content (G2 extraction)."""
+    """Profound Lift's own proposed_change as a ChangeInput. Claims = sentences of the proposed content (G2 extraction)."""
     change = change if isinstance(change, dict) else {}
     target = change.get("target_url") or (change.get("manual_task") or {}).get("target_url")
     text = _change_text(change)
@@ -614,7 +614,7 @@ async def intervention_proposal(session: AsyncSession, iv: Intervention, change:
 
 async def evaluate_intervention(session: AsyncSession, iv: Intervention, *, change: dict[str, Any] | None = None
                                 ) -> Submitted:
-    """Run the guard on AEO SRE's own proposal. One ChangeSet per distinct proposal; every call appends a fresh check
+    """Run the guard on Profound Lift's own proposal. One ChangeSet per distinct proposal; every call appends a fresh check
     (the verdict at approval time must reflect the experiments active NOW)."""
     prop = await intervention_proposal(session, iv, change)
     await lock_target(session, prop)
@@ -724,7 +724,7 @@ async def protection_for(session: AsyncSession, exp: Experiment) -> dict[str, An
 
 
 async def verdict_for_intervention(session: AsyncSession, iv: Intervention) -> dict[str, Any] | None:
-    """Stored guard verdict for AEO SRE's own proposal (read-only; None = never checked => 'unavailable')."""
+    """Stored guard verdict for Profound Lift's own proposal (read-only; None = never checked => 'unavailable')."""
     latest = await latest_intervention_check(session, iv.id)
     if latest is None:
         return None

@@ -1,4 +1,4 @@
-# AEO SRE — UI Spec (from mockup)
+# Profound Lift — UI Spec (from mockup)
 
 Two dark-theme mockups, both showing incident #1042 "Enterprise SSO visibility drop":
 - **Mockup A** (sections 1–9): dense full dashboard, 10-item nav, right rail.
@@ -18,7 +18,7 @@ Layout: left nav | incident list | incident detail (center) | live panels (right
 ## 1. Top bar
 | Element | Behavior | Data source |
 |---|---|---|
-| Logo + "AEO SRE — Incident Response for AI Discovery" | Branding | static |
+| Logo + "Profound Lift — Profound-powered discovery lift" | Branding | static |
 | Global search | "Search prompts, incidents, competitors…" | `GET /api/search?q=` over prompts, incidents, competitors |
 | **Live** pill (green) | Shows SSE connection / ingest health. Must turn red/grey when disconnected, never stay green by default | SSE heartbeat |
 | Date range dropdown | "Last 7 days"; scopes all KPI cards + lists | query param `range` |
@@ -176,7 +176,7 @@ Timeline: Incident detected → Investigation started → Root cause identified 
 Page title "**Incidents**", subtitle "High-signal changes in your AI discovery performance". Layout: slim left sidebar | incident list | incident detail. No right rail, no KPI row.
 
 ## 10.1 Sidebar
-- Logo: "AEO SRE — AI Discovery Incident Response"
+- Logo: "Profound Lift — discovery lift"
 - Nav (only 3): **Incidents** (badge = active count, 4) · **Experiments** · **Settings** — matches Plan §6 routes exactly.
 - **Monitoring status** card: green dot, "Monitoring", "Last sync 12 min ago". Must be real: time since last successful Profound ingest. Turns amber/red when stale or Profound unavailable.
 - **Org switcher** (bottom): avatar, org name "Acme Corp", domain `acme.com`, chevron. Backed by `POST /organizations {domain}`; switching changes the scope of every query.
@@ -269,7 +269,7 @@ Dark theme, neon accents (blue/purple/red/orange/green by severity and metric di
 
 | Element | Behavior | Data / API |
 |---|---|---|
-| Brand | **AEO SRE** + subtitle **AI Discovery Incident Response** | static |
+| Brand | **Profound Lift** + subtitle **Profound-powered discovery lift** | static |
 | Nav | **Incidents** (badge = open/active count) · **Experiments** · **Settings** | `GET /api/incidents` count; routes `/incidents`, `/experiments`, `/settings` |
 | Monitoring card (sidebar bottom) | Green **Live** dot, label **Monitoring**, **Last sync** relative time | Last successful Profound ingest (`/api/system/capabilities`, settings `profound.last_sync.*`); amber/red when stale or Profound unavailable — never fake “Live” |
 | Org block | Avatar, org name (e.g. Acme Corp), domain (e.g. acme.com) | `Organization`; org switcher when multi-tenant |
@@ -432,9 +432,9 @@ Each step is a labeled stage; collapsed when empty, expanded when data exists:
 
 ---
 
-# AEO SRE — UI Implementation Specification
+# Profound Lift — UI Implementation Specification
 
-> **Product:** AEO SRE — Incident Response for AI Discovery  
+> **Product:** Profound Lift — Incident Response for AI Discovery  
 > **Frontend:** Nuxt 4 + TypeScript  
 > **Scope:** UI architecture, interaction model, frontend wiring, component behavior, and visual direction  
 > **Current phase:** Functional frontend wiring first. Styling comes after correctness.  
@@ -444,7 +444,7 @@ Each step is a labeled stage; collapsed when empty, expanded when data exists:
 
 # 1. Product UI Thesis
 
-AEO SRE is not a dashboard whose job is to show more metrics.
+Profound Lift is not a dashboard whose job is to show more metrics.
 
 Its interface exists to answer four operational questions as fast as possible:
 
@@ -568,7 +568,7 @@ If data is unavailable, say so.
 # 3. Core Information Architecture
 
 ```text
-AEO SRE
+Profound Lift
 │
 ├── Incidents                  /incidents
 │   └── Incident Detail        /incidents/:id
@@ -617,7 +617,7 @@ Width should remain compact.
 The navigation contains only:
 
 ```text
-AEO SRE logo
+Profound Lift logo
 
 Incidents
 Experiments
@@ -1175,7 +1175,7 @@ The UI must never silently treat fetch failure as “no evidence.”
 
 # 21. Action Tab
 
-This is where AEO SRE differs from ordinary analytics tools.
+This is where Profound Lift differs from ordinary analytics tools.
 
 The action view must answer:
 
@@ -2794,7 +2794,7 @@ DETECT
 → LEARN
 ```
 
-That is the complete UI direction for AEO SRE.
+That is the complete UI direction for Profound Lift.
 
 ---
 
@@ -2989,12 +2989,12 @@ Four primary cards:
 
 ## 1. Vision & Architecture
 
-**AgentMatch** is an agent-native AI discovery command center that reconciles:
+**Profound Lift** is an agent-native AI discovery command center that reconciles:
 - **Personal Agent Demand (Muse Intent Envelope)**: Real-time structured requirements and constraints captured from buyer personal agents.
 - **Product Truth (Neo4j / Canonical Knowledge Graph)**: Ground reality verified from official domain documentation and capability specifications.
 - **AI Perception (Profound AI Engine)**: Synthesized answers and citations across generative answer engines (ChatGPT, Claude, Perplexity, Gemini).
 
-When product truth satisfies personal agent constraints but AI engines underrepresent or misrepresent the brand, AgentMatch surfaces a **Discovery Gap** with measured percentage-point discrepancies and recommended causal actions.
+When product truth satisfies personal agent constraints but AI engines underrepresent or misrepresent the brand, Profound Lift surfaces a **Discovery Gap** with measured percentage-point discrepancies and recommended causal actions.
 
 ## 2. Information Architecture: Exactly 3 Primary Nav Pages
 
@@ -3042,7 +3042,7 @@ Investment
 ## 2. Navigation Architecture
 
 Primary navigation is constrained to:
-- **AgentMatch** (`/matches`): Intent envelopes, verified constraints vs AI perception, and discovery gaps.
+- **Profound Lift** (`/matches`): Intent envelopes, verified constraints vs AI perception, and discovery gaps.
 - **Campaigns** (`/campaigns`): Financial control center, cost lineage, human/agent models, asset provenance, Profound/Muse telemetry, and 3D Campaign Graph.
 - **Experiments** (`/experiments`): Protected experiments, causal spine, before/after metrics, and policy learning.
 - (Sub-surfaces for Costs, Agents, People, Assets, Videos, Profound, Muse, and Inefficiency are housed inside Campaigns).
@@ -3108,7 +3108,7 @@ Edge thickness reflects cost weight. Outcome edges differ by confidence (solid f
 
 ## 1. Executive Summary & Design System Foundation
 
-The AgentMatch control plane enforces the **"Quiet shell, active data"** design philosophy (inspired by Linear 2026 and Microsoft Fluent 2.0). Primary navigation recedes visually to give absolute priority to the active data and operations.
+The Profound Lift control plane enforces the **"Quiet shell, active data"** design philosophy (inspired by Linear 2026 and Microsoft Fluent 2.0). Primary navigation recedes visually to give absolute priority to the active data and operations.
 
 ### Canonical Layout Tokens (`frontend/assets/css/main.css`)
 ```css
@@ -3146,7 +3146,7 @@ The AgentMatch control plane enforces the **"Quiet shell, active data"** design 
 
 The product homepage at `/` anchors the entire platform narrative:
 
-1. **Branding & Global Routing**: The application logo in `AppNavRail.vue` links directly to `/` with the accessible label `AgentMatch home`.
+1. **Branding & Global Routing**: The application logo in `AppNavRail.vue` links directly to `/` with the accessible label `Profound Lift home`.
 2. **Hero Narrative**: *"Understand demand. Fix AI perception. Measure what marketing actually produces."* with direct call-to-actions to `/matches` and `/campaigns`.
 3. **Causal Topology Loop**: Interactive visualization of the continuous marketing feedback loop:
    ```text
@@ -3154,7 +3154,7 @@ The product homepage at `/` anchors the entire platform narrative:
    ```
    Powered by live Pinia reactive store counts (`activeIntentsCount`, `discoveryGapsCount`, `campaignsCount`, `experimentsCount`).
 4. **Core Capabilities Grid**:
-   - **AgentMatch** (`/matches`): Intent envelopes, real-time match matrix, canonical product verification.
+   - **Profound Lift** (`/matches`): Intent envelopes, real-time match matrix, canonical product verification.
    - **Discovery Gaps** (`/discovery-gaps`): Perception discrepancy analysis, Profound citations, action approvals.
    - **CampaignGraph ROI** (`/campaigns`): Provenance-backed cost ledger, contributor modeling, multi-tier attribution.
    - **Experiments** (`/experiments`): Protected A/B execution, gate verification, Bayesian policy learning.

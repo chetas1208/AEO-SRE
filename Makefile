@@ -1,4 +1,4 @@
-# AEO SRE. Rootless docker users: export DOCKER_HOST=unix:///tmp/xdg-$$UID/docker.sock (see README).
+# Profound Lift. Rootless docker users: export DOCKER_HOST=unix:///tmp/xdg-$$UID/docker.sock (see README).
 VENV := backend/.venv/bin
 .PHONY: train-ranker help install infra infra-down migrate migration dev dev-api dev-worker dev-web test test-web lint typecheck build-web seed-fixture eval eval-model-live verify verify-live profound-smoke mixpanel-smoke model-smoke ingest-live audit-db browser-smoke alembic-check verify-experiment eval-guard
 

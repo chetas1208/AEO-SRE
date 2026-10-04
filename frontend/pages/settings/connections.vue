@@ -23,7 +23,7 @@ onMounted(load)
     <h1>Connections</h1>
     <section class="card stack">
       <h2>Muse</h2>
-      <p class="meta">Muse can access only the AgentMatch data you approve.</p>
+      <p class="meta">Muse can access only the Profound Lift data you approve.</p>
       <EmptyState v-if="!rows.length && !err" title="Not connected" :lines="['Connect from Muse using OAuth, or start OAuth from your Muse client.']" />
       <div v-for="r in rows" :key="r.authorization_id" class="stack sm">
         <div>Connected · scopes: {{ r.scopes.join(', ') }}</div>

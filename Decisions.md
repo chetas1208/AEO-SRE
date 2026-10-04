@@ -1,4 +1,4 @@
-# AEO SRE — Decision Log
+# Profound Lift — Decision Log
 
 This file records architectural and product decisions that materially affect implementation.
 
@@ -8,7 +8,7 @@ If a decision changes, add a new decision superseding the old one.
 
 ---
 
-## DEC-001 — Product Is AEO SRE
+## DEC-001 — Product Is Profound Lift
 
 **Status:** ACCEPTED
 **Date:** 2026-10-02
@@ -20,7 +20,7 @@ Profound already measures AI visibility, citations, prompt volume, and related w
 
 ### Decision
 
-AEO SRE is an incident-response and adaptive control system for AI discovery.
+Profound Lift is an incident-response and adaptive control system for AI discovery.
 
 It is not a generic marketing assistant, a dashboard-only product, a content generator, a chatbot, or a broad autonomous marketing swarm.
 
@@ -182,7 +182,7 @@ Rebuilding visibility monitoring duplicates Profound and will be wrong.
 
 ### Decision
 
-Profound supplies signals. AEO SRE adds incidents, evidence, root cause, priority, intervention choice, experiments, and policy learning. The connector normalizes responses. Domain code does not depend on Profound payload shapes.
+Profound supplies signals. Profound Lift adds incidents, evidence, root cause, priority, intervention choice, experiments, and policy learning. The connector normalizes responses. Domain code does not depend on Profound payload shapes.
 
 ### Why
 
@@ -697,11 +697,11 @@ Studied prior open-source incident-response systems (including BlackBox) to exam
 
 ### Decision
 
-Design and implement AEO SRE's incident lifecycle, state machine, and evidence verification independently from scratch for the AI-discovery problem. Do not copy code or import external stacks.
+Design and implement Profound Lift's incident lifecycle, state machine, and evidence verification independently from scratch for the AI-discovery problem. Do not copy code or import external stacks.
 
 ### Why
 
-`docs/notes/blackbox.md`. AEO SRE requires an explicit state machine edge map, strict transactional rollback, and AI-search domain semantics rather than generic SQL repair.
+`docs/notes/blackbox.md`. Profound Lift requires an explicit state machine edge map, strict transactional rollback, and AI-search domain semantics rather than generic SQL repair.
 
 ### Alternatives Considered
 
@@ -733,7 +733,7 @@ Develop an independent, multi-layer root-cause engine tailored specifically to A
 
 ### Why
 
-`docs/notes/campaignpilot.md`. AEO search anomalies require domain-specific evidence correlation across search engine updates, citation graphs, and competitor crawl changes. All detector and RCA modules are written independently for AEO SRE.
+`docs/notes/campaignpilot.md`. AEO search anomalies require domain-specific evidence correlation across search engine updates, citation graphs, and competitor crawl changes. All detector and RCA modules are written independently for Profound Lift.
 
 ### Alternatives Considered
 
@@ -753,7 +753,7 @@ Hypotheses carry a layer. Deterministic rules remain the reliable baseline when 
 
 ### Context
 
-AEO SRE is an incident-response and experimental-learning system. Deterministic code handles metrics, incident state, evidence existence, verification timing, reward, policy updates, and approval. The model is only needed for structured semantic operations: prompt intent classification, claim extraction, evidence summarization, candidate hypothesis generation, counterevidence assessment, intervention drafting, and incident explanations. Sending every request to an expensive frontier model wastes API credits and increases latency without improving decision quality.
+Profound Lift is an incident-response and experimental-learning system. Deterministic code handles metrics, incident state, evidence existence, verification timing, reward, policy updates, and approval. The model is only needed for structured semantic operations: prompt intent classification, claim extraction, evidence summarization, candidate hypothesis generation, counterevidence assessment, intervention drafting, and incident explanations. Sending every request to an expensive frontier model wastes API credits and increases latency without improving decision quality.
 
 ### Decision
 
@@ -999,7 +999,7 @@ The generated file becomes too large to review and a thinner client is needed.
 
 ### Context
 
-DEC-009 made a GitHub pull request the first execution target because BlackBox repairs code. AEO SRE does not. The product records an approved intervention as an experiment and measures the AI-discovery outcome. Where the change is applied is an adapter.
+DEC-009 made a GitHub pull request the first execution target because BlackBox repairs code. Profound Lift does not. The product records an approved intervention as an experiment and measures the AI-discovery outcome. Where the change is applied is an adapter.
 
 ### Decision
 
@@ -1339,7 +1339,7 @@ Earlier decisions called some studied hackathon projects "primary references". R
 
 ### Decision
 
-- Public-facing text describes AEO SRE as an original implementation developed for the Profound Marketing Engineering Hackathon, informed by studying existing open-source and hackathon projects, papers and engineering patterns.
+- Public-facing text describes Profound Lift as an original implementation developed for the Profound Marketing Engineering Hackathon, informed by studying existing open-source and hackathon projects, papers and engineering patterns.
 - `THIRD_PARTY.md` separates "Incorporated third-party software, data and models" (what is used or distributed, with licenses) from "Research and architectural inspiration" (studied only). Commit SHAs and license findings for studied projects live in `docs/notes/research-inspiration.md`.
 - Studied projects are not named as components, engines or donors in architecture text or source comments. Dataset, paper and API citations stay.
 - No claim is made that no outside work influenced the project, and none that it is entirely novel.
@@ -1373,7 +1373,7 @@ Meanwhile the existing system already has the pieces that make a narrower versio
 
 ### Decision
 
-Build **Change Guard** inside AEO SRE as a capability that protects the Experiment object and checks changes proposed by Profound Agents (and AEO SRE's own interventions): an Agent posts a structured ChangeSet through a Call API node and receives one decision (ALLOW, MERGE, DELAY, REQUIRE_REVIEW, BLOCK) based on exactly three checks: active-experiment contamination, duplicate/conflicting target changes, canonical-truth conflict. Approvals bind to a digest of the proposal. Specification: `docs/CHANGE_GUARD_SPEC.md`; integration: `docs/CHANGE_GUARD_INTEGRATION.md`; evaluation: `make eval-guard`.
+Build **Change Guard** inside Profound Lift as a capability that protects the Experiment object and checks changes proposed by Profound Agents (and Profound Lift's own interventions): an Agent posts a structured ChangeSet through a Call API node and receives one decision (ALLOW, MERGE, DELAY, REQUIRE_REVIEW, BLOCK) based on exactly three checks: active-experiment contamination, duplicate/conflicting target changes, canonical-truth conflict. Approvals bind to a digest of the proposal. Specification: `docs/CHANGE_GUARD_SPEC.md`; integration: `docs/CHANGE_GUARD_INTEGRATION.md`; evaluation: `make eval-guard`.
 
 The guard targets **cross-run coordination** (this change vs other active changes vs canonical truth vs active experiments). It makes no claim about what Profound's own review features do or lack.
 
@@ -1558,7 +1558,7 @@ The peer responds, or the frontend is handed to a single owner.
 
 ### Context
 
-AgentMatch needs a fast local decision layer and an online learner for control-plane actions without replacing Change Guard, PostgreSQL, Neo4j, or Profound. Meta Muse connector terms forbid using connector data for unrelated profiling or model training.
+Profound Lift needs a fast local decision layer and an online learner for control-plane actions without replacing Change Guard, PostgreSQL, Neo4j, or Profound. Meta Muse connector terms forbid using connector data for unrelated profiling or model training.
 
 ### Decision
 

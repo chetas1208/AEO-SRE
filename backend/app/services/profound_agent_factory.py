@@ -18,7 +18,7 @@ DEFAULT_TEMPLATES: tuple[dict[str, str], ...] = (
     {
         "slug": "agt-citation-recovery",
         "name": "Citation Recovery Agent",
-        "description": "Drafts citation recovery actions for AI search visibility (AEO SRE).",
+        "description": "Drafts citation recovery actions for AI search visibility (Profound Lift).",
         "system_prompt": "You are a citation recovery specialist for B2B SaaS AI search visibility.",
         "user_prompt": (
             "Marketing objective: {{objective_var}}\n"

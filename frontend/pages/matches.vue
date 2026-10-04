@@ -170,11 +170,11 @@ function handleNodeSelect(id: string | null) {
         </section>
 
         <!-- Knowledge Graph Explorer (2D Analytical Default + 3D Spatial) -->
-        <section class="graph-section" aria-label="AgentMatch Knowledge Graph Lineage">
+        <section class="graph-section" aria-label="Profound Lift knowledge graph lineage">
           <KnowledgeGraphExplorer
             :initial-perspective="'intent'"
             :initial-focus-id="selectedCandidateId || selectedIntentId"
-            title="AgentMatch Causal Lineage"
+            title="Profound Lift causal lineage"
           />
         </section>
 

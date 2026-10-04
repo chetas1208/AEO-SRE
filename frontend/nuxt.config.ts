@@ -50,9 +50,13 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'AEO SRE',
+      title: 'Profound Lift',
+      titleTemplate: '%s · Profound Lift',
       htmlAttrs: { lang: 'en' },
-      meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }]
+      meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'application-name', content: 'Profound Lift' },
+      ],
     }
   },
   typescript: { strict: true, typeCheck: false },

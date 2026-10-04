@@ -105,7 +105,7 @@ async def main() -> int:
     deep_model = s.resolved_deep_model
 
     print("=" * 80)
-    print("AEO SRE — LIVE MODEL TIER EVALUATION & COST COMPARISON")
+    print("Profound Lift — LIVE MODEL TIER EVALUATION & COST COMPARISON")
     print("=" * 80)
     print(f"FAST Tier Model: {fast_model}")
     print(f"DEEP Tier Model: {deep_model}")

@@ -1,4 +1,4 @@
-# AEO SRE — Build Brief (shared by all build agents)
+# Profound Lift — Build Brief (shared by all build agents)
 
 > Historical working record. Agent labels in the ownership table (e.g. "A2 BlackBox") are internal work-package names from the build campaign, not statements about code origin. See THIRD_PARTY.md for what is actually incorporated.
 

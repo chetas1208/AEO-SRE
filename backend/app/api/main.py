@@ -192,7 +192,7 @@ ERROR_RESPONSES: dict[int | str, dict] = {
 def create_app() -> FastAPI:
     s = get_settings()
     app = FastAPI(
-        title="AEO SRE API",
+        title="Profound Lift API",
         version="0.1.0",
         description="Incident-response control plane for AI discovery. JSON is snake_case.",
         lifespan=lifespan,

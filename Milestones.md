@@ -1,4 +1,4 @@
-# AEO SRE — Milestones
+# Profound Lift — Milestones
 
 Execution map from the current repository to a working incident-response loop for AI discovery.
 
@@ -664,7 +664,7 @@ Update 2026-10-03: real Profound data is now LIVE VERIFIED (488 signals, Mixpane
 
 ## Objective
 
-Let Profound Agents post intended changes to AEO SRE and get one decision before publishing, protecting running experiments and organisation-approved facts. Feature inside AEO SRE (DEC-041), not a pivot. Spec: `docs/CHANGE_GUARD_SPEC.md`.
+Let Profound Agents post intended changes to Profound Lift and get one decision before publishing, protecting running experiments and organisation-approved facts. Feature inside Profound Lift (DEC-041), not a pivot. Spec: `docs/CHANGE_GUARD_SPEC.md`.
 
 ## Deliverables
 

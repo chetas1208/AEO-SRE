@@ -54,7 +54,7 @@ semaphore, metadata, defaults. `tests/unit/test_llm_client.py` (A15) updated for
 - Nothing calls INTENT classification / counterevidence / summary prompts yet (no consumer in the codebase).
 
 ## README model section (for B5)
-> **Model (optional).** AEO SRE works without a model (rules-only; investigations show DEGRADED reasoning). To enable model-assisted
+> **Model (optional).** Profound Lift works without a model (rules-only; investigations show DEGRADED reasoning). To enable model-assisted
 > hypotheses and content drafts set `MODEL_API_PROTOCOL` (`openai_chat`, `openai_responses` or `anthropic_messages`), `MODEL_BASE_URL`,
 > `MODEL_API_KEY`, `MODEL_NAME` (and optionally `MODEL_PROVIDER` as a label), then run `make model-smoke`. OpenAI-compatible servers
 > (OpenAI, NVIDIA NIM, vLLM) use the `openai_*` protocols with their base URL; Anthropic uses `anthropic_messages`. The model only

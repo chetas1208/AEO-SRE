@@ -1,4 +1,4 @@
-// AgentMatch domain types (AgentMatch + Muse + Profound + Neo4j)
+// Intent-match domain types (Profound Lift + Muse + Profound + Neo4j)
 
 export type IntentSource = 'MUSE' | 'MANUAL' | 'TEST'
 

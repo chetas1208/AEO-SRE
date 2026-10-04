@@ -1077,8 +1077,10 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-lg, 14px);
   overflow: hidden;
   position: relative;
-  height: calc(100vh - 520px);
-  min-height: 420px;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
 }
 

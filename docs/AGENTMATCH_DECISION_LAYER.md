@@ -1,4 +1,4 @@
-# AgentMatch decision layer — capability map & phased plan
+# Profound Lift decision layer — capability map & phased plan
 
 Architecture target:
 

@@ -339,7 +339,7 @@ CAMPAIGNS_DB: list[dict[str, Any]] = [
             "funnel": [
                 {"step": "Personal Agent Demand", "count": 312},
                 {"step": "Profound Perception Aligned", "count": 218},
-                {"step": "AgentMatch Surfaced", "count": 144},
+                {"step": "Profound Lift Surfaced", "count": 144},
                 {"step": "Shortlisted by Buyer Agent", "count": 91},
                 {"step": "Technical Details Requested", "count": 37},
                 {"step": "Conversion / Closed Won", "count": 8}

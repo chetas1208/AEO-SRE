@@ -118,7 +118,7 @@ class ChangeCheckList(ApiModel):
 
 
 class ChangeGuardVerdict(ApiModel):
-    """Guard verdict for AEO SRE's own proposed intervention (null = never checked: render 'unavailable')."""
+    """Guard verdict for Profound Lift's own proposed intervention (null = never checked: render 'unavailable')."""
 
     check_id: uuid.UUID
     decision: DecisionName

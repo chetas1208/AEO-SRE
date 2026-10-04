@@ -15,7 +15,7 @@ def muse_openapi(app) -> dict:
             paths[p] = v
     return {
         "openapi": full.get("openapi", "3.1.0"),
-        "info": {"title": "AgentMatch Muse Connector", "version": "1.0.0",
+        "info": {"title": "Profound Lift Muse Connector", "version": "1.0.0",
                  "description": "OAuth-protected Muse connector API (read tools + feedback write)."},
         "paths": paths,
         "components": full.get("components", {}),

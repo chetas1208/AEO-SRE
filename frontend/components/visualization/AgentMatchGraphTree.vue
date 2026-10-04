@@ -26,7 +26,7 @@ function getNodesInLayer(z: number): GraphNodeSemantic[] {
 </script>
 
 <template>
-  <div class="tree-container" role="tree" aria-label="AgentMatch Semantic Graph Tree">
+  <div class="tree-container" role="tree" aria-label="Profound Lift semantic graph tree">
     <div class="tree-header">
       <span class="tree-badge">Semantic Layer Hierarchy (DOM Fallback)</span>
       <span class="tree-count">{{ nodes.length }} nodes · {{ edges.length }} causal relations</span>

@@ -1,6 +1,6 @@
 # Research inspiration (internal notes)
 
-Projects studied while designing AEO SRE. Studied only: read-only clones under the gitignored `references/` directory,
+Projects studied while designing Profound Lift. Studied only: read-only clones under the gitignored `references/` directory,
 not distributed, not imported by production code, no code copied. Provenance framing: Decisions.md DEC-040.
 
 Classification evidence (2026-10-03): normalised-line and 3-line-shingle comparison of each clone against `backend/app`,

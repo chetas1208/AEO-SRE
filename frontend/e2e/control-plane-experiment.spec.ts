@@ -10,7 +10,7 @@ test.beforeAll(async ({ request }) => {
 test('Flight Deck renders heading, KPI strip, and operational tabs on /', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: 'Agent Control Plane' })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: 'Control Plane' })).toBeVisible({ timeout: 15_000 })
 
   await expect(page.getByText('Active Agents', { exact: true })).toBeVisible()
   await expect(page.getByText('Running Campaigns', { exact: true })).toBeVisible()

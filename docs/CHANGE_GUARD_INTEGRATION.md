@@ -4,7 +4,7 @@ Status: **designed against Profound's public docs, not exercised with a real Pro
 received traffic from a live Profound Agent; demo data comes from `scripts/simulate_agent_change.py` and is labelled
 `SIMULATED` everywhere.
 
-Flow: Profound Agent -> Call API node -> `POST /api/change-checks` (AEO SRE Change Guard) -> one decision -> the Agent
+Flow: Profound Agent -> Call API node -> `POST /api/change-checks` (Profound Lift Change Guard) -> one decision -> the Agent
 branches on `decision`.
 
 Change Guard does not replace any review step a Profound Agent already has (for example its Human Review node). It targets a
@@ -150,10 +150,10 @@ Error body: `{"error": {"code", "type", "message", "details", "request_id"}}`.
 | 422 | validation | malformed or unknown fields | fix the body template |
 | 5xx / timeout | | server or network trouble | not ALLOW; retry with the same key |
 
-## Approval binding (inside AEO SRE)
+## Approval binding (inside Profound Lift)
 
 Approvals bind to the proposal digest. If a proposal is edited after approval, activation or manual execution recording returns
-`409 APPROVAL_DIGEST_MISMATCH` and the edit needs a new approval. This applies to AEO SRE's own interventions and to external
+`409 APPROVAL_DIGEST_MISMATCH` and the edit needs a new approval. This applies to Profound Lift's own interventions and to external
 ChangeSets.
 
 ## Trying it without Profound

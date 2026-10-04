@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { APP_NAME } from '~/utils/brand'
+
 const route = useRoute()
 const live = useLiveSystemStore()
 const sel = useIncidentSelectionStore()
@@ -53,7 +55,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); live.stopG
 
     <div class="topbar-left">
       <NuxtLink to="/" class="brand-link">
-        <span class="brand-name">AgentMatch</span>
+        <span class="brand-name">{{ APP_NAME }}</span>
       </NuxtLink>
       <span v-if="pageSection" class="section-divider" aria-hidden="true">/</span>
       <span v-if="pageSection" class="section-name">{{ pageSection }}</span>

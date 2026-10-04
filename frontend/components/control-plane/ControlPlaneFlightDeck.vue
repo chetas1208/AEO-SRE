@@ -56,6 +56,10 @@ const summary = computed(() => {
     decisionsNeedingReview: num(s?.decisionsNeedingReview ?? s?.decisions_needing_review),
     experimentsMeasuring: num(s?.experimentsMeasuring ?? s?.experiments_measuring),
     totalAgentRuns: num(s?.totalAgentRuns ?? s?.total_agent_runs),
+    totalSpend: num(s?.totalSpend ?? s?.total_spend),
+    netReturn: s?.netReturn ?? s?.net_return,
+    blendedRoiPct: s?.blendedRoiPct ?? s?.blended_roi_pct,
+    decisionCostTotal: num(s?.decisionCostTotal ?? s?.decision_cost_total),
   }
 })
 
@@ -108,13 +112,11 @@ const totals = computed(() => {
 })
 
 const topCampaigns = computed(() =>
-  [...campaigns.value].sort((a, b) => campaignCost(b) - campaignCost(a)).slice(0, 6)
+  [...campaigns.value].sort((a, b) => campaignCost(b) - campaignCost(a))
 )
 
 const topAgentsByCost = computed(() =>
-  [...agents.value]
-    .sort((a, b) => num(b.modelCost ?? b.model_cost) - num(a.modelCost ?? a.model_cost))
-    .slice(0, 6)
+  [...agents.value].sort((a, b) => num(b.modelCost ?? b.model_cost) - num(a.modelCost ?? a.model_cost))
 )
 
 const pendingDecisions = computed(() =>
@@ -557,6 +559,8 @@ function agentCost(a: AgentActivity): number {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 .ledger-row,

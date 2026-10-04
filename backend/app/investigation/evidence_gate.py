@@ -22,7 +22,7 @@ cite it.
 
 Design note: requiring machine-checked evidence before a root cause is accepted is a pattern informed by
 incident-response research (see docs/notes/research-inspiration.md); this implementation was written for
-AEO SRE and is AEO-specific.
+Profound Lift and is AEO-specific.
 """
 from __future__ import annotations
 

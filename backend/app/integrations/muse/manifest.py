@@ -21,7 +21,7 @@ def tool_entry(t: ToolSpec) -> dict[str, Any]:
 
 def build_manifest(settings: Settings) -> dict[str, Any]:
     return {
-        "name": "AEO SRE Change Guard", "version": MANIFEST_VERSION, "transport": "https+json",
+        "name": "Profound Lift Change Guard", "version": MANIFEST_VERSION, "transport": "https+json",
         "auth": {"scheme": "bearer", "header": "Authorization", "format": "Bearer <connector key>",
                  "organization_binding": "one key maps to exactly one organization (server configuration)"},
         "rate_limit": {"per_minute_per_key": settings.muse_rate_limit_per_minute, "on_exceed": "429 + Retry-After"},

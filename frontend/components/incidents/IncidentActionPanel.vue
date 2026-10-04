@@ -104,7 +104,7 @@ async function submitReject() {
         </details>
         <GuardVerdict :guard="chosen.guard" ask-later />
         <p v-if="chosen.action === 'observe'" class="dim">Incident remains open. System monitors the next measurement window. No external mutation occurs.</p>
-        <p v-else-if="canApprove" class="meta">Approving activates an experiment. The change is applied by you (or an adapter you select), and AEO SRE records exactly what was done before measuring the result.</p>
+        <p v-else-if="canApprove" class="meta">Approving activates an experiment. The change is applied by you (or an adapter you select), and Profound Lift records exactly what was done before measuring the result.</p>
 
         <div v-if="mode === 'modify'" class="stack sm">
           <label class="stack sm"><span class="meta">Edit proposed change</span><textarea v-model="draft" rows="8" class="mono" /></label>

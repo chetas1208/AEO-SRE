@@ -17,7 +17,7 @@
 - Approval as its own durable row with requester/decider identity, and approvals gating execution.
 - Migrate-then-serve compose ordering (A14 owns compose).
 
-## Where AEO SRE deliberately differs
+## Where Profound Lift deliberately differs
 - Approvals are immutable once decided (service guard + ORM `before_update` guard).
 - `actor_type` (human|model|system) recorded; only humans can approve/reject/modify.
 - `modified_change` stored verbatim; original change snapshot stored at request time.

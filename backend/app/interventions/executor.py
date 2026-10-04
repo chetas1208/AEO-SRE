@@ -199,7 +199,7 @@ def build_pr_body(*, intervention: Any, incident: Any | None, change: ProposedCh
     when = getattr(approval, "decided_at", None)
     stamp = f", {when.isoformat()}" if hasattr(when, "isoformat") else ""
     lines = [
-        "## AEO SRE proposed change", "",
+        "## Profound Lift proposed change", "",
         f"**Incident:** {inc_ref}", f"**Action:** `{_v(intervention.action)}` (risk: {_v(intervention.risk)})",
         f"**Policy version:** {policy_version or 'unknown'}"
         + (f" (score {intervention.score:.2f})" if getattr(intervention, "score", None) is not None else ""),
@@ -362,7 +362,7 @@ class GitHubPRExecutor:
             elif not r.ok:
                 raise _Stop(f"could not create branch: {_msg(r)}", "branch_create_failed", retryable=False)
         # 4. files -> commits
-        pr_title = f"[AEO SRE] {change.title or intervention.title}"[:250]
+        pr_title = f"[Profound Lift] {change.title or intervention.title}"[:250]
         for fc in change.files:
             await self._commit_file(run, gh, fc, branch, pr_title, approval, incident)
         # 5. pull request (never merged)

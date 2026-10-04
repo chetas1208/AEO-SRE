@@ -1,7 +1,7 @@
 import type { GContext, GExplanation, GHealth, GraphView, GraphWindow } from '~/types/graph'
 import { DEFAULT_GRAPH_WINDOW, sinceParam } from '~/utils/graph'
 
-// Data hooks for the Neo4j-backed graph API. The browser only talks to the AEO SRE API (never Neo4j). Every hook is scoped to
+// Data hooks for the Neo4j-backed graph API. The browser only talks to the Profound Lift API (never Neo4j). Every hook is scoped to
 // the current organization and refetches when the global SSE feed reports `graph_projected`.
 
 type Id = MaybeRefOrGetter<string | null | undefined>

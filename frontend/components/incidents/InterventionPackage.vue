@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ApiErrorInfo, InterventionCandidate } from '~/types'
 
-// The intervention package issued after approval (manual executor, the default). AEO SRE decides and explains;
+// The intervention package issued after approval (manual executor, the default). Profound Lift decides and explains;
 // a human applies the exact change and records it here. Never optimistic: the backend answer is re-fetched.
 const props = defineProps<{ candidate: InterventionCandidate; incidentId: string }>()
 const emit = defineEmits<{ recorded: [] }>()
@@ -49,7 +49,7 @@ async function submit() {
       <StatusBadge :label="`Executor: ${executorLabel(candidate.executor)}`" tone="muted" />
     </div>
     <p class="dim">
-      Approving activated an experiment. {{ pkg.requiresHumanStep === false ? 'This is an observation: no change is applied and nothing is required from you.' : 'Apply the change below yourself, then record when you did. Nothing was changed in any external system by AEO SRE.' }}
+      Approving activated an experiment. {{ pkg.requiresHumanStep === false ? 'This is an observation: no change is applied and nothing is required from you.' : 'Apply the change below yourself, then record when you did. Nothing was changed in any external system by Profound Lift.' }}
     </p>
     <dl class="kv">
       <dt>Target</dt><dd>{{ pkg.target?.url ?? candidate.executionTarget ?? (pkg.target?.paths ?? []).join(', ') ?? 'not reported' }}</dd>
@@ -66,7 +66,7 @@ async function submit() {
 
     <template v-for="c in pkg.changes" :key="c.path">
       <h3>Exact text to apply: <span class="mono">{{ c.path }}</span></h3>
-      <p v-if="!c.currentContentKnown" class="meta">Current content of this page was not available to AEO SRE; the diff shows the proposed text as an addition.</p>
+      <p v-if="!c.currentContentKnown" class="meta">Current content of this page was not available to Profound Lift; the diff shows the proposed text as an addition.</p>
       <pre v-if="c.diff" data-testid="package-diff">{{ c.diff }}</pre>
       <details><summary>Proposed text (copy)</summary><pre data-testid="package-text">{{ c.proposedText }}</pre></details>
     </template>

@@ -1,6 +1,6 @@
 """Manual execution: the DEFAULT, always-available executor.
 
-AEO SRE decides and explains; a human applies the change; the system records exactly what was applied and then
+Profound Lift decides and explains; a human applies the change; the system records exactly what was applied and then
 measures the outcome. `ManualExecutor` performs NO external mutation: it renders a structured INTERVENTION
 PACKAGE (exact change / diff, target, steps, evidence summary, risk, rollback, observation window) onto an
 `Execution` row with status `awaiting_human_execution`. A human then calls `record_manual_execution`, which
@@ -208,7 +208,7 @@ class ManualExecutor:
     def capability(self) -> ExecutorCapability:
         return ExecutorCapability(
             name=self.name, label="Manual", state="healthy", available=True, mutates_external=False, default=True,
-            detail="always available: AEO SRE prepares the exact change, a human applies and records it")
+            detail="always available: Profound Lift prepares the exact change, a human applies and records it")
 
     async def execute(self, intervention: Any, approval: Any | None, incident: Any | None = None, *,
                       evidence: list[Any] | None = None, policy_version: str | None = None) -> ExecutionResult:

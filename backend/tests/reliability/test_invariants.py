@@ -1,4 +1,4 @@
-"""The ten reliability invariants of AEO SRE (docs/TODO_VERIFICATION_CAMPAIGN.md step 18), each as one named test.
+"""The ten reliability invariants of Profound Lift (docs/TODO_VERIFICATION_CAMPAIGN.md step 18), each as one named test.
 
 Some invariants have deeper coverage elsewhere (cross-referenced in the docstrings); these tests are the single
 place where each one is asserted end to end, with a positive control wherever a negative could pass vacuously.

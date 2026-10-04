@@ -98,7 +98,7 @@ Feature inside the monolith (DEC-041; spec `docs/CHANGE_GUARD_SPEC.md`). Package
  Profound Agent (Profound's cloud) ──Call API node──► POST /api/change-checks   (Bearer CHANGE_GUARD_TOKEN)
                                                          │ ChangeSet (source_mode LIVE | SIMULATED)
                                                          ▼
-                                                  AEO SRE Change Guard
+                                                  Profound Lift Change Guard
               1 experiment contamination ── experiments/collision + window.py ──► DELAY (+ eligible_after)
               2 duplicate / conflicting target changes ────────────────────────► MERGE | REQUIRE_REVIEW
               3 canonical-truth conflict: rules, then EvidenceRanker / ModelGateway if READY ► BLOCK

@@ -35,10 +35,6 @@ const sortedAgents = computed(() => {
   })
 })
 
-function taskOf(a: AgentActivity): string {
-  return a.currentTask ?? a.current_task ?? '—'
-}
-
 function campaignOf(a: AgentActivity): string {
   return a.campaignName ?? a.campaign_name ?? '—'
 }
@@ -61,61 +57,74 @@ function stateClass(state: AgentActivity['state']): string {
   }
 }
 
-function formatState(state: string): string {
-  return state.replace(/_/g, ' ')
+function num(a: AgentActivity, ...keys: (keyof AgentActivity)[]): number {
+  for (const k of keys) {
+    const v = a[k]
+    if (v != null && v !== '') return Number(v) || 0
+  }
+  return 0
 }
 
-function agentModelCost(a: AgentActivity): number {
-  return Number(a.modelCost ?? a.model_cost ?? 0)
-}
-
-function formatCost(v: number): string {
-  if (!v) return '$0.00'
+function money(v: number): string {
   return `$${v.toFixed(2)}`
 }
 </script>
 
 <template>
-  <aside class="agents-panel" aria-label="Active agents">
+  <aside class="agents-panel" aria-label="Active agents ledger">
     <header class="panel-header">
-      <div class="header-title">
-        <h2 class="panel-title">Agents</h2>
+      <div class="header-row">
+        <h2 class="panel-title">Agent ledger</h2>
         <span class="count-pill">{{ agents.length }}</span>
       </div>
-      <p class="panel-sub">
-        Profound &amp; control-plane registry — select to highlight on the graph
-      </p>
+      <p class="panel-sub">All runs, costs, and outputs — select a row to highlight on the graph</p>
     </header>
 
-    <div v-if="loading && !agents.length" class="panel-empty">
-      Loading agents…
-    </div>
+    <div v-if="loading && !agents.length" class="panel-empty">Loading agents…</div>
     <div v-else-if="!agents.length" class="panel-empty">
-      No agents in the live registry yet. Bootstrap agents from Campaigns or refresh after Profound publish.
+      No agents in the live registry yet.
     </div>
 
-    <ul v-else class="agent-list" role="list">
-      <li v-for="agent in sortedAgents" :key="agent.id">
-        <button
-          type="button"
-          class="agent-row"
-          :class="{ selected: selectedAgentId === agent.id }"
-          @click="emit('select', agent)"
-        >
-          <div class="row-top">
-            <span class="agent-name">{{ agent.name }}</span>
-            <span :class="['state-badge', stateClass(agent.state)]">{{ formatState(agent.state) }}</span>
-          </div>
-          <p class="agent-role">{{ agent.role }}</p>
-          <p class="agent-task">{{ taskOf(agent) }}</p>
-          <div class="row-meta">
-            <span class="meta-item">{{ campaignOf(agent) }}</span>
-            <span v-if="agent.runs" class="meta-item">{{ agent.runs }} run{{ agent.runs === 1 ? '' : 's' }}</span>
-            <span class="meta-item meta-cost">{{ formatCost(agentModelCost(agent)) }} model</span>
-          </div>
-        </button>
-      </li>
-    </ul>
+    <div v-else class="table-wrap">
+      <table class="agent-table">
+        <thead>
+          <tr>
+            <th scope="col">Agent</th>
+            <th scope="col">State</th>
+            <th scope="col" class="num">Runs</th>
+            <th scope="col" class="num">Model $</th>
+            <th scope="col" class="num">Total $</th>
+            <th scope="col" class="num">Out</th>
+            <th scope="col" class="num">Acc</th>
+            <th scope="col">Campaign</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="agent in sortedAgents"
+            :key="agent.id"
+            :class="{ selected: selectedAgentId === agent.id }"
+            tabindex="0"
+            role="button"
+            @click="emit('select', agent)"
+            @keydown.enter="emit('select', agent)"
+          >
+            <td class="name-cell">
+              <span class="agent-name" :title="agent.name">{{ agent.name }}</span>
+            </td>
+            <td>
+              <span :class="['state-badge', stateClass(agent.state)]">{{ agent.state }}</span>
+            </td>
+            <td class="num">{{ num(agent, 'runs') }}</td>
+            <td class="num cost">{{ money(num(agent, 'modelCost', 'model_cost')) }}</td>
+            <td class="num cost">{{ money(num(agent, 'totalCost', 'total_cost')) }}</td>
+            <td class="num">{{ num(agent, 'outputsProduced', 'outputs_produced') }}</td>
+            <td class="num">{{ num(agent, 'outputsAccepted', 'outputs_accepted') }}</td>
+            <td class="camp-cell" :title="campaignOf(agent)">{{ campaignOf(agent) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </aside>
 </template>
 
@@ -123,22 +132,23 @@ function formatCost(v: number): string {
 .agents-panel {
   display: flex;
   flex-direction: column;
-  background: rgba(13, 19, 34, 0.85);
+  min-width: 0;
+  min-height: 480px;
+  max-height: min(62vh, 720px);
+  background: rgba(13, 19, 34, 0.92);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg, 14px);
   overflow: hidden;
-  height: calc(100vh - 520px);
-  min-height: 420px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
 }
 
 .panel-header {
-  padding: 14px 16px 12px;
+  padding: 12px 14px 10px;
   border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
-.header-title {
+.header-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -146,10 +156,9 @@ function formatCost(v: number): string {
 
 .panel-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #f8fafc;
-  letter-spacing: -0.01em;
 }
 
 .count-pill {
@@ -163,143 +172,112 @@ function formatCost(v: number): string {
 }
 
 .panel-sub {
-  margin: 6px 0 0;
-  font-size: 11px;
-  line-height: 1.4;
+  margin: 4px 0 0;
+  font-size: 10px;
   color: var(--text-dim);
+  line-height: 1.35;
 }
 
 .panel-empty {
-  padding: 24px 16px;
+  padding: 20px 14px;
   font-size: 12px;
   color: var(--text-dim);
-  line-height: 1.5;
 }
 
-.agent-list {
-  list-style: none;
-  margin: 0;
-  padding: 8px;
-  overflow-y: auto;
+.table-wrap {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 0 8px;
 }
 
-.agent-row {
+.agent-table {
   width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.agent-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   text-align: left;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  background: rgba(15, 21, 38, 0.6);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  padding: 8px 10px;
+  background: rgba(8, 12, 22, 0.98);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.agent-table th.num,
+.agent-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.agent-table tbody tr {
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: background 0.12s;
 }
 
-.agent-row:hover {
-  background: var(--surface-hover);
-  border-color: var(--border);
+.agent-table tbody tr:hover {
+  background: rgba(79, 70, 229, 0.08);
 }
 
-.agent-row.selected {
-  border-color: rgba(99, 102, 241, 0.55);
-  background: rgba(79, 70, 229, 0.12);
+.agent-table tbody tr.selected {
+  background: rgba(79, 70, 229, 0.16);
 }
 
-.row-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
+.agent-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+  color: #cbd5e1;
+}
+
+.name-cell {
+  max-width: 160px;
 }
 
 .agent-name {
-  font-size: 12px;
+  display: block;
   font-weight: 700;
   color: #f1f5f9;
-  line-height: 1.3;
+  line-height: 1.25;
+  word-break: break-word;
 }
 
-.state-badge {
-  flex-shrink: 0;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-}
-
-.state-running {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-}
-.state-review {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-}
-.state-waiting {
-  background: rgba(56, 189, 248, 0.2);
-  color: #38bdf8;
-}
-.state-bad {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-}
-.state-done {
-  background: rgba(148, 163, 184, 0.2);
-  color: #94a3b8;
-}
-.state-idle {
-  background: rgba(100, 116, 139, 0.25);
-  color: #94a3b8;
-}
-
-.agent-role {
-  margin: 4px 0 0;
-  font-size: 10px;
-  color: #64748b;
-}
-
-.agent-task {
-  margin: 6px 0 0;
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.row-meta {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 10px;
-  font-size: 10px;
-  color: #64748b;
-}
-
-.meta-item {
-  max-width: 100%;
+.camp-cell {
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: #64748b;
+  font-size: 10px;
 }
 
-.meta-cost {
+.cost {
   color: #c084fc;
   font-weight: 700;
 }
 
-@media (max-width: 1100px) {
-  .agents-panel {
-    height: auto;
-    min-height: 280px;
-    max-height: 360px;
-  }
+.state-badge {
+  display: inline-block;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
+
+.state-running { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.state-review { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.state-waiting { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+.state-bad { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+.state-done { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+.state-idle { background: rgba(100, 116, 139, 0.25); color: #94a3b8; }
 </style>

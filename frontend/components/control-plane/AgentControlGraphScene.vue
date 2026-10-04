@@ -352,7 +352,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 3D WebGL Canvas Container -->
-    <div ref="canvasContainer" class="canvas-container" aria-label="3D Live Agent Control Plane Canvas"></div>
+    <div ref="canvasContainer" class="canvas-container" aria-label="Profound Lift 3D control plane canvas"></div>
 
     <!-- Hover Tooltip Card -->
     <div

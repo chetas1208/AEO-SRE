@@ -1,4 +1,4 @@
-"""Adversarial HTTP attacks: every request below tries to make AEO SRE report a success it did not earn.
+"""Adversarial HTTP attacks: every request below tries to make Profound Lift report a success it did not earn.
 
 Expected: a structured error {error: {code, type, message, details, request_id}}, no stack trace, and ZERO side
 effects (no row written, no state moved).

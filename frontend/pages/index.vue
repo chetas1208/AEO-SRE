@@ -4,6 +4,7 @@ import type { ControlPlaneGraphNode, ExperimentDetail } from '~/types'
 import ControlPlaneGraph from '~/components/control-plane/ControlPlaneGraph.vue'
 import ControlPlaneAgentsList from '~/components/control-plane/ControlPlaneAgentsList.vue'
 import ControlPlaneFlightDeck from '~/components/control-plane/ControlPlaneFlightDeck.vue'
+import ControlPlaneOpsStrip from '~/components/control-plane/ControlPlaneOpsStrip.vue'
 import CampaignCreateDrawer from '~/components/campaigns/CampaignCreateDrawer.vue'
 import ExperimentCreateDrawer from '~/components/experiments/ExperimentCreateDrawer.vue'
 import type { AgentActivity } from '~/types'
@@ -22,6 +23,10 @@ const selectedNodeId = ref<string | null>(null)
 const graphNodes = computed(() => data.value?.graph?.nodes ?? [])
 const graphEdges = computed(() => data.value?.graph?.edges ?? [])
 const agents = computed(() => data.value?.agents ?? [])
+const graphStats = computed(() => ({
+  nodes: graphNodes.value.length,
+  edges: graphEdges.value.length,
+}))
 
 function selectGraphNodeId(id: string | null) {
   selectedNodeId.value = id
@@ -73,7 +78,7 @@ function handleExperimentCreated(_detail: ExperimentDetail) {
     <header class="page-header" aria-label="Control Plane Header">
       <div class="header-left">
         <div class="title-row">
-          <h1 class="page-title">Agent Control Plane</h1>
+          <h1 class="page-title">Control Plane</h1>
           <span :class="['mode-badge', data?.sourceMode === 'TEST' || data?.source_mode === 'TEST' ? 'mode-test' : 'mode-live']">
             <span class="live-dot" aria-hidden="true" />
             {{
@@ -140,21 +145,29 @@ function handleExperimentCreated(_detail: ExperimentDetail) {
       @select-agent="handleAgentSelect"
     />
 
-    <!-- Graph + live agent registry -->
+    <ControlPlaneOpsStrip
+      :data="data"
+      :graph-node-count="graphStats.nodes"
+      :graph-edge-count="graphStats.edges"
+    />
+
+    <!-- Graph (primary) + agent ledger with full numeric columns -->
     <main class="control-plane-centerpiece" aria-label="Control plane graph and agents">
+      <section class="graph-pane">
+        <ControlPlaneGraph
+          :nodes="graphNodes"
+          :edges="graphEdges"
+          :selected-node-id="selectedNodeId"
+          @select="handleNodeSelect"
+          @clear-selection="handleClearSelection"
+          @open-create-experiment="handleOpenCreateExperiment"
+        />
+      </section>
       <ControlPlaneAgentsList
         :agents="agents"
         :selected-agent-id="selectedNodeId"
         :loading="isLoading"
         @select="handleAgentSelect"
-      />
-      <ControlPlaneGraph
-        :nodes="graphNodes"
-        :edges="graphEdges"
-        :selected-node-id="selectedNodeId"
-        @select="handleNodeSelect"
-        @clear-selection="handleClearSelection"
-        @open-create-experiment="handleOpenCreateExperiment"
       />
     </main>
 
@@ -178,11 +191,12 @@ function handleExperimentCreated(_detail: ExperimentDetail) {
 .control-plane-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px 24px 32px;
-  max-width: 1680px;
+  gap: 12px;
+  padding: 12px 20px 24px;
+  max-width: 1920px;
   margin: 0 auto;
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 }
 
@@ -314,19 +328,35 @@ function handleExperimentCreated(_detail: ExperimentDetail) {
   font-size: 12px;
 }
 
-/* Graph + agents side-by-side */
+/* Graph first (wide), agent ledger with all numeric columns on the right */
 .control-plane-centerpiece {
   width: 100%;
   flex: 1;
+  min-height: 0;
   display: grid;
-  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 36%);
+  gap: 12px;
   align-items: stretch;
+  min-height: min(62vh, 720px);
 }
 
-@media (max-width: 1100px) {
+.graph-pane {
+  min-width: 0;
+  min-height: 480px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.graph-pane :deep(.control-plane-graph) {
+  flex: 1;
+  min-height: 480px;
+}
+
+@media (max-width: 1280px) {
   .control-plane-centerpiece {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 }
 </style>

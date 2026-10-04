@@ -9,6 +9,6 @@ export default defineNuxtPlugin(() => {
     sameOrigin: Boolean(config.public.apiSameOrigin)
   })
   if (import.meta.env.PROD && isLoopbackApiBase(base)) {
-    console.error('[AgentMatch] Misconfigured API base in production:', base)
+    console.error('[Profound Lift] Misconfigured API base in production:', base)
   }
 })
