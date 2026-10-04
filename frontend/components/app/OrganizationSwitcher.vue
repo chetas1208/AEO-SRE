@@ -41,7 +41,7 @@ function onSelectOrg(id: string) {
       <div class="org-avatar">{{ currentInitial }}</div>
       <div class="org-info">
         <span class="org-name">{{ org.current?.name ?? 'No organization' }}</span>
-        <span class="org-domain">{{ org.current?.domain ?? 'unavailable' }}</span>
+        <span v-if="org.current?.domain" class="org-domain">{{ org.current.domain }}</span>
       </div>
       <svg class="org-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <polyline points="9 18 15 12 9 6" />

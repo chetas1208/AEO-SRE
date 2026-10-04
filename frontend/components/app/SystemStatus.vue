@@ -2,10 +2,14 @@
 const live = useLiveSystemStore()
 const expanded = ref(false)
 
+const requiredCapabilities = computed(() =>
+  (live.health?.capabilities ?? []).filter((c) => !c.optional)
+)
+
 const monitoring = computed(() => {
   if (live.apiReachable === null) return { label: 'Checking status…', tone: 'warn' }
   if (live.apiReachable !== true) return { label: 'API unreachable', tone: 'bad' }
-  const caps = live.health?.capabilities ?? []
+  const caps = requiredCapabilities.value
   const bad = caps.filter((c) => c.state === 'unavailable')
   if (bad.length) return { label: `${bad.length} unavailable`, tone: 'bad' }
   if (caps.some((c) => c.state === 'degraded')) return { label: 'Degraded', tone: 'warn' }
@@ -31,11 +35,11 @@ const monitoring = computed(() => {
     </div>
 
     <div v-if="expanded" class="capabilities-drawer">
-      <div v-for="c in live.health?.capabilities ?? []" :key="c.name" class="cap-item">
+      <div v-for="c in requiredCapabilities" :key="c.name" class="cap-item">
         <span class="cap-name">{{ c.label ?? humanize(c.name) }}</span>
         <StatusBadge :label="humanize(c.state)" :tone="c.state === 'healthy' ? 'good' : c.state === 'degraded' ? 'warn' : 'bad'" />
       </div>
-      <div v-if="!(live.health?.capabilities ?? []).length" class="meta dim">No capability report available.</div>
+      <div v-if="!requiredCapabilities.length" class="meta dim">No capability report available.</div>
     </div>
   </section>
 </template>
