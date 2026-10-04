@@ -198,6 +198,80 @@ async def build_live_decisions(session: AsyncSession) -> list[DecisionCard]:
     return cards
 
 
+MAX_GRAPH_ENTITIES = 5
+
+# Process columns (left → right): signal → agent → campaign → decision → experiment → outcome
+_COL = {
+    "signal": (-11.0, -4.0),
+    "agent": (-7.0, -2.5),
+    "campaign": (0.0, 0.0),
+    "decision": (4.5, 2.0),
+    "experiment": (8.5, 4.5),
+    "outcome": (11.5, 6.5),
+}
+
+
+def _y_slot(i: int, n: int) -> float:
+    if n <= 1:
+        return 0.0
+    return (i - (n - 1) / 2.0) * 2.6
+
+
+def _dedupe_agents_for_graph(agents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One graph node per Profound agent; prefer the row with the newest activity."""
+    by_key: dict[str, dict[str, Any]] = {}
+    for a in agents:
+        key = str(a.get("profound_agent_id") or a.get("id") or a.get("name") or "")
+        if not key:
+            continue
+        prev = by_key.get(key)
+        if prev is None or a.get("state") in ("RUNNING", "REVIEW"):
+            by_key[key] = a
+    return list(by_key.values())[:MAX_GRAPH_ENTITIES]
+
+
+def _campaign_id_set(campaigns: list[CampaignFinancialCard]) -> set[str]:
+    return {c.id for c in campaigns}
+
+
+def _resolve_campaign_id(
+    *,
+    explicit: str | None,
+    campaigns: list[CampaignFinancialCard],
+    row: int,
+) -> str | None:
+    valid = _campaign_id_set(campaigns)
+    if explicit and explicit in valid:
+        return explicit
+    if not campaigns:
+        return None
+    return campaigns[row % len(campaigns)].id
+
+
+def _add_edge(
+    edges: list[ControlPlaneGraphEdge],
+    *,
+    edge_id: str,
+    source: str,
+    target: str,
+    label: str,
+    status: str = "active",
+) -> None:
+    if source == target:
+        return
+    if any(e.id == edge_id for e in edges):
+        return
+    edges.append(
+        ControlPlaneGraphEdge(
+            id=edge_id,
+            source=source,
+            target=target,
+            label=label,
+            status=status,
+        )
+    )
+
+
 def build_live_control_graph(
     *,
     agents: list[dict[str, Any]],
@@ -205,153 +279,217 @@ def build_live_control_graph(
     decisions: list[DecisionCard],
     experiments: list[ExperimentControlCard],
     profound_live: dict[str, Any],
+    experiment_campaign_ids: dict[str, str] | None = None,
 ) -> ControlPlaneGraph:
-    """3D topology from real entities + Profound overlay only."""
+    """Connected left-to-right process: signals → agents → campaigns → decisions → experiments → outcome."""
     nodes: list[ControlPlaneGraphNode] = []
     edges: list[ControlPlaneGraphEdge] = []
+    exp_cids = experiment_campaign_ids or {}
 
+    graph_agents = _dedupe_agents_for_graph(agents)
+    graph_campaigns = campaigns[:MAX_GRAPH_ENTITIES]
+    graph_decisions = decisions[:MAX_GRAPH_ENTITIES]
+    graph_experiments = experiments[:MAX_GRAPH_ENTITIES]
+
+    row_count = max(
+        len(graph_agents),
+        len(graph_campaigns),
+        len(graph_decisions),
+        len(graph_experiments),
+        1,
+    )
+    row_count = min(row_count, MAX_GRAPH_ENTITIES)
+
+    signal_id: str | None = None
     if profound_live.get("status") == "OK":
+        signal_id = "sig-profound-live"
         vis = profound_live.get("metrics", {}).get("visibility")
         delta = (profound_live.get("delta_7d_pp") or {}).get("visibility")
+        sx, sz = _COL["signal"]
         nodes.append(
             ControlPlaneGraphNode(
-                id="sig-profound-live",
+                id=signal_id,
                 type="signal",
-                label=f"Profound visibility ({profound_live.get('signal_count', 0)} signals)",
+                label=f"Profound ({profound_live.get('signal_count', 0)} signals)",
                 status="running",
                 meta={
                     "source": "PROFOUND",
                     "source_mode": "LIVE",
                     "visibility": vis,
                     "delta_7d_pp": delta,
-                    "effectiveness": profound_live.get("campaign_effectiveness"),
                 },
-                x=-11.0,
+                x=sx,
                 y=0.0,
-                z=-4.0,
+                z=sz,
             )
         )
 
-    for idx, a in enumerate(agents[:8]):
-        y_pos = (idx - 3.5) * 2.2
+    agent_ids: list[str] = []
+    for idx, a in enumerate(graph_agents):
+        node_id = str(a["id"])
+        agent_ids.append(node_id)
         st = "running" if a.get("state") in ("RUNNING", "REVIEW", "WAITING") else "neutral"
+        ax, az = _COL["agent"]
         nodes.append(
             ControlPlaneGraphNode(
-                id=str(a["id"]),
+                id=node_id,
                 type="agent",
-                label=str(a["name"]),
+                label=str(a["name"])[:64],
                 status=st,
                 meta={
-                    **{k: a[k] for k in ("role", "runs", "current_task", "source_mode", "profound_run_id") if k in a},
+                    **{k: a[k] for k in ("role", "runs", "current_task", "source_mode") if k in a},
                     "source_mode": a.get("source_mode", "LIVE"),
                 },
-                x=-7.0,
-                y=y_pos,
-                z=-2.5,
+                x=ax,
+                y=_y_slot(idx, max(len(graph_agents), row_count)),
+                z=az,
             )
         )
-        if nodes and nodes[0].id == "sig-profound-live":
-            edges.append(
-                ControlPlaneGraphEdge(
-                    id=f"e-sig-{a['id']}",
-                    source="sig-profound-live",
-                    target=str(a["id"]),
-                    label="OBSERVED",
-                    status="active",
-                )
+        if signal_id:
+            _add_edge(
+                edges,
+                edge_id=f"e-{signal_id}-{node_id}",
+                source=signal_id,
+                target=node_id,
+                label="TRIGGERS",
             )
 
-    for idx, c in enumerate(campaigns[:8]):
-        y_pos = (idx - 3.5) * 2.8
+    campaign_ids: list[str] = []
+    for idx, c in enumerate(graph_campaigns):
+        campaign_ids.append(c.id)
+        cx, cz = _COL["campaign"]
         nodes.append(
             ControlPlaneGraphNode(
                 id=c.id,
                 type="campaign",
-                label=c.name,
+                label=c.name[:64],
                 status="positive" if c.financial_status == "POSITIVE" else "uncertain",
                 meta={"cost": c.total_cost, "return": c.attributed_return, "source_mode": "LIVE"},
-                x=0.0,
-                y=y_pos,
-                z=0.0,
+                x=cx,
+                y=_y_slot(idx, max(len(graph_campaigns), row_count)),
+                z=cz,
             )
         )
 
-    for a in agents[:8]:
-        cid = a.get("campaign_id")
-        if cid and any(c.id == cid for c in campaigns):
-            edges.append(
-                ControlPlaneGraphEdge(
-                    id=f"e-agent-{a['id']}-{cid}",
-                    source=str(a["id"]),
-                    target=str(cid),
-                    label="WORKING_ON",
-                    status="active",
-                )
+    for idx, a in enumerate(graph_agents):
+        aid = str(a["id"])
+        cid = _resolve_campaign_id(
+            explicit=str(a.get("campaign_id") or "") or None,
+            campaigns=graph_campaigns,
+            row=idx,
+        )
+        if cid:
+            _add_edge(
+                edges,
+                edge_id=f"e-agent-cmp-{aid}-{cid}",
+                source=aid,
+                target=cid,
+                label="EXECUTES",
             )
 
-    for idx, d in enumerate(decisions[:6]):
-        y_pos = (idx - 2.5) * 2.4
+    decision_ids: list[str] = []
+    for idx, d in enumerate(graph_decisions):
+        decision_ids.append(d.id)
+        dx, dz = _COL["decision"]
         nodes.append(
             ControlPlaneGraphNode(
                 id=d.id,
                 type="decision",
-                label=d.title[:80],
+                label=d.title[:72],
                 status="uncertain" if d.status == "PENDING_REVIEW" else "positive",
                 meta={"status": d.status, "source_mode": "LIVE", "recommended_by": d.recommended_by},
-                x=4.5,
-                y=y_pos,
-                z=2.0,
+                x=dx,
+                y=_y_slot(idx, max(len(graph_decisions), row_count)),
+                z=dz,
             )
         )
-        if d.campaign_id and any(c.id == d.campaign_id for c in campaigns):
-            edges.append(
-                ControlPlaneGraphEdge(
-                    id=f"e-cmp-{d.campaign_id}-{d.id}",
-                    source=d.campaign_id,
-                    target=d.id,
-                    label="ACTION",
-                    status="active",
-                )
+        cid = _resolve_campaign_id(
+            explicit=d.campaign_id or None,
+            campaigns=graph_campaigns,
+            row=idx,
+        )
+        if cid:
+            _add_edge(
+                edges,
+                edge_id=f"e-cmp-dec-{cid}-{d.id}",
+                source=cid,
+                target=d.id,
+                label="PROPOSES",
             )
 
-    for idx, e in enumerate(experiments[:6]):
-        y_pos = (idx - 2.5) * 2.6
+    experiment_ids: list[str] = []
+    for idx, e in enumerate(graph_experiments):
+        experiment_ids.append(e.id)
+        ex, ez = _COL["experiment"]
         nodes.append(
             ControlPlaneGraphNode(
                 id=e.id,
                 type="experiment",
-                label=e.code,
+                label=e.code[:48],
                 status="running" if e.protection_active else "neutral",
-                meta={"hypothesis": e.hypothesis[:120], "status": e.status, "source_mode": "LIVE"},
-                x=8.5,
-                y=y_pos,
-                z=4.5,
+                meta={"hypothesis": (e.hypothesis or "")[:120], "status": e.status, "source_mode": "LIVE"},
+                x=ex,
+                y=_y_slot(idx, max(len(graph_experiments), row_count)),
+                z=ez,
             )
         )
+        dec_id = decision_ids[idx] if idx < len(decision_ids) else (decision_ids[-1] if decision_ids else None)
+        if dec_id:
+            _add_edge(
+                edges,
+                edge_id=f"e-dec-exp-{dec_id}-{e.id}",
+                source=dec_id,
+                target=e.id,
+                label="VERIFIES",
+            )
+        else:
+            cid = _resolve_campaign_id(
+                explicit=exp_cids.get(e.id),
+                campaigns=graph_campaigns,
+                row=idx,
+            )
+            if cid:
+                _add_edge(
+                    edges,
+                    edge_id=f"e-cmp-exp-{cid}-{e.id}",
+                    source=cid,
+                    target=e.id,
+                    label="TESTS",
+                )
 
     delta = (profound_live.get("delta_7d_pp") or {}).get("visibility")
+    outcome_id = "out-profound-live"
     if delta is not None:
-        nodes.append(
-            ControlPlaneGraphNode(
-                id="out-profound-live",
-                type="outcome",
-                label=f"Profound Δ visibility: {delta:+.2f}pp",
-                status="positive" if (delta or 0) >= 0 else "negative",
-                meta={"source": "PROFOUND", "source_mode": "LIVE", "delta_pp": delta},
-                x=11.5,
-                y=0.0,
-                z=6.5,
-            )
+        label = f"Outcome Δ {delta:+.2f}pp visibility"
+        status = "positive" if (delta or 0) >= 0 else "negative"
+    elif graph_experiments:
+        label = "Measured outcomes"
+        status = "neutral"
+    else:
+        label = "Outcomes (awaiting experiments)"
+        status = "neutral"
+
+    ox, oz = _COL["outcome"]
+    nodes.append(
+        ControlPlaneGraphNode(
+            id=outcome_id,
+            type="outcome",
+            label=label[:72],
+            status=status,
+            meta={"source": "PROFOUND", "source_mode": "LIVE", "delta_pp": delta},
+            x=ox,
+            y=0.0,
+            z=oz,
         )
-        if experiments:
-            edges.append(
-                ControlPlaneGraphEdge(
-                    id=f"e-exp-out-{experiments[0].id}",
-                    source=experiments[0].id,
-                    target="out-profound-live",
-                    label="MEASURED_BY",
-                    status="active",
-                )
-            )
+    )
+
+    for eid in experiment_ids:
+        _add_edge(
+            edges,
+            edge_id=f"e-exp-out-{eid}-{outcome_id}",
+            source=eid,
+            target=outcome_id,
+            label="MEASURES",
+        )
 
     return ControlPlaneGraph(nodes=nodes, edges=edges)

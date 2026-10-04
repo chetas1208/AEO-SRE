@@ -262,8 +262,22 @@ async def get_control_plane(session: SessionDep):
     )).scalars().all()
 
     exp_cards: list[ExperimentControlCard] = []
+    experiment_campaign_ids: dict[str, str] = {}
     for e in exp_rows:
         spec = e.spec if isinstance(e.spec, dict) else {}
+        exp_cid: str | None = None
+        inc_row = await session.get(Incident, e.incident_id) if e.incident_id else None
+        if inc_row and isinstance(inc_row.context, dict):
+            exp_cid = inc_row.context.get("campaign_id")
+        if not exp_cid and e.intervention_id:
+            from app.models.interventions import Intervention
+
+            iv = await session.get(Intervention, e.intervention_id)
+            if iv and isinstance(iv.proposed_change, dict):
+                exp_cid = iv.proposed_change.get("campaign_id")
+        if exp_cid:
+            experiment_campaign_ids[str(e.id)] = str(exp_cid)
+
         exp_cards.append(ExperimentControlCard(
             id=str(e.id),
             code=e.code,
@@ -352,6 +366,13 @@ async def get_control_plane(session: SessionDep):
     }
     measuring_exps = len([e for e in exp_cards if e.status in measuring_statuses])
 
+    total_agent_runs = sum(int(a.get("runs") or 0) for a in agents_registry)
+    decision_cost_total = round(sum(float(d.cost or 0) for d in enriched_decisions), 2)
+    net_return_val = (tot_return - tot_cost) if tot_return else None
+    blended_roi = (
+        ((tot_return - tot_cost) / tot_cost * 100.0) if tot_return and tot_cost > 0 else None
+    )
+
     summary = ControlPlaneSummary(
         active_agents=len([a for a in agents_registry if a.get("state") in ("RUNNING", "REVIEW")]),
         running_campaigns=len([c for c in campaign_cards if c.status == "ACTIVE"]),
@@ -359,6 +380,11 @@ async def get_control_plane(session: SessionDep):
         attributed_return=round(tot_return, 2),
         decisions_needing_review=pending_decisions,
         experiments_measuring=measuring_exps,
+        total_spend=round(tot_cost, 2),
+        net_return=round(net_return_val, 2) if net_return_val is not None else None,
+        blended_roi_pct=round(blended_roi, 2) if blended_roi is not None else None,
+        total_agent_runs=total_agent_runs,
+        decision_cost_total=decision_cost_total,
     )
 
     if live_surface:
@@ -368,6 +394,7 @@ async def get_control_plane(session: SessionDep):
             decisions=enriched_decisions,
             experiments=exp_cards,
             profound_live=profound_live,
+            experiment_campaign_ids=experiment_campaign_ids,
         )
         return ControlPlaneResponse(
             generated_at=now.isoformat(),
@@ -565,13 +592,19 @@ async def get_control_plane(session: SessionDep):
             z=4.5,
         ))
 
-    # Edges: Decision / Laya -> Experiments
-    if exp_cards:
+    # Edges: Decision / Laya -> Experiments (each experiment wired into the process)
+    for idx, exp in enumerate(exp_cards[:3]):
+        if idx == 0:
+            src = "laya-decision-gate"
+        elif enriched_decisions:
+            src = enriched_decisions[min(idx, len(enriched_decisions) - 1)].id
+        else:
+            continue
         edges.append(ControlPlaneGraphEdge(
-            id=f"e-laya-gate-{exp_cards[0].id}",
-            source="laya-decision-gate",
-            target=exp_cards[0].id,
-            label="TESTED_BY",
+            id=f"e-dec-exp-{src}-{exp.id}",
+            source=src,
+            target=exp.id,
+            label="VERIFIES",
             status="active",
         ))
 
@@ -597,13 +630,13 @@ async def get_control_plane(session: SessionDep):
         z=6.5,
     ))
 
-    # Edge: Experiment -> Visibility Lift -> Deal Pipeline
-    if exp_cards:
+    # Edge: Experiments -> Visibility Lift -> Deal Pipeline
+    for exp in exp_cards[:3]:
         edges.append(ControlPlaneGraphEdge(
-            id=f"e-{exp_cards[0].id}-out-visibility",
-            source=exp_cards[0].id,
+            id=f"e-{exp.id}-out-visibility",
+            source=exp.id,
             target="out-visibility-lift",
-            label="MEASURED_BY",
+            label="MEASURES",
             status="positive",
         ))
     edges.append(ControlPlaneGraphEdge(

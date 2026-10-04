@@ -629,6 +629,16 @@ export interface ControlPlaneSummary {
   decisions_needing_review?: number
   experimentsMeasuring?: number
   experiments_measuring?: number
+  totalSpend?: number
+  total_spend?: number
+  netReturn?: number | null
+  net_return?: number | null
+  blendedRoiPct?: number | null
+  blended_roi_pct?: number | null
+  totalAgentRuns?: number
+  total_agent_runs?: number
+  decisionCostTotal?: number
+  decision_cost_total?: number
 }
 
 export interface AgentActivity {

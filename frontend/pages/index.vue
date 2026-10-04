@@ -2,12 +2,11 @@
 import { ref, computed } from 'vue'
 import type { ControlPlaneGraphNode, ExperimentDetail } from '~/types'
 import ControlPlaneGraph from '~/components/control-plane/ControlPlaneGraph.vue'
+import ControlPlaneAgentsList from '~/components/control-plane/ControlPlaneAgentsList.vue'
+import ControlPlaneFlightDeck from '~/components/control-plane/ControlPlaneFlightDeck.vue'
 import CampaignCreateDrawer from '~/components/campaigns/CampaignCreateDrawer.vue'
 import ExperimentCreateDrawer from '~/components/experiments/ExperimentCreateDrawer.vue'
-import ProfoundLiveRail from '~/components/profound/ProfoundLiveRail.vue'
-import MixpanelStatusRail from '~/components/mixpanel/MixpanelStatusRail.vue'
-
-const showOptionalMixpanel = ref(false)
+import type { AgentActivity } from '~/types'
 
 const { data, isLoading, error, refresh } = useControlPlane()
 
@@ -19,29 +18,38 @@ const selectedCampaignIdForExperiment = ref<string | undefined>(undefined)
 // Selected node in control plane
 const selectedNodeId = ref<string | null>(null)
 
-// Normalized Summary Values
-const summary = computed(() => {
-  const s = data.value?.summary
-  return {
-    activeAgents: s?.activeAgents ?? s?.active_agents ?? 0,
-    runningCampaigns: s?.runningCampaigns ?? s?.running_campaigns ?? 0,
-    modelCostToday: s?.modelCostToday ?? s?.model_cost_today ?? 0,
-    attributedReturn: s?.attributedReturn ?? s?.attributed_return ?? 0,
-    decisionsNeedingReview: s?.decisionsNeedingReview ?? s?.decisions_needing_review ?? 0,
-    experimentsMeasuring: s?.experimentsMeasuring ?? s?.experiments_measuring ?? 0,
-  }
-})
-
 // Graph Nodes & Edges
 const graphNodes = computed(() => data.value?.graph?.nodes ?? [])
 const graphEdges = computed(() => data.value?.graph?.edges ?? [])
+const agents = computed(() => data.value?.agents ?? [])
+
+function selectGraphNodeId(id: string | null) {
+  selectedNodeId.value = id
+}
+
+function handleAgentSelect(agent: AgentActivity) {
+  const byId = graphNodes.value.find(n => n.id === agent.id)
+  if (byId) {
+    selectGraphNodeId(byId.id)
+    return
+  }
+  const byLabel = graphNodes.value.find(
+    n => n.type === 'agent' && n.label.toLowerCase() === agent.name.toLowerCase()
+  )
+  selectGraphNodeId(byLabel?.id ?? agent.id)
+}
+
+function handleCampaignSelect(campaignId: string) {
+  const node = graphNodes.value.find(n => n.id === campaignId && n.type === 'campaign')
+  selectGraphNodeId(node?.id ?? campaignId)
+}
 
 function handleNodeSelect(node: ControlPlaneGraphNode) {
   selectedNodeId.value = node.id
 }
 
 function handleClearSelection() {
-  selectedNodeId.value = null
+  selectGraphNodeId(null)
 }
 
 function handleOpenCreateExperiment(campaignId?: string) {
@@ -57,15 +65,6 @@ function handleExperimentCreated(_detail: ExperimentDetail) {
   refresh()
 }
 
-function formatCurrency(val?: number | null): string {
-  if (val === null || val === undefined) return '—'
-  return `$${Number(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-}
-
-function formatCost(val?: number | null): string {
-  if (val === null || val === undefined) return '$0.00'
-  return `$${Number(val).toFixed(2)}`
-}
 </script>
 
 <template>
@@ -86,7 +85,7 @@ function formatCost(val?: number | null): string {
           <span v-if="isLoading" class="sync-indicator">Syncing...</span>
         </div>
         <p class="page-subtitle">
-          Live autonomous marketing operations · Dynamic knowledge graph · Laya decision prior
+          Cost, return, agents, and experiments in one live flight deck
         </p>
       </div>
 
@@ -130,67 +129,25 @@ function formatCost(val?: number | null): string {
       </div>
     </header>
 
-    <!-- COMPACT LIVE TELEMETRY RAIL (SLEEK & NON-INTRUSIVE) -->
-    <section class="telemetry-rail" aria-label="Live Telemetry Rail">
-      <div class="rail-item">
-        <span class="rail-dot dot-cyan" />
-        <span class="rail-label">Agents:</span>
-        <strong class="rail-val tone-cyan">{{ summary.activeAgents }}</strong>
-      </div>
+    <div v-if="error" class="page-error" role="alert">
+      {{ error.message }}
+    </div>
 
-      <div class="rail-separator" aria-hidden="true" />
+    <ControlPlaneFlightDeck
+      :data="data"
+      :loading="isLoading"
+      @select-campaign="handleCampaignSelect"
+      @select-agent="handleAgentSelect"
+    />
 
-      <div class="rail-item">
-        <span class="rail-dot dot-indigo" />
-        <span class="rail-label">Campaigns:</span>
-        <strong class="rail-val tone-indigo">{{ summary.runningCampaigns }}</strong>
-      </div>
-
-      <div class="rail-separator" aria-hidden="true" />
-
-      <div class="rail-item">
-        <span class="rail-label">Model Cost:</span>
-        <strong class="rail-val">{{ formatCost(summary.modelCostToday) }}</strong>
-        <span class="rail-pill pill-purple">Haiku-first</span>
-      </div>
-
-      <div class="rail-separator" aria-hidden="true" />
-
-      <div class="rail-item">
-        <span class="rail-label">Attributed Return:</span>
-        <strong class="rail-val tone-emerald">{{ formatCurrency(summary.attributedReturn) }}</strong>
-        <span class="rail-pill pill-emerald">Verified</span>
-      </div>
-
-      <div class="rail-separator" aria-hidden="true" />
-
-      <div class="rail-item">
-        <span class="rail-label">Reviews:</span>
-        <strong :class="['rail-val', summary.decisionsNeedingReview > 0 ? 'tone-amber' : '']">
-          {{ summary.decisionsNeedingReview }}
-        </strong>
-      </div>
-
-      <div class="rail-separator" aria-hidden="true" />
-
-      <div class="rail-item">
-        <span class="rail-label">Measuring Experiments:</span>
-        <strong class="rail-val tone-sky">{{ summary.experimentsMeasuring }}</strong>
-        <span class="rail-pill pill-sky">Change Guard</span>
-      </div>
-    </section>
-
-    <!-- LIVE DATA: Profound API (primary) -->
-    <ProfoundLiveRail />
-
-    <!-- Optional: Mixpanel product analytics (separate from Profound; not required for live discovery) -->
-    <details class="optional-mixpanel" @toggle="showOptionalMixpanel = ($event.target as HTMLDetailsElement).open">
-      <summary>Optional Mixpanel export (not your live Profound feed)</summary>
-      <MixpanelStatusRail v-if="showOptionalMixpanel" />
-    </details>
-
-    <!-- CENTERPIECE: LIVING CONTROL PLANE GRAPH (60-70% OF VIEWPORT) -->
-    <main class="control-plane-centerpiece" aria-label="Control Plane Knowledge Graph">
+    <!-- Graph + live agent registry -->
+    <main class="control-plane-centerpiece" aria-label="Control plane graph and agents">
+      <ControlPlaneAgentsList
+        :agents="agents"
+        :selected-agent-id="selectedNodeId"
+        :loading="isLoading"
+        @select="handleAgentSelect"
+      />
       <ControlPlaneGraph
         :nodes="graphNodes"
         :edges="graphEdges"
@@ -218,23 +175,6 @@ function formatCost(val?: number | null): string {
 </template>
 
 <style scoped>
-.optional-mixpanel {
-  font-size: 12px;
-  color: #64748b;
-}
-.optional-mixpanel summary {
-  cursor: pointer;
-  padding: 8px 4px;
-  list-style: none;
-}
-.optional-mixpanel summary::-webkit-details-marker {
-  display: none;
-}
-.optional-mixpanel[open] summary {
-  margin-bottom: 8px;
-  color: #94a3b8;
-}
-
 .control-plane-page {
   display: flex;
   flex-direction: column;
@@ -365,73 +305,28 @@ function formatCost(val?: number | null): string {
   box-shadow: 0 4px 14px var(--primary-glow);
 }
 
-/* COMPACT TELEMETRY RAIL */
-.telemetry-rail {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: rgba(13, 19, 34, 0.75);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
+.page-error {
+  padding: 10px 14px;
   border-radius: var(--radius-sm);
-  padding: 8px 16px;
-  overflow-x: auto;
-  box-sizing: border-box;
-}
-
-.rail-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
   font-size: 12px;
-  white-space: nowrap;
 }
 
-.rail-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-.dot-cyan { background: #38bdf8; }
-.dot-indigo { background: #6366f1; }
-
-.rail-label {
-  color: var(--text-dim);
-}
-
-.rail-val {
-  color: var(--text-primary);
-  font-weight: 700;
-}
-
-.rail-pill {
-  font-size: 9px;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 3px;
-  text-transform: uppercase;
-}
-.pill-purple { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
-.pill-emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-.pill-sky { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
-
-.rail-separator {
-  width: 1px;
-  height: 14px;
-  background: var(--border-subtle);
-  flex-shrink: 0;
-}
-
-.tone-cyan { color: #38bdf8; }
-.tone-indigo { color: #818cf8; }
-.tone-emerald { color: #34d399; }
-.tone-amber { color: #f59e0b; }
-.tone-sky { color: #38bdf8; }
-
-/* CENTERPIECE GRAPH */
+/* Graph + agents side-by-side */
 .control-plane-centerpiece {
   width: 100%;
   flex: 1;
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .control-plane-centerpiece {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

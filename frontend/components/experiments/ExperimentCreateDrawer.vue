@@ -9,6 +9,7 @@ const props = withDefaults(
     initialHypothesis?: string
     initialAction?: string
     initialTargetUrl?: string
+    initialTargetKey?: string
     initialPrimaryMetric?: string
     initialIncidentId?: string
     initialCampaignId?: string
@@ -20,6 +21,7 @@ const props = withDefaults(
     initialHypothesis: '',
     initialAction: 'update_existing_page',
     initialTargetUrl: '',
+    initialTargetKey: '',
     initialPrimaryMetric: 'visibility',
     initialIncidentId: undefined,
     initialCampaignId: undefined,
@@ -131,7 +133,11 @@ watch(
       form.hypothesis = props.initialHypothesis || ''
       form.action = props.initialAction || 'update_existing_page'
       form.targetUrl = props.initialTargetUrl || ''
-      form.targetKey = props.initialTargetUrl ? `target:${props.initialTargetUrl.trim().toLowerCase().replace(/\/$/, '')}` : ''
+      form.targetKey =
+        props.initialTargetKey?.trim() ||
+        (props.initialTargetUrl
+          ? `target:${props.initialTargetUrl.trim().toLowerCase().replace(/\/$/, '')}`
+          : '')
       form.primaryMetric = props.initialPrimaryMetric || 'visibility'
       form.campaignId = props.initialCampaignId || ''
       form.incidentId = props.initialIncidentId || ''

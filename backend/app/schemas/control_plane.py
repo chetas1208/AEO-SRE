@@ -11,6 +11,11 @@ class ControlPlaneSummary(ApiModel):
     attributed_return: float = 0.0
     decisions_needing_review: int = 0
     experiments_measuring: int = 0
+    total_spend: float = 0.0
+    net_return: float | None = None
+    blended_roi_pct: float | None = None
+    total_agent_runs: int = 0
+    decision_cost_total: float = 0.0
 
 
 class AgentActivity(ApiModel):

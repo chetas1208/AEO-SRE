@@ -1,9 +1,57 @@
 import type { DiscoveryGapItem, GapType } from '~/types/agentmatch'
 
+function normGap(raw: Record<string, unknown>): DiscoveryGapItem {
+  const ra = (raw.recommended_action ?? raw.recommendedAction) as Record<string, unknown> | undefined
+  const pt = (raw.product_truth ?? raw.productTruth) as Record<string, unknown> | undefined
+  const ap = (raw.ai_perception ?? raw.aiPerception) as Record<string, unknown> | undefined
+  const pm = (raw.profound_metrics ?? raw.profoundMetrics) as Record<string, unknown> | undefined
+  const incidentId = String(raw.incident_id ?? raw.incidentId ?? raw.id ?? '')
+  return {
+    id: String(raw.id ?? incidentId),
+    incidentId: incidentId || undefined,
+    number: typeof raw.number === 'number' ? raw.number : undefined,
+    intentClass: String(raw.intent_class ?? raw.intentClass ?? 'Discovery gap'),
+    productName: String(raw.product_name ?? raw.productName ?? 'Product'),
+    actualFitPct: Number(raw.actual_fit_pct ?? raw.actualFitPct ?? 0),
+    aiPerceivedFitPct: Number(raw.ai_perceived_fit_pct ?? raw.aiPerceivedFitPct ?? 0),
+    gapPp: Number(raw.gap_pp ?? raw.gapPp ?? 0),
+    gapType: (raw.gap_type ?? raw.gapType ?? 'UNKNOWN') as DiscoveryGapItem['gapType'],
+    promptClustersCount: Number(raw.prompt_clusters_count ?? raw.promptClustersCount ?? 0),
+    confidence: Number(raw.confidence ?? 0),
+    severity: (raw.severity ?? 'medium') as DiscoveryGapItem['severity'],
+    detectedAt: String(raw.detected_at ?? raw.detectedAt ?? new Date().toISOString()),
+    sourceMode: (raw.source_mode ?? raw.sourceMode ?? 'LIVE') as DiscoveryGapItem['sourceMode'],
+    productTruth: {
+      statement: String(pt?.statement ?? ''),
+      canonicalKey: (pt?.canonical_key ?? pt?.canonicalKey) as string | null | undefined,
+      canonicalSource: (pt?.canonical_source ?? pt?.canonicalSource) as string | null | undefined,
+      verifiedAt: (pt?.verified_at ?? pt?.verifiedAt) as string | null | undefined,
+    },
+    aiPerception: {
+      claim: String(ap?.claim ?? ''),
+      engines: (ap?.engines as string[]) ?? [],
+      likelySource: (ap?.likely_source ?? ap?.likelySource) as string | null | undefined,
+      citationsCount: Number(ap?.citations_count ?? ap?.citationsCount ?? 0),
+    },
+    profoundMetrics: {
+      visibilityPct: Number(pm?.visibility_pct ?? pm?.visibilityPct ?? 0),
+      citationSharePct: Number(pm?.citation_share_pct ?? pm?.citationSharePct ?? 0),
+      promptCoveragePct: Number(pm?.prompt_coverage_pct ?? pm?.promptCoveragePct ?? 0),
+      competitorSharePct: Number(pm?.competitor_share_pct ?? pm?.competitorSharePct ?? 0),
+      topSources: (pm?.top_sources ?? pm?.topSources ?? []) as string[],
+    },
+    recommendedAction: {
+      type: (ra?.type ?? 'update_canonical_page') as DiscoveryGapItem['recommendedAction']['type'],
+      title: String(ra?.title ?? 'Remediate gap'),
+      description: String(ra?.description ?? ''),
+    },
+    approvalStatus: (raw.approval_status ?? raw.approvalStatus ?? 'pending') as DiscoveryGapItem['approvalStatus'],
+  }
+}
+
 const DEFAULT_GAPS: DiscoveryGapItem[] = [
   {
     id: 'gap-saml-tier-01',
-    incidentId: '74fe0e4d-19a5-4bec-9349-89a1c4065e5f',
     number: 1,
     intentClass: 'Enterprise CRM Migration',
     productName: 'Acme CRM Enterprise',
@@ -44,7 +92,6 @@ const DEFAULT_GAPS: DiscoveryGapItem[] = [
   },
   {
     id: 'gap-hubspot-migrator-02',
-    incidentId: '8a69c17c-5092-4fc4-9d5b-dcb64cfd85da',
     number: 2,
     intentClass: 'CRM Data Migration & Onboarding',
     productName: 'Acme CRM Enterprise',
@@ -85,7 +132,6 @@ const DEFAULT_GAPS: DiscoveryGapItem[] = [
   },
   {
     id: 'gap-analytics-kafka-03',
-    incidentId: '458714ec-bf20-4888-b829-bfed6221cad4',
     number: 3,
     intentClass: 'Product Analytics & Event Streaming',
     productName: 'DataFlow Realtime Analytics',
@@ -127,9 +173,56 @@ const DEFAULT_GAPS: DiscoveryGapItem[] = [
 ]
 
 export function useDiscoveryGaps() {
-  const gaps = ref<DiscoveryGapItem[]>(DEFAULT_GAPS)
+  const gaps = ref<DiscoveryGapItem[]>([...DEFAULT_GAPS])
   const selectedGapId = ref<string>(DEFAULT_GAPS[0]?.id || '')
   const filterType = ref<GapType | 'ALL'>('ALL')
+  const isLoading = ref(false)
+  const loadError = ref<string | null>(null)
+  const dataSource = ref<'live' | 'fixture'>('fixture')
+
+  async function refreshGaps() {
+    const org = useOrganizationStore()
+    if (!org.loaded) return
+    isLoading.value = true
+    loadError.value = null
+    try {
+      const q: Record<string, string> = { limit: '100' }
+      if (org.currentId) q.org_id = org.currentId
+      const res = await apiFetch<{ items?: Record<string, unknown>[]; source?: string }>(
+        '/api/discovery-gaps',
+        { query: q }
+      )
+      const live = (res.items ?? []).map(normGap)
+      if (live.length) {
+        gaps.value = live
+        dataSource.value = 'live'
+        if (!gaps.value.some(g => g.id === selectedGapId.value)) {
+          selectedGapId.value = gaps.value[0]?.id ?? ''
+        }
+      } else {
+        gaps.value = [...DEFAULT_GAPS]
+        dataSource.value = 'fixture'
+      }
+    } catch (e: unknown) {
+      const err = e as { message?: string }
+      loadError.value = err?.message ?? 'Failed to load discovery gaps'
+      gaps.value = [...DEFAULT_GAPS]
+      dataSource.value = 'fixture'
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  onMounted(() => {
+    void refreshGaps()
+  })
+
+  watch(
+    () => useOrganizationStore().currentId,
+    () => {
+      void refreshGaps()
+    }
+  )
 
   const filteredGaps = computed(() => {
     if (filterType.value === 'ALL') return gaps.value
@@ -190,6 +283,10 @@ export function useDiscoveryGaps() {
     approveGap,
     rejectGap,
     modifyGap,
-    counts
+    counts,
+    isLoading,
+    loadError,
+    dataSource,
+    refreshGaps,
   }
 }

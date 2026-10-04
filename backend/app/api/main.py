@@ -21,6 +21,7 @@ from app.api.routes import (
     change_checks,
     control_plane,
     control_policy,
+    discovery_gaps,
     events,
     experiments,
     graph,
@@ -232,6 +233,7 @@ def create_app() -> FastAPI:
     for module in (
         campaigns,
         control_plane,
+        discovery_gaps,
         events,
         health,
         system,

@@ -1,22 +1,38 @@
 <script setup lang="ts">
-import type { DiscoveryGapItem, GapType } from '~/types/agentmatch'
+import type { ExperimentDetail } from '~/types'
+import type { GapType } from '~/types/agentmatch'
 import KnowledgeGraphExplorer from '~/components/graph/KnowledgeGraphExplorer.vue'
 import ExperimentCreateDrawer from '~/components/experiments/ExperimentCreateDrawer.vue'
+import { experimentDefaultsFromGap } from '~/utils/discoveryGapExperiment'
 
 const gapsState = useDiscoveryGaps()
 const experimentDrawerOpen = ref(false)
+const experimentCreatedCode = ref<string | null>(null)
 const {
   gaps,
   selectedGapId,
   selectedGap,
   filterType,
   filteredGaps,
-  criticalGapsCount,
   selectGap,
   approveGap,
   rejectGap,
-  modifyGap
+  modifyGap,
+  isLoading,
+  dataSource,
 } = gapsState
+
+const experimentSeed = computed(() => {
+  const gap = selectedGap.value
+  return gap ? experimentDefaultsFromGap(gap) : null
+})
+
+function onExperimentCreated(detail: ExperimentDetail) {
+  experimentCreatedCode.value = detail.code ?? detail.id ?? 'created'
+  if (selectedGap.value) {
+    approveGap(selectedGap.value.id)
+  }
+}
 
 const filterOptions: Array<{ label: string; value: GapType | 'ALL' }> = [
   { label: 'All Gaps', value: 'ALL' },
@@ -52,7 +68,11 @@ function submitModify() {
           <span class="pane-title">Discovery Gaps</span>
           <span class="gap-count-badge">{{ filteredGaps.length }} Issues</span>
         </div>
-        <p class="pane-subtitle">Where product truth wins but AI engines underrepresent you</p>
+        <p class="pane-subtitle">
+          Where product truth wins but AI engines underrepresent you
+          <span v-if="dataSource === 'live'" class="live-tag">LIVE</span>
+          <span v-else class="fixture-tag">Demo data</span>
+        </p>
       </div>
 
       <!-- Filters -->
@@ -292,9 +312,12 @@ function submitModify() {
                   data-testid="btn-create-gap-experiment"
                   @click="experimentDrawerOpen = true"
                 >
-                  🧪 Test in Experiments Engine →
+                  Create experiment from gap →
                 </button>
               </div>
+              <p v-if="experimentCreatedCode" class="experiment-created-note">
+                Experiment <strong>{{ experimentCreatedCode }}</strong> created — Change Guard protection applies to this target.
+              </p>
             </div>
           </div>
         </section>
@@ -323,17 +346,19 @@ function submitModify() {
       </div>
     </div>
 
-    <!-- Real Experiment Creation Drawer from Discovery Gap -->
     <ExperimentCreateDrawer
-      v-if="selectedGap"
+      v-if="selectedGap && experimentSeed"
+      :key="selectedGap.id"
       v-model="experimentDrawerOpen"
       initial-trigger="gap"
-      :initial-name="`Remediate: ${selectedGap.title}`"
-      :initial-hypothesis="selectedGap.actionPlan?.planDescription || `Updating canonical evidence will close the +${selectedGap.perceptionGap}% gap across answer engines.`"
-      :initial-action="selectedGap.actionPlan?.actionType || 'update_existing_page'"
-      :initial-target-url="selectedGap.productTruth?.sourceUrl || ''"
+      :initial-name="experimentSeed.name"
+      :initial-hypothesis="experimentSeed.hypothesis"
+      :initial-action="experimentSeed.action"
+      :initial-target-url="experimentSeed.targetUrl"
+      :initial-target-key="experimentSeed.targetKey"
       initial-primary-metric="accuracy"
-      :initial-incident-id="selectedGap.id"
+      :initial-incident-id="experimentSeed.incidentId"
+      @created="onExperimentCreated"
     />
   </div>
 </template>
@@ -989,5 +1014,27 @@ function submitModify() {
   border-radius: 4px;
   border: 0;
   cursor: pointer;
+}
+
+.live-tag,
+.fixture-tag {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+.live-tag {
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+.fixture-tag {
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+.experiment-created-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
 }
 </style>
