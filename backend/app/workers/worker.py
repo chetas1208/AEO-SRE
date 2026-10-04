@@ -144,6 +144,16 @@ async def cron_discovery_gap(ctx: dict[str, Any]) -> int:
     return await _fan_out("detect_discovery_gaps")
 
 
+async def cron_sync_profound_runs(ctx: dict[str, Any]) -> int:
+    from app.services.profound_agents import profound_generation_enabled, sync_all_live_runs
+
+    if not profound_generation_enabled():
+        return 0
+    async with get_sessionmaker()() as session:
+        result = await sync_all_live_runs(session)
+    return int(result.get("campaigns_synced", 0)) + int(result.get("experiments_synced", 0))
+
+
 async def cron_mixpanel_ingest(ctx: dict[str, Any]) -> int:
     from app.integrations.mixpanel.auth import mixpanel_configured
 
@@ -204,6 +214,7 @@ class WorkerSettings:
         cron(cron_reap, minute={5, 35}, run_at_startup=True, unique=True),
         cron(cron_graph_project, run_at_startup=True, unique=True),  # every minute
         cron(cron_mixpanel_ingest, minute=set(range(60)), run_at_startup=False, unique=True),
+        cron(cron_sync_profound_runs, minute={0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58}, run_at_startup=True, unique=True),
     ]
     redis_settings = redis_settings()
     on_startup = on_startup

@@ -46,6 +46,8 @@ const form = reactive<{
   campaignId: string
   incidentId: string
   autoActivate: boolean
+  runProfoundAgents: boolean
+  profoundAgentIds: string[]
 }>({
   name: '',
   hypothesis: '',
@@ -58,7 +60,35 @@ const form = reactive<{
   campaignId: '',
   incidentId: '',
   autoActivate: true,
+  runProfoundAgents: true,
+  profoundAgentIds: [],
 })
+
+const profoundAgentOptions = ref<Array<{ id: string; label: string }>>([])
+const profoundAgentsLoading = ref(false)
+const profoundGenerationEnabled = ref(false)
+
+async function loadProfoundAgents() {
+  profoundAgentsLoading.value = true
+  try {
+    const res = await apiFetch<{
+      agents?: Array<{ id: string; name: string; status?: string }>
+      generation_enabled?: boolean
+    }>('/api/integrations/profound/agents')
+    profoundGenerationEnabled.value = Boolean(res.generation_enabled)
+    profoundAgentOptions.value = (res.agents ?? []).map(a => ({
+      id: a.id,
+      label: `${a.name}${a.status ? ` · ${a.status}` : ''}`,
+    }))
+    if (profoundAgentOptions.value.length && !form.profoundAgentIds.length) {
+      form.profoundAgentIds = profoundAgentOptions.value.slice(0, 1).map(a => a.id)
+    }
+  } catch {
+    profoundAgentOptions.value = []
+  } finally {
+    profoundAgentsLoading.value = false
+  }
+}
 
 const mixpanelMetricOptions = ref<Array<{ value: string; label: string; expected: string }>>([])
 const baselinePreview = ref<{ status?: string; metrics?: Record<string, number>; primary_value?: number | null } | null>(null)
@@ -109,6 +139,7 @@ watch(
       form.autoActivate = true
       void loadMixpanelCatalog()
       void loadBaselinePreview()
+      void loadProfoundAgents()
     }
   },
   { immediate: true }
@@ -169,6 +200,8 @@ async function submit() {
     incident_id: form.incidentId || null,
     campaign_id: form.campaignId || null,
     auto_activate: form.autoActivate,
+    run_profound_agents: form.runProfoundAgents,
+    profound_agent_ids: form.profoundAgentIds,
   }
 
   try {
@@ -323,6 +356,28 @@ async function submit() {
                 {{ w.label }}
               </option>
             </select>
+          </div>
+
+          <div v-if="profoundGenerationEnabled || profoundAgentOptions.length" class="form-group profound-agents-block">
+            <label class="form-label">Profound agent generation</label>
+            <label class="toggle-row">
+              <input v-model="form.runProfoundAgents" type="checkbox" class="toggle-checkbox" />
+              <span>Run Profound agents in the background after create (uses API key)</span>
+            </label>
+            <p v-if="profoundAgentsLoading" class="field-hint">Loading agents…</p>
+            <select
+              v-else-if="form.runProfoundAgents && profoundAgentOptions.length"
+              v-model="form.profoundAgentIds"
+              multiple
+              class="input-select multi"
+            >
+              <option v-for="a in profoundAgentOptions" :key="a.id" :value="a.id">
+                {{ a.label }}
+              </option>
+            </select>
+            <p v-else-if="form.runProfoundAgents" class="field-hint">
+              No agents listed yet — the worker will auto-select published agents when available.
+            </p>
           </div>
 
           <div class="protection-notice">
@@ -713,6 +768,26 @@ async function submit() {
   align-items: flex-start;
   gap: 12px;
   cursor: pointer;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.field-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.input-select.multi {
+  min-height: 72px;
 }
 
 .toggle-checkbox {

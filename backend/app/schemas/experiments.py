@@ -164,6 +164,14 @@ class ExperimentCreateIn(ApiModel):
     notes: str | None = None
     dry_run: bool = False
     auto_activate: bool = True
+    run_profound_agents: bool = Field(
+        default=True,
+        description="Enqueue background Profound agent runs for this experiment (requires PROFOUND_API_KEY).",
+    )
+    profound_agent_ids: list[str] = Field(
+        default_factory=list,
+        description="Optional explicit Profound agent UUIDs; empty = auto-select published agents.",
+    )
     run_mode: str = Field(
         default="live",
         description="Internal automation only: live (Profound baseline + worker verify) or test (CI sandbox).",

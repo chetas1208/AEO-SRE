@@ -17,7 +17,11 @@ const {
   highlightCostPath,
   clearHighlights,
   refreshProfoundLive,
-  profoundRefreshing
+  profoundRefreshing,
+  syncAgentRuns,
+  rerunAgentGeneration,
+  agentRunsSyncing,
+  usingOfflineFixture,
 } = useCampaigns()
 
 const isExperimentDrawerOpen = ref(false)
@@ -58,8 +62,19 @@ function closeCostDetail() {
           >
             {{ profoundRefreshing ? 'Syncing…' : 'Profound sync' }}
           </button>
+          <button
+            type="button"
+            class="profound-refresh-btn"
+            :disabled="agentRunsSyncing"
+            title="Poll LIVE Profound agent run status (API key)"
+            @click="syncAgentRuns()"
+          >
+            {{ agentRunsSyncing ? 'Syncing…' : 'Agent runs LIVE' }}
+          </button>
         </div>
         <p class="pane-subtitle">Provenance-backed cost & return ledger across every marketing initiative</p>
+        <p v-if="usingOfflineFixture" class="fixture-warning">Offline fixture data — connect API for LIVE campaigns.</p>
+        <p v-else-if="!campaigns.length" class="fixture-warning">No campaigns yet — create one from the control plane (+ Campaign).</p>
       </div>
 
       <div class="campaign-list" role="list">
@@ -123,6 +138,16 @@ function closeCostDetail() {
               <span class="channel-tag">{{ selectedCampaign.channels.join(', ') }}</span>
             </div>
             <h2 class="campaign-title">{{ selectedCampaign.name }}</h2>
+            <div v-if="(selectedCampaign as any).profound_generation" class="live-gen-row">
+              <span class="live-gen-badge">LIVE Profound runs</span>
+              <span class="live-gen-status">{{ (selectedCampaign as any).profound_generation?.status }}</span>
+              <button type="button" class="profound-refresh-btn mini" :disabled="agentRunsSyncing" @click="syncAgentRuns(selectedCampaign.id)">
+                Sync runs
+              </button>
+              <button type="button" class="profound-refresh-btn mini" :disabled="agentRunsSyncing" @click="rerunAgentGeneration(selectedCampaign.id)">
+                Re-run agents
+              </button>
+            </div>
           </div>
 
           <div class="header-badges">
@@ -617,6 +642,12 @@ function closeCostDetail() {
   border-radius: 999px;
   white-space: nowrap;
 }
+.fixture-warning {
+  font-size: 11px;
+  color: #fbbf24;
+  margin: 6px 0 0;
+}
+
 .pane-subtitle {
   font-size: 11px;
   color: #94a3b8;
@@ -1117,6 +1148,28 @@ function closeCostDetail() {
 .profound-refresh-btn:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+.profound-refresh-btn.mini {
+  margin-left: 0;
+  font-size: 9px;
+}
+.live-gen-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.live-gen-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #34d399;
+  letter-spacing: 0.06em;
+}
+.live-gen-status {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: var(--font-mono, monospace);
 }
 
 .profound-effect-row {

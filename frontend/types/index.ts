@@ -612,6 +612,8 @@ export interface ExperimentCreateIn {
   notes?: string | null
   dry_run?: boolean
   auto_activate?: boolean
+  run_profound_agents?: boolean
+  profound_agent_ids?: string[]
 }
 
 export interface ControlPlaneSummary {
@@ -745,6 +747,8 @@ export interface ControlPlaneResponse {
   generated_at?: string
   sourceMode?: 'LIVE' | 'TEST'
   source_mode?: 'LIVE' | 'TEST'
+  dataProvenance?: 'LIVE' | 'FIXTURE'
+  data_provenance?: 'LIVE' | 'FIXTURE'
   summary: ControlPlaneSummary
   agents: AgentActivity[]
   campaigns: CampaignFinancialCard[]

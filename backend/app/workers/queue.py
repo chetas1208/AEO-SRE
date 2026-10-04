@@ -29,6 +29,8 @@ JOB_KINDS = (
     "update_policy",
     "detect_discovery_gaps",
     "ingest_mixpanel_events",
+    "profound_agent_generation",
+    "sync_profound_agent_runs",
 )
 
 _pool: ArqRedis | None = None

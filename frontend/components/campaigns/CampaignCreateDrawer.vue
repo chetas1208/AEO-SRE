@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 
 const props = defineProps<{
   open: boolean
@@ -18,9 +18,10 @@ const form = ref({
   budget: 25000,
   primary_metric: 'visibility',
   channels: ['Search LLMs', 'Developer Docs'],
-  agents: ['agt-citation-recovery', 'agt-claim-verifier'],
+  agents: [] as string[],
   date_range: 'Oct 2026 – Dec 2026',
-  owner: 'Sarah Jenkins (PMM Lead)'
+  owner: 'Sarah Jenkins (PMM Lead)',
+  run_profound_agents: true,
 })
 
 const isSubmitting = ref(false)
@@ -34,12 +35,60 @@ const availableChannels = [
   'YouTube & Video'
 ]
 
-const availableAgents = [
-  { id: 'agt-citation-recovery', label: 'Citation Recovery Agent' },
-  { id: 'agt-claim-verifier', label: 'Technical Claim Verification Agent' },
-  { id: 'agt-competitive-copilot', label: 'Competitive Differentiation Copilot' },
-  { id: 'agt-token-router', label: 'Model API Token Router' }
+const FALLBACK_AGENTS = [
+  { id: 'agt-citation-recovery', label: 'Citation Recovery Agent (local preset)' },
+  { id: 'agt-claim-verifier', label: 'Technical Claim Verification Agent (local preset)' },
+  { id: 'agt-competitive-copilot', label: 'Competitive Differentiation Copilot (local preset)' },
+  { id: 'agt-token-router', label: 'Model API Token Router (local preset)' },
 ]
+
+const availableAgents = ref([...FALLBACK_AGENTS])
+const agentsLoading = ref(false)
+const generationEnabled = ref(false)
+const agentsStatus = ref<string | null>(null)
+
+async function loadProfoundAgents() {
+  agentsLoading.value = true
+  agentsStatus.value = null
+  try {
+    const res = await $fetch<{
+      status?: string
+      agents?: Array<{ id: string; name: string; status?: string }>
+      generation_enabled?: boolean
+      message?: string
+    }>(`${apiBase}/api/integrations/profound/agents`)
+    generationEnabled.value = Boolean(res.generation_enabled)
+    const live = (res.agents || []).map(a => ({
+      id: a.id,
+      label: `${a.name}${a.status ? ` · ${a.status}` : ''}`,
+    }))
+    if (live.length) {
+      availableAgents.value = live
+      form.value.agents = live.slice(0, 2).map(a => a.id)
+    } else {
+      availableAgents.value = [...FALLBACK_AGENTS]
+      if (!form.value.agents.length) {
+        form.value.agents = ['agt-citation-recovery', 'agt-claim-verifier']
+      }
+      agentsStatus.value = res.message || 'No published Profound agents yet — using local presets; runs will auto-select when agents exist.'
+    }
+  } catch {
+    availableAgents.value = [...FALLBACK_AGENTS]
+    if (!form.value.agents.length) {
+      form.value.agents = ['agt-citation-recovery', 'agt-claim-verifier']
+    }
+  } finally {
+    agentsLoading.value = false
+  }
+}
+
+onMounted(() => {
+  if (props.open) loadProfoundAgents()
+})
+
+watch(() => props.open, (open) => {
+  if (open) loadProfoundAgents()
+})
 
 function toggleChannel(ch: string) {
   const idx = form.value.channels.indexOf(ch)
@@ -78,10 +127,11 @@ async function handleSubmit() {
         budget: Number(form.value.budget) || 10000,
         channels: form.value.channels,
         primary_channel: form.value.channels[0],
-        agents: form.value.agents,
+        agents: form.value.agents.length ? form.value.agents : ['agt-citation-recovery'],
         primary_metric: form.value.primary_metric,
         date_range: form.value.date_range,
-        owner: form.value.owner
+        owner: form.value.owner,
+        run_profound_agents: form.value.run_profound_agents,
       }
     })
 
@@ -183,6 +233,12 @@ async function handleSubmit() {
 
         <div class="form-group">
           <label class="form-label">Assigned Autonomous Agents</label>
+          <p v-if="agentsLoading" class="hint-text">Loading Profound agents…</p>
+          <p v-else-if="agentsStatus" class="hint-text">{{ agentsStatus }}</p>
+          <label v-if="generationEnabled" class="checkbox-row">
+            <input v-model="form.run_profound_agents" type="checkbox">
+            Run Profound agents in the background after create (API key)
+          </label>
           <div class="agents-list">
             <div
               v-for="agt in availableAgents"
@@ -382,6 +438,22 @@ async function handleSubmit() {
   border-color: var(--primary);
   color: #fff;
   font-weight: 600;
+}
+
+.hint-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0 0 8px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  cursor: pointer;
 }
 
 .agents-list {

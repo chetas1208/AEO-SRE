@@ -72,6 +72,18 @@ async def detect_discovery_gaps(session: AsyncSession, p: dict[str, Any]) -> dic
     return await run_job(session, _id(p, "org_id"))
 
 
+async def profound_agent_generation(session: AsyncSession, p: dict[str, Any]) -> dict[str, Any]:
+    from app.services.profound_agents import run_generation_job
+
+    return await run_generation_job(session, p)
+
+
+async def sync_profound_agent_runs(session: AsyncSession, p: dict[str, Any]) -> dict[str, Any]:
+    from app.services.profound_agents import sync_all_live_runs
+
+    return await sync_all_live_runs(session)
+
+
 async def ingest_mixpanel_events(session: AsyncSession, p: dict[str, Any]) -> dict[str, Any]:
     from app.integrations.mixpanel.ingest import ingest_mixpanel
 
@@ -99,4 +111,6 @@ HANDLERS: dict[str, Handler] = {
     "update_policy": update_policy,
     "detect_discovery_gaps": detect_discovery_gaps,
     "ingest_mixpanel_events": ingest_mixpanel_events,
+    "profound_agent_generation": profound_agent_generation,
+    "sync_profound_agent_runs": sync_profound_agent_runs,
 }

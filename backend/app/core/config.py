@@ -66,6 +66,8 @@ class Settings(BaseSettings):
     model_task_overrides: str = ""  # JSON: {"HYPOTHESIS_GENERATION": {"temperature": 0.1, "timeout_s": 90}}
     profound_api_key: str = ""
     profound_base_url: str = ""
+    profound_agent_runs_enabled: bool = True  # POST /v1/agents/{id}/runs for campaign/experiment generation
+    profound_agent_poll_attempts: int = 30  # ~60s of live status polling per run
     # Mixpanel live behavioral telemetry (read-only; service account).
     mixpanel_enabled: bool = False
     mixpanel_project_id: str = ""

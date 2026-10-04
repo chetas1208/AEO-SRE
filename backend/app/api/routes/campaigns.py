@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import SessionDep
 from app.services.campaign_profound import live_profound_overlay, merge_profound_impact, resolve_brand_org_id
+from app.services.live_surface import BUILT_IN_CAMPAIGN_IDS, iter_public_campaigns, live_surface_enabled
 
 router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
 
@@ -24,6 +25,52 @@ class CampaignCreateRequest(BaseModel):
     primary_metric: str = Field(default="visibility")
     date_range: str | None = None
     owner: str = Field(default="Operations Lead")
+    run_profound_agents: bool = Field(
+        default=True,
+        description="When true, enqueue background Profound agent runs after create (requires PROFOUND_API_KEY).",
+    )
+
+
+def patch_campaign_generation(campaign_id: str, generation: dict[str, Any]) -> None:
+    """Update in-memory campaign store with Profound generation run results (worker callback)."""
+    _sync_custom_from_disk()
+    for c in CAMPAIGNS_DB:
+        if c.get("id") != campaign_id:
+            continue
+        c["profound_generation"] = {**generation, "source": "PROFOUND", "source_mode": "LIVE"}
+        runs = generation.get("runs") or []
+        if runs:
+            activity = []
+            for r in runs:
+                st = str(r.get("status") or "running").lower()
+                activity.append(
+                    {
+                        "id": r.get("run_id") or f"run-{r.get('agent_id')}",
+                        "name": r.get("agent_name") or r.get("agent_id"),
+                        "profound_agent_id": r.get("agent_id"),
+                        "profound_run_id": r.get("run_id"),
+                        "role": "Profound Agent (LIVE)",
+                        "source": "PROFOUND",
+                        "source_mode": "LIVE",
+                        "runs": 1,
+                        "cost": 0.0,
+                        "status": st.upper() if st in ("queued", "running", "succeeded", "failed") else "RUNNING",
+                        "outputs": list((r.get("outputs") or {}).values()) if isinstance(r.get("outputs"), dict) else [],
+                    }
+                )
+            c["agent_activity"] = activity
+        tl = list(c.get("timeline") or [])
+        tl.insert(
+            0,
+            {
+                "time": "Just now",
+                "event": f"Profound agent generation: {generation.get('status')}",
+                "type": "agent",
+            },
+        )
+        c["timeline"] = tl
+        _save_custom_campaigns()
+        return
 
 CAMPAIGNS_DB: list[dict[str, Any]] = [
 
@@ -495,18 +542,31 @@ def _load_custom_campaigns() -> None:
         except Exception:
             pass
 
+
+def _sync_custom_from_disk() -> None:
+    """Merge worker-written campaign updates (e.g. Profound generation) into the API process."""
+    if not CAMPAIGNS_STORE_PATH.exists():
+        return
+    try:
+        with open(CAMPAIGNS_STORE_PATH, encoding="utf-8") as f:
+            custom = json.load(f)
+        index = {c["id"]: i for i, c in enumerate(CAMPAIGNS_DB) if c.get("id")}
+        for c in custom:
+            cid = c.get("id")
+            if not cid:
+                continue
+            if cid in index:
+                CAMPAIGNS_DB[index[cid]] = c
+            else:
+                CAMPAIGNS_DB.append(c)
+    except Exception:
+        pass
+
 def _save_custom_campaigns() -> None:
     try:
         CAMPAIGNS_STORE_PATH.parent.mkdir(parents=True, exist_ok=True)
         # Save campaigns that were dynamically created
-        built_in_ids = {
-            "cmp-ai-discovery-launch-01",
-            "cmp-sso-parity-q4",
-            "cmp-developer-experience-01",
-            "cmp-cloud-security-rebrand",
-            "cmp-saml-expansion-q3",
-        }
-        custom = [c for c in CAMPAIGNS_DB if c["id"] not in built_in_ids]
+        custom = [c for c in CAMPAIGNS_DB if c["id"] not in BUILT_IN_CAMPAIGN_IDS]
         with open(CAMPAIGNS_STORE_PATH, "w", encoding="utf-8") as f:
             json.dump(custom, f, indent=2)
     except Exception:
@@ -593,11 +653,31 @@ async def create_campaign(req: CampaignCreateRequest):
         ],
         "timeline": [
             {"time": "Just now", "event": f"Campaign '{req.name}' created with ${req.budget:,.0f} budget", "type": "budget"}
-        ]
+        ],
+        "profound_generation": {"status": "queued", "runs": [], "source": "PROFOUND", "source_mode": "LIVE"},
     }
 
     CAMPAIGNS_DB.insert(0, new_campaign)
     _save_custom_campaigns()
+
+    if req.run_profound_agents:
+        from app.services.profound_agents import enqueue_profound_generation
+
+        job_id = await enqueue_profound_generation(
+            scope="campaign",
+            entity_id=cid,
+            agent_ids=req.agents,
+            context={
+                "campaign_id": cid,
+                "name": req.name,
+                "objective": new_campaign.get("objective"),
+                "primary_metric": req.primary_metric,
+                "channels": req.channels,
+            },
+        )
+        if job_id is not None:
+            new_campaign["profound_generation"]["job_id"] = str(job_id)
+
     return new_campaign
 
 
@@ -605,6 +685,72 @@ async def create_campaign(req: CampaignCreateRequest):
 async def campaigns_profound_live(session: SessionDep):
     """Live Profound metrics + 7d delta for the brand org (from ingested signals)."""
     return await live_profound_overlay(session)
+
+
+@router.post("/profound/rerun-all")
+async def campaigns_rerun_all_profound_agents():
+    """Re-enqueue LIVE Profound agent generation for every custom campaign on disk."""
+    from app.services.profound_agents import enqueue_profound_generation
+
+    _sync_custom_from_disk()
+    jobs: list[dict[str, str | None]] = []
+    for c in iter_public_campaigns(CAMPAIGNS_DB):
+        cid = str(c.get("id") or "")
+        if not cid:
+            continue
+        job_id = await enqueue_profound_generation(
+            scope="campaign",
+            entity_id=cid,
+            agent_ids=list(c.get("assigned_agents") or c.get("agents") or []),
+            context={
+                "campaign_id": cid,
+                "name": c.get("name"),
+                "objective": c.get("objective"),
+                "primary_metric": c.get("primary_metric"),
+                "channels": c.get("channels"),
+            },
+        )
+        jobs.append({"campaign_id": cid, "job_id": str(job_id) if job_id else None})
+    return {"status": "queued", "source_mode": "LIVE", "jobs": jobs}
+
+
+@router.post("/profound/sync-runs")
+async def campaigns_sync_all_agent_runs(session: SessionDep):
+    """Poll Profound for latest LIVE run status on every campaign and experiment."""
+    from app.services.profound_agents import sync_all_live_runs
+
+    return await sync_all_live_runs(session)
+
+
+@router.post("/{campaign_id}/profound/sync-runs")
+async def campaign_sync_agent_runs(campaign_id: str):
+    from app.services.profound_agents import sync_live_runs_for_campaign
+
+    return await sync_live_runs_for_campaign(campaign_id)
+
+
+@router.post("/{campaign_id}/profound/rerun")
+async def campaign_rerun_profound_agents(campaign_id: str):
+    """Re-enqueue LIVE Profound agent generation for a campaign."""
+    _sync_custom_from_disk()
+    camp = next((c for c in CAMPAIGNS_DB if c.get("id") == campaign_id), None)
+    if camp is None:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    from app.services.profound_agents import enqueue_profound_generation
+
+    job_id = await enqueue_profound_generation(
+        scope="campaign",
+        entity_id=campaign_id,
+        agent_ids=list(camp.get("assigned_agents") or camp.get("agents") or []),
+        context={
+            "campaign_id": campaign_id,
+            "name": camp.get("name"),
+            "objective": camp.get("objective"),
+            "primary_metric": camp.get("primary_metric"),
+            "channels": camp.get("channels"),
+        },
+    )
+    return {"status": "queued", "job_id": str(job_id) if job_id else None, "source_mode": "LIVE"}
 
 
 @router.post("/profound/refresh")
@@ -623,14 +769,21 @@ async def campaigns_profound_refresh(session: SessionDep):
 @router.get("")
 async def list_campaigns(session: SessionDep):
     """List all tracked campaigns with financial summaries and live Profound effectiveness overlay."""
+    _sync_custom_from_disk()
     overlay = await live_profound_overlay(session)
-    enriched = [merge_profound_impact(dict(c), overlay) for c in CAMPAIGNS_DB]
-    return {"campaigns": enriched, "total": len(enriched), "profound_live": overlay}
+    enriched = [merge_profound_impact(dict(c), overlay) for c in iter_public_campaigns(CAMPAIGNS_DB)]
+    return {
+        "campaigns": enriched,
+        "total": len(enriched),
+        "profound_live": overlay,
+        "source_mode": "LIVE" if live_surface_enabled() else "FIXTURE",
+    }
 
 
 @router.get("/{campaign_id}")
 async def get_campaign(campaign_id: str, session: SessionDep):
     """Get single campaign detail."""
+    _sync_custom_from_disk()
     overlay = await live_profound_overlay(session)
     for c in CAMPAIGNS_DB:
         if c["id"] == campaign_id:

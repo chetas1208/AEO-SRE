@@ -22,6 +22,7 @@ interface ProfoundLive {
 const live = ref<ProfoundLive | null>(null)
 const isLoading = ref(true)
 const isSyncing = ref(false)
+const isBootstrapping = ref(false)
 const error = ref<string | null>(null)
 const lastPolledAt = ref<Date | null>(null)
 let pollTimer: ReturnType<typeof setTimeout> | null = null
@@ -68,6 +69,19 @@ async function fetchLive() {
   }
 }
 
+async function bootstrapAgents() {
+  isBootstrapping.value = true
+  try {
+    await apiFetch('/api/integrations/profound/agents/bootstrap', { method: 'POST' })
+    error.value = null
+  } catch (e: unknown) {
+    const err = e as { message?: string }
+    error.value = err?.message ?? 'bootstrap failed'
+  } finally {
+    isBootstrapping.value = false
+  }
+}
+
 async function syncFromProfound() {
   isSyncing.value = true
   try {
@@ -75,6 +89,7 @@ async function syncFromProfound() {
       method: 'POST',
     })
     if (res.profound_live) live.value = res.profound_live
+    await apiFetch('/api/integrations/profound/runs/sync', { method: 'POST' })
     error.value = null
   } catch (e: unknown) {
     const err = e as { message?: string }
@@ -110,6 +125,9 @@ onUnmounted(() => {
         <span class="rail-subtitle">api.tryprofound.com → ingested signals</span>
       </div>
       <div class="rail-actions">
+        <button type="button" class="sync-btn" :disabled="isBootstrapping" @click="bootstrapAgents">
+          {{ isBootstrapping ? 'Creating…' : 'Create agents' }}
+        </button>
         <button type="button" class="sync-btn" :disabled="isSyncing" @click="syncFromProfound">
           {{ isSyncing ? 'Syncing…' : 'Sync Profound' }}
         </button>

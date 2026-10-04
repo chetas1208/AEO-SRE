@@ -1,196 +1,5 @@
 [
   {
-    "id": "cmp-production-live-verifica-ceb45d",
-    "name": "Production Live Verification Campaign",
-    "owner": "Operations Lead",
-    "objective": "Verify production campaign creation from public domain",
-    "status": "ACTIVE",
-    "date_range": "Active Now",
-    "channels": [
-      "Search LLMs",
-      "Developer Docs"
-    ],
-    "primary_channel": "Search LLMs",
-    "currency": "USD",
-    "budget": 15000.0,
-    "total_cost": 0.0,
-    "attributed_return": 0.0,
-    "roi": 0.0,
-    "measurement_confidence": "HIGH",
-    "cost_completeness_pct": 100,
-    "outcome_coverage_pct": 100,
-    "assigned_agents": [
-      "agt-citation-recovery"
-    ],
-    "primary_metric": "visibility",
-    "return_sources": {
-      "direct": 0.0,
-      "attributed": 0.0,
-      "modeled": 0.0,
-      "proxy": "+0.0pp Profound visibility"
-    },
-    "operational_metrics": {
-      "gross_return": 0.0,
-      "net_return": 0.0,
-      "cost_per_output": 0.0,
-      "cost_per_agent_run": 0.0,
-      "cost_per_approved_asset": 0.0,
-      "cost_per_lead": 0.0,
-      "cost_per_ai_visibility_point": 0.0,
-      "cost_per_citation_gain": 0.0,
-      "agent_roi": {
-        "ratio": 1.0,
-        "attribution_label": "ATTRIBUTED (live campaign)"
-      },
-      "health_dimensions": {
-        "cost_completeness": 100,
-        "outcome_coverage": 100,
-        "attribution_quality": "High",
-        "ai_discovery_coverage": "High"
-      }
-    },
-    "cost_composition": [
-      {
-        "category": "Agent Runs",
-        "amount": 0.0,
-        "pct": 0.0,
-        "source": "OBSERVED"
-      },
-      {
-        "category": "Model APIs",
-        "amount": 0.0,
-        "pct": 0.0,
-        "source": "OBSERVED"
-      }
-    ],
-    "cost_lineage": {
-      "id": "root-cost-cmp-production-live-verifica-ceb45d",
-      "name": "Total Campaign Cost",
-      "amount": 0.0,
-      "children": []
-    },
-    "people_breakdown": [],
-    "agent_activity": [
-      {
-        "id": "agt-run-cmp-production-live-verifica-ceb45d",
-        "name": "agt-citation-recovery",
-        "role": "Autonomous Operator",
-        "runs": 0,
-        "cost": 0.0,
-        "status": "RUNNING",
-        "outputs": []
-      }
-    ],
-    "timeline": [
-      {
-        "time": "Just now",
-        "event": "Campaign 'Production Live Verification Campaign' created with $15,000 budget",
-        "type": "budget"
-      }
-    ]
-  },
-  {
-    "id": "cmp-q4-autonomous-aeo-expans-6a21eb",
-    "name": "Q4 Autonomous AEO Expansion",
-    "owner": "Operations Lead",
-    "objective": "Displace stale legacy claims and establish verified SCIM/SAML authority",
-    "status": "ACTIVE",
-    "date_range": "Active Now",
-    "channels": [
-      "Search LLMs",
-      "Developer Docs",
-      "LinkedIn"
-    ],
-    "primary_channel": "Search LLMs & Developer Docs",
-    "currency": "USD",
-    "budget": 35000.0,
-    "total_cost": 0.0,
-    "attributed_return": 0.0,
-    "roi": 0.0,
-    "measurement_confidence": "HIGH",
-    "cost_completeness_pct": 100,
-    "outcome_coverage_pct": 100,
-    "assigned_agents": [
-      "agt-citation-recovery",
-      "agt-claim-verifier"
-    ],
-    "primary_metric": "visibility",
-    "return_sources": {
-      "direct": 0.0,
-      "attributed": 0.0,
-      "modeled": 0.0,
-      "proxy": "+0.0pp Profound visibility"
-    },
-    "operational_metrics": {
-      "gross_return": 0.0,
-      "net_return": 0.0,
-      "cost_per_output": 0.0,
-      "cost_per_agent_run": 0.0,
-      "cost_per_approved_asset": 0.0,
-      "cost_per_lead": 0.0,
-      "cost_per_ai_visibility_point": 0.0,
-      "cost_per_citation_gain": 0.0,
-      "agent_roi": {
-        "ratio": 1.0,
-        "attribution_label": "ATTRIBUTED (live campaign)"
-      },
-      "health_dimensions": {
-        "cost_completeness": 100,
-        "outcome_coverage": 100,
-        "attribution_quality": "High",
-        "ai_discovery_coverage": "High"
-      }
-    },
-    "cost_composition": [
-      {
-        "category": "Agent Runs",
-        "amount": 0.0,
-        "pct": 0.0,
-        "source": "OBSERVED"
-      },
-      {
-        "category": "Model APIs",
-        "amount": 0.0,
-        "pct": 0.0,
-        "source": "OBSERVED"
-      }
-    ],
-    "cost_lineage": {
-      "id": "root-cost-cmp-q4-autonomous-aeo-expans-6a21eb",
-      "name": "Total Campaign Cost",
-      "amount": 0.0,
-      "children": []
-    },
-    "people_breakdown": [],
-    "agent_activity": [
-      {
-        "id": "agt-run-cmp-q4-autonomous-aeo-expans-6a21eb",
-        "name": "agt-citation-recovery",
-        "role": "Autonomous Operator",
-        "runs": 0,
-        "cost": 0.0,
-        "status": "RUNNING",
-        "outputs": []
-      },
-      {
-        "id": "agt-run-cmp-q4-autonomous-aeo-expans-6a21eb",
-        "name": "agt-claim-verifier",
-        "role": "Autonomous Operator",
-        "runs": 0,
-        "cost": 0.0,
-        "status": "RUNNING",
-        "outputs": []
-      }
-    ],
-    "timeline": [
-      {
-        "time": "Just now",
-        "event": "Campaign 'Q4 Autonomous AEO Expansion' created with $35,000 budget",
-        "type": "budget"
-      }
-    ]
-  },
-  {
     "id": "cmp-security-blitz-02",
     "name": "Q3 SAML & Security Verification Blitz",
     "owner": "David Chen (Solutions Eng)",
@@ -445,5 +254,960 @@
         "type": "revenue"
       }
     ]
+  },
+  {
+    "id": "cmp-profound-gen-test-2-e094bf",
+    "name": "Profound Gen Test 2",
+    "owner": "Operations Lead",
+    "objective": "Drive discoverability and growth for Profound Gen Test 2",
+    "status": "ACTIVE",
+    "date_range": "Active Now",
+    "channels": [
+      "Search LLMs",
+      "Developer Docs"
+    ],
+    "primary_channel": "Search LLMs",
+    "currency": "USD",
+    "budget": 5000.0,
+    "total_cost": 0.0,
+    "attributed_return": 0.0,
+    "roi": 0.0,
+    "measurement_confidence": "HIGH",
+    "cost_completeness_pct": 100,
+    "outcome_coverage_pct": 100,
+    "assigned_agents": [
+      "agt-citation-recovery"
+    ],
+    "primary_metric": "visibility",
+    "return_sources": {
+      "direct": 0.0,
+      "attributed": 0.0,
+      "modeled": 0.0,
+      "proxy": "+0.0pp Profound visibility"
+    },
+    "operational_metrics": {
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "cost_per_output": 0.0,
+      "cost_per_agent_run": 0.0,
+      "cost_per_approved_asset": 0.0,
+      "cost_per_lead": 0.0,
+      "cost_per_ai_visibility_point": 0.0,
+      "cost_per_citation_gain": 0.0,
+      "agent_roi": {
+        "ratio": 1.0,
+        "attribution_label": "ATTRIBUTED (live campaign)"
+      },
+      "health_dimensions": {
+        "cost_completeness": 100,
+        "outcome_coverage": 100,
+        "attribution_quality": "High",
+        "ai_discovery_coverage": "High"
+      }
+    },
+    "cost_composition": [
+      {
+        "category": "Agent Runs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      },
+      {
+        "category": "Model APIs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      }
+    ],
+    "cost_lineage": {
+      "id": "root-cost-cmp-profound-gen-test-2-e094bf",
+      "name": "Total Campaign Cost",
+      "amount": 0.0,
+      "children": []
+    },
+    "people_breakdown": [],
+    "agent_activity": [
+      {
+        "id": "01a10457-2d4f-7091-a739-2df6700d6d86",
+        "name": "01a10456-e819-74d3-999f-bc76474f90ef",
+        "profound_agent_id": "01a10456-e819-74d3-999f-bc76474f90ef",
+        "profound_run_id": "01a10457-2d4f-7091-a739-2df6700d6d86",
+        "role": "Profound Agent (LIVE)",
+        "source": "PROFOUND",
+        "source_mode": "LIVE",
+        "runs": 1,
+        "cost": 0.0,
+        "status": "SUCCEEDED",
+        "outputs": [
+          "To recover official citations in LLM answers for your B2B SaaS AI search visibility, consider the following actions:\n\n- **Implement Structured Data Markup**: Utilize schema.org markup to enhance your content with structured data, making it easier for search engines to understand and display your citations accurately in search results.\n\n- **Engage in Content Partnerships**: Collaborate with industry-relevant publications and influencers to create guest posts or co-authored articles that include citations to your software, thereby increasing the likelihood of authoritative backlinks.\n\n- **Monitor and Update Existing Citations**: Regularly audit your existing citations across various platforms and directories to ensure they are accurate and up-to-date, correcting any discrepancies that may hinder visibility in LLM responses."
+        ]
+      }
+    ],
+    "timeline": [
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: skipped",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: skipped",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Campaign 'Profound Gen Test 2' created with $5,000 budget",
+        "type": "budget"
+      }
+    ],
+    "profound_generation": {
+      "source": "PROFOUND",
+      "source_mode": "LIVE",
+      "status": "completed",
+      "scope": "campaign",
+      "entity_id": "cmp-profound-gen-test-2-e094bf",
+      "runs": [
+        {
+          "source": "PROFOUND",
+          "source_mode": "LIVE",
+          "agent_id": "01a10456-e819-74d3-999f-bc76474f90ef",
+          "run_id": "01a10457-2d4f-7091-a739-2df6700d6d86",
+          "status": "succeeded",
+          "started_at": "2026-10-04T00:36:24.503688Z",
+          "finished_at": "2026-10-04T00:36:26.411891Z",
+          "error": null,
+          "outputs": {
+            "845cc7dd-a88d-4a92-96b5-46662cc959f7": "To recover official citations in LLM answers for your B2B SaaS AI search visibility, consider the following actions:\n\n- **Implement Structured Data Markup**: Utilize schema.org markup to enhance your content with structured data, making it easier for search engines to understand and display your citations accurately in search results.\n\n- **Engage in Content Partnerships**: Collaborate with industry-relevant publications and influencers to create guest posts or co-authored articles that include citations to your software, thereby increasing the likelihood of authoritative backlinks.\n\n- **Monitor and Update Existing Citations**: Regularly audit your existing citations across various platforms and directories to ensure they are accurate and up-to-date, correcting any discrepancies that may hinder visibility in LLM responses."
+          }
+        }
+      ],
+      "errors": [],
+      "updated_at": "2026-10-04T01:14:00.592626+00:00"
+    }
+  },
+  {
+    "id": "cmp-profound-gen-test-8b8410",
+    "name": "Profound Gen Test",
+    "owner": "Operations Lead",
+    "objective": "Drive discoverability and growth for Profound Gen Test",
+    "status": "ACTIVE",
+    "date_range": "Active Now",
+    "channels": [
+      "Search LLMs",
+      "Developer Docs"
+    ],
+    "primary_channel": "Search LLMs",
+    "currency": "USD",
+    "budget": 5000.0,
+    "total_cost": 0.0,
+    "attributed_return": 0.0,
+    "roi": 0.0,
+    "measurement_confidence": "HIGH",
+    "cost_completeness_pct": 100,
+    "outcome_coverage_pct": 100,
+    "assigned_agents": [
+      "agt-citation-recovery"
+    ],
+    "primary_metric": "visibility",
+    "return_sources": {
+      "direct": 0.0,
+      "attributed": 0.0,
+      "modeled": 0.0,
+      "proxy": "+0.0pp Profound visibility"
+    },
+    "operational_metrics": {
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "cost_per_output": 0.0,
+      "cost_per_agent_run": 0.0,
+      "cost_per_approved_asset": 0.0,
+      "cost_per_lead": 0.0,
+      "cost_per_ai_visibility_point": 0.0,
+      "cost_per_citation_gain": 0.0,
+      "agent_roi": {
+        "ratio": 1.0,
+        "attribution_label": "ATTRIBUTED (live campaign)"
+      },
+      "health_dimensions": {
+        "cost_completeness": 100,
+        "outcome_coverage": 100,
+        "attribution_quality": "High",
+        "ai_discovery_coverage": "High"
+      }
+    },
+    "cost_composition": [
+      {
+        "category": "Agent Runs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      },
+      {
+        "category": "Model APIs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      }
+    ],
+    "cost_lineage": {
+      "id": "root-cost-cmp-profound-gen-test-8b8410",
+      "name": "Total Campaign Cost",
+      "amount": 0.0,
+      "children": []
+    },
+    "people_breakdown": [],
+    "agent_activity": [
+      {
+        "id": "01a10457-2d5d-77e2-b244-238328c65a1d",
+        "name": "01a10456-e819-74d3-999f-bc76474f90ef",
+        "profound_agent_id": "01a10456-e819-74d3-999f-bc76474f90ef",
+        "profound_run_id": "01a10457-2d5d-77e2-b244-238328c65a1d",
+        "role": "Profound Agent (LIVE)",
+        "source": "PROFOUND",
+        "source_mode": "LIVE",
+        "runs": 1,
+        "cost": 0.0,
+        "status": "SUCCEEDED",
+        "outputs": [
+          "To recover official citations in LLM answers for your B2B SaaS AI search visibility, consider the following actions:\n\n- **Implement Structured Data Markup**: Utilize schema.org markup to enhance your content with structured data, making it easier for search engines to identify and display citations accurately in search results.\n\n- **Create a Citation Management System**: Develop a centralized database to track and manage all official citations, ensuring that they are consistently referenced across various platforms and updated regularly to maintain accuracy.\n\n- **Engage in Outreach for Backlinks**: Actively reach out to industry publications, blogs, and influencers to secure backlinks to your official citations, thereby increasing their authority and visibility in search engine results."
+        ]
+      }
+    ],
+    "timeline": [
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: skipped",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Campaign 'Profound Gen Test' created with $5,000 budget",
+        "type": "budget"
+      }
+    ],
+    "profound_generation": {
+      "source": "PROFOUND",
+      "source_mode": "LIVE",
+      "status": "completed",
+      "scope": "campaign",
+      "entity_id": "cmp-profound-gen-test-8b8410",
+      "runs": [
+        {
+          "source": "PROFOUND",
+          "source_mode": "LIVE",
+          "agent_id": "01a10456-e819-74d3-999f-bc76474f90ef",
+          "run_id": "01a10457-2d5d-77e2-b244-238328c65a1d",
+          "status": "succeeded",
+          "started_at": "2026-10-04T00:36:24.518159Z",
+          "finished_at": "2026-10-04T00:36:26.349645Z",
+          "error": null,
+          "outputs": {
+            "845cc7dd-a88d-4a92-96b5-46662cc959f7": "To recover official citations in LLM answers for your B2B SaaS AI search visibility, consider the following actions:\n\n- **Implement Structured Data Markup**: Utilize schema.org markup to enhance your content with structured data, making it easier for search engines to identify and display citations accurately in search results.\n\n- **Create a Citation Management System**: Develop a centralized database to track and manage all official citations, ensuring that they are consistently referenced across various platforms and updated regularly to maintain accuracy.\n\n- **Engage in Outreach for Backlinks**: Actively reach out to industry publications, blogs, and influencers to secure backlinks to your official citations, thereby increasing their authority and visibility in search engine results."
+          }
+        }
+      ],
+      "errors": [],
+      "updated_at": "2026-10-04T01:14:00.893915+00:00"
+    }
+  },
+  {
+    "id": "cmp-production-live-verifica-ceb45d",
+    "name": "Production Live Verification Campaign",
+    "owner": "Operations Lead",
+    "objective": "Verify production campaign creation from public domain",
+    "status": "ACTIVE",
+    "date_range": "Active Now",
+    "channels": [
+      "Search LLMs",
+      "Developer Docs"
+    ],
+    "primary_channel": "Search LLMs",
+    "currency": "USD",
+    "budget": 15000.0,
+    "total_cost": 0.0,
+    "attributed_return": 0.0,
+    "roi": 0.0,
+    "measurement_confidence": "HIGH",
+    "cost_completeness_pct": 100,
+    "outcome_coverage_pct": 100,
+    "assigned_agents": [
+      "agt-citation-recovery"
+    ],
+    "primary_metric": "visibility",
+    "return_sources": {
+      "direct": 0.0,
+      "attributed": 0.0,
+      "modeled": 0.0,
+      "proxy": "+0.0pp Profound visibility"
+    },
+    "operational_metrics": {
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "cost_per_output": 0.0,
+      "cost_per_agent_run": 0.0,
+      "cost_per_approved_asset": 0.0,
+      "cost_per_lead": 0.0,
+      "cost_per_ai_visibility_point": 0.0,
+      "cost_per_citation_gain": 0.0,
+      "agent_roi": {
+        "ratio": 1.0,
+        "attribution_label": "ATTRIBUTED (live campaign)"
+      },
+      "health_dimensions": {
+        "cost_completeness": 100,
+        "outcome_coverage": 100,
+        "attribution_quality": "High",
+        "ai_discovery_coverage": "High"
+      }
+    },
+    "cost_composition": [
+      {
+        "category": "Agent Runs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      },
+      {
+        "category": "Model APIs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      }
+    ],
+    "cost_lineage": {
+      "id": "root-cost-cmp-production-live-verifica-ceb45d",
+      "name": "Total Campaign Cost",
+      "amount": 0.0,
+      "children": []
+    },
+    "people_breakdown": [],
+    "agent_activity": [
+      {
+        "id": "01a10457-2d5e-7ff1-b811-58214802c1ea",
+        "name": "01a10456-e819-74d3-999f-bc76474f90ef",
+        "profound_agent_id": "01a10456-e819-74d3-999f-bc76474f90ef",
+        "profound_run_id": "01a10457-2d5e-7ff1-b811-58214802c1ea",
+        "role": "Profound Agent (LIVE)",
+        "source": "PROFOUND",
+        "source_mode": "LIVE",
+        "runs": 1,
+        "cost": 0.0,
+        "status": "SUCCEEDED",
+        "outputs": [
+          "To recover official citations in LLM answers for your marketing objective, consider the following actions:\n\n- **Implement Structured Data Markup**: Utilize schema.org markup to enhance your content with structured data, making it easier for search engines to understand and display your citations in search results.\n\n- **Create a Citation Repository**: Develop a centralized repository of all official citations related to your content. Ensure that this repository is easily accessible and regularly updated to maintain accuracy and relevance.\n\n- **Engage with Industry Publications**: Reach out to relevant industry publications and websites to request backlinks or mentions of your content. This can help establish authority and improve the visibility of your citations in LLM outputs."
+        ]
+      }
+    ],
+    "timeline": [
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: skipped",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Campaign 'Production Live Verification Campaign' created with $15,000 budget",
+        "type": "budget"
+      }
+    ],
+    "profound_generation": {
+      "source": "PROFOUND",
+      "source_mode": "LIVE",
+      "status": "completed",
+      "scope": "campaign",
+      "entity_id": "cmp-production-live-verifica-ceb45d",
+      "runs": [
+        {
+          "source": "PROFOUND",
+          "source_mode": "LIVE",
+          "agent_id": "01a10456-e819-74d3-999f-bc76474f90ef",
+          "run_id": "01a10457-2d5e-7ff1-b811-58214802c1ea",
+          "status": "succeeded",
+          "started_at": "2026-10-04T00:36:24.523620Z",
+          "finished_at": "2026-10-04T00:36:26.075427Z",
+          "error": null,
+          "outputs": {
+            "845cc7dd-a88d-4a92-96b5-46662cc959f7": "To recover official citations in LLM answers for your marketing objective, consider the following actions:\n\n- **Implement Structured Data Markup**: Utilize schema.org markup to enhance your content with structured data, making it easier for search engines to understand and display your citations in search results.\n\n- **Create a Citation Repository**: Develop a centralized repository of all official citations related to your content. Ensure that this repository is easily accessible and regularly updated to maintain accuracy and relevance.\n\n- **Engage with Industry Publications**: Reach out to relevant industry publications and websites to request backlinks or mentions of your content. This can help establish authority and improve the visibility of your citations in LLM outputs."
+          }
+        }
+      ],
+      "errors": [],
+      "updated_at": "2026-10-04T01:14:01.265295+00:00"
+    }
+  },
+  {
+    "id": "cmp-q4-autonomous-aeo-expans-6a21eb",
+    "name": "Q4 Autonomous AEO Expansion",
+    "owner": "Operations Lead",
+    "objective": "Displace stale legacy claims and establish verified SCIM/SAML authority",
+    "status": "ACTIVE",
+    "date_range": "Active Now",
+    "channels": [
+      "Search LLMs",
+      "Developer Docs",
+      "LinkedIn"
+    ],
+    "primary_channel": "Search LLMs & Developer Docs",
+    "currency": "USD",
+    "budget": 35000.0,
+    "total_cost": 0.0,
+    "attributed_return": 0.0,
+    "roi": 0.0,
+    "measurement_confidence": "HIGH",
+    "cost_completeness_pct": 100,
+    "outcome_coverage_pct": 100,
+    "assigned_agents": [
+      "agt-citation-recovery",
+      "agt-claim-verifier"
+    ],
+    "primary_metric": "visibility",
+    "return_sources": {
+      "direct": 0.0,
+      "attributed": 0.0,
+      "modeled": 0.0,
+      "proxy": "+0.0pp Profound visibility"
+    },
+    "operational_metrics": {
+      "gross_return": 0.0,
+      "net_return": 0.0,
+      "cost_per_output": 0.0,
+      "cost_per_agent_run": 0.0,
+      "cost_per_approved_asset": 0.0,
+      "cost_per_lead": 0.0,
+      "cost_per_ai_visibility_point": 0.0,
+      "cost_per_citation_gain": 0.0,
+      "agent_roi": {
+        "ratio": 1.0,
+        "attribution_label": "ATTRIBUTED (live campaign)"
+      },
+      "health_dimensions": {
+        "cost_completeness": 100,
+        "outcome_coverage": 100,
+        "attribution_quality": "High",
+        "ai_discovery_coverage": "High"
+      }
+    },
+    "cost_composition": [
+      {
+        "category": "Agent Runs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      },
+      {
+        "category": "Model APIs",
+        "amount": 0.0,
+        "pct": 0.0,
+        "source": "OBSERVED"
+      }
+    ],
+    "cost_lineage": {
+      "id": "root-cost-cmp-q4-autonomous-aeo-expans-6a21eb",
+      "name": "Total Campaign Cost",
+      "amount": 0.0,
+      "children": []
+    },
+    "people_breakdown": [],
+    "agent_activity": [
+      {
+        "id": "01a10457-2d5f-7823-a341-cc4d5ea1678f",
+        "name": "01a10456-e819-74d3-999f-bc76474f90ef",
+        "profound_agent_id": "01a10456-e819-74d3-999f-bc76474f90ef",
+        "profound_run_id": "01a10457-2d5f-7823-a341-cc4d5ea1678f",
+        "role": "Profound Agent (LIVE)",
+        "source": "PROFOUND",
+        "source_mode": "LIVE",
+        "runs": 1,
+        "cost": 0.0,
+        "status": "SUCCEEDED",
+        "outputs": [
+          "To recover official citations in LLM answers for your marketing objective, consider the following actions:\n\n- **Implement Structured Data Markup**: Utilize schema.org markup to enhance the visibility of your content in search engines. This structured data helps search engines understand the context of your content, making it easier to generate citations in LLM responses.\n\n- **Create High-Quality, Authoritative Content**: Develop comprehensive and well-researched articles, whitepapers, or case studies that address key topics in your industry. Ensure that these resources are linked to credible sources and include citations, which can improve their chances of being referenced by LLMs.\n\n- **Engage in Outreach and Partnerships**: Collaborate with industry influencers, thought leaders, and reputable publications to gain backlinks and mentions. This can increase the authority of your content and improve its likelihood of being cited in LLM-generated answers."
+        ]
+      },
+      {
+        "id": "01a10457-3877-7bb2-b8b6-1a51a22ea797",
+        "name": "01a10456-ebed-7e30-9901-437b1b4b6e3e",
+        "profound_agent_id": "01a10456-ebed-7e30-9901-437b1b4b6e3e",
+        "profound_run_id": "01a10457-3877-7bb2-b8b6-1a51a22ea797",
+        "role": "Profound Agent (LIVE)",
+        "source": "PROFOUND",
+        "source_mode": "LIVE",
+        "runs": 1,
+        "cost": 0.0,
+        "status": "SUCCEEDED",
+        "outputs": [
+          "I'm unable to verify claims or access URLs based on the identifiers you've provided. Please provide a specific claim or hypothesis along with any relevant details, and I'll do my best to assist you with verification and risk assessment."
+        ]
+      }
+    ],
+    "timeline": [
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: completed",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Profound agent generation: skipped",
+        "type": "agent"
+      },
+      {
+        "time": "Just now",
+        "event": "Campaign 'Q4 Autonomous AEO Expansion' created with $35,000 budget",
+        "type": "budget"
+      }
+    ],
+    "profound_generation": {
+      "source": "PROFOUND",
+      "source_mode": "LIVE",
+      "status": "completed",
+      "scope": "campaign",
+      "entity_id": "cmp-q4-autonomous-aeo-expans-6a21eb",
+      "runs": [
+        {
+          "source": "PROFOUND",
+          "source_mode": "LIVE",
+          "agent_id": "01a10456-e819-74d3-999f-bc76474f90ef",
+          "run_id": "01a10457-2d5f-7823-a341-cc4d5ea1678f",
+          "status": "succeeded",
+          "started_at": "2026-10-04T00:36:24.527332Z",
+          "finished_at": "2026-10-04T00:36:26.532319Z",
+          "error": null,
+          "outputs": {
+            "845cc7dd-a88d-4a92-96b5-46662cc959f7": "To recover official citations in LLM answers for your marketing objective, consider the following actions:\n\n- **Implement Structured Data Markup**: Utilize schema.org markup to enhance the visibility of your content in search engines. This structured data helps search engines understand the context of your content, making it easier to generate citations in LLM responses.\n\n- **Create High-Quality, Authoritative Content**: Develop comprehensive and well-researched articles, whitepapers, or case studies that address key topics in your industry. Ensure that these resources are linked to credible sources and include citations, which can improve their chances of being referenced by LLMs.\n\n- **Engage in Outreach and Partnerships**: Collaborate with industry influencers, thought leaders, and reputable publications to gain backlinks and mentions. This can increase the authority of your content and improve its likelihood of being cited in LLM-generated answers."
+          }
+        },
+        {
+          "source": "PROFOUND",
+          "source_mode": "LIVE",
+          "agent_id": "01a10456-ebed-7e30-9901-437b1b4b6e3e",
+          "run_id": "01a10457-3877-7bb2-b8b6-1a51a22ea797",
+          "status": "succeeded",
+          "started_at": "2026-10-04T00:36:27.363269Z",
+          "finished_at": "2026-10-04T00:36:28.695800Z",
+          "error": null,
+          "outputs": {
+            "ca1a617a-1b49-42d1-874a-52f1b8b1e1b5": "I'm unable to verify claims or access URLs based on the identifiers you've provided. Please provide a specific claim or hypothesis along with any relevant details, and I'll do my best to assist you with verification and risk assessment."
+          }
+        }
+      ],
+      "errors": [],
+      "updated_at": "2026-10-04T01:14:01.820275+00:00"
+    }
   }
 ]

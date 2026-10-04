@@ -288,8 +288,50 @@ class ProfoundClient:
         q = query or PromptsListQuery()
         return await self.request("GET", f"/v1/org/categories/{category_id}/prompts", params=q.params())
 
-    async def list_agents(self, *, limit: int = 100) -> ProfoundResponse:
-        return await self.request("GET", "/v1/agents", params={"limit": limit})
+    async def list_agents(
+        self,
+        *,
+        limit: int = 100,
+        statuses: list[str] | None = None,
+    ) -> ProfoundResponse:
+        params: dict[str, Any] = {"limit": limit}
+        if statuses:
+            params["statuses"] = statuses
+        return await self.request("GET", "/v1/agents", params=params)
+
+    async def create_agent(
+        self,
+        *,
+        organization_id: str,
+        name: str,
+        description: str | None = None,
+        graph: dict[str, Any] | None = None,
+    ) -> ProfoundResponse:
+        body: dict[str, Any] = {"organization_id": organization_id, "name": name}
+        if description:
+            body["description"] = description
+        if graph is not None:
+            body["graph"] = graph
+        return await self.request("POST", "/v1/agents", json=body)
+
+    async def get_agent(self, agent_id: str) -> ProfoundResponse:
+        return await self.request("GET", f"/v1/agents/{agent_id}")
+
+    async def update_agent_graph(self, agent_id: str, graph: dict[str, Any]) -> ProfoundResponse:
+        return await self.request("PATCH", f"/v1/agents/{agent_id}", json={"graph": graph})
+
+    async def get_agent_graph(self, agent_id: str, *, version: str = "draft") -> ProfoundResponse:
+        return await self.request("GET", f"/v1/agents/{agent_id}/graph", params={"version": version})
+
+    async def publish_agent(self, agent_id: str) -> ProfoundResponse:
+        return await self.request("POST", f"/v1/agents/{agent_id}/publish", json={})
+
+    async def run_agent(self, agent_id: str, *, inputs: dict[str, Any] | None = None) -> ProfoundResponse:
+        body = {"inputs": inputs} if inputs else None
+        return await self.request("POST", f"/v1/agents/{agent_id}/runs", json=body)
+
+    async def get_agent_run(self, agent_id: str, run_id: str) -> ProfoundResponse:
+        return await self.request("GET", f"/v1/agents/{agent_id}/runs/{run_id}")
 
     # -- reports (v2, POST but read-only) ---------------------------------------------------------------
     async def visibility(self, q: VisibilityQuery) -> ProfoundResponse:

@@ -108,6 +108,7 @@ class ControlPlaneGraph(ApiModel):
 class ControlPlaneResponse(ApiModel):
     generated_at: str
     source_mode: Literal["LIVE", "TEST"] = "LIVE"
+    data_provenance: Literal["LIVE", "FIXTURE"] = "LIVE"
     summary: ControlPlaneSummary
     agents: list[AgentActivity]
     campaigns: list[CampaignFinancialCard]

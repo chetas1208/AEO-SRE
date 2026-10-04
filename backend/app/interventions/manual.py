@@ -9,7 +9,7 @@ turns that row into a REAL execution (`dry_run=False`, executor `manual`) and st
 A manual execution is a real execution for learning: rewards, verification and outcome ranges all count it.
 Only a GitHub-executor preview is ever a dry-run.
 
-`ProfoundAgentExecutor` is a clearly marked, unavailable stub (capability reporting only).
+`ProfoundAgentExecutor` runs live Profound published agents when `PROFOUND_API_KEY` is set.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import audit
 from app.core.config import get_settings
-from app.domain.enums import ActionType, ExperimentStatus, IncidentState
+from app.domain.enums import ActionType, ApprovalStatus, ExperimentStatus, IncidentState
 from app.experiments import ledger
 from app.experiments.window import window_from_settings
 from app.incidents import state_machine
@@ -232,18 +232,112 @@ class ManualExecutor:
 
 
 class ProfoundAgentExecutor:
-    """UNAVAILABLE STUB. Reserved for a Profound-native action surface; no such action is wired or assumed."""
+    """Runs published Profound agents via POST /v1/agents/{id}/runs when PROFOUND_API_KEY is set."""
 
     name = "profound_agent"
 
+    def __init__(self, settings: Any = None) -> None:
+        self._settings = settings
+
     def capability(self) -> ExecutorCapability:
+        from app.core.config import get_settings
+        from app.services.profound_agents import profound_generation_enabled
+
+        s = self._settings or get_settings()
+        if profound_generation_enabled():
+            return ExecutorCapability(
+                name=self.name,
+                label="Profound agent",
+                state="healthy",
+                available=True,
+                mutates_external=True,
+                detail="POST /v1/agents/{id}/runs (live published agents)",
+            )
+        if s.profound_api_key:
+            return ExecutorCapability(
+                name=self.name,
+                label="Profound agent",
+                state="unavailable",
+                available=False,
+                mutates_external=True,
+                detail="PROFOUND_AGENT_RUNS_ENABLED=0 or agent runs disabled",
+            )
         return ExecutorCapability(
-            name=self.name, label="Profound agent (not available)", state="unavailable", available=False,
-            mutates_external=True, detail="not implemented: no Profound action endpoint is integrated")
+            name=self.name,
+            label="Profound agent",
+            state="unavailable",
+            available=False,
+            mutates_external=True,
+            detail="PROFOUND_API_KEY not set",
+        )
 
     async def execute(self, intervention: Any, approval: Any | None, incident: Any | None = None, *,
                       evidence: list[Any] | None = None, policy_version: str | None = None) -> ExecutionResult:
-        raise ExecutionRefused("the Profound agent executor is not available", "executor_unavailable")
+        from app.connectors.profound.client import ProfoundClient
+        from app.connectors.profound.errors import ProfoundError
+        from app.services.profound_agents import (
+            build_run_inputs,
+            profound_generation_enabled,
+            resolve_agent_ids,
+        )
+
+        if not profound_generation_enabled():
+            raise ExecutionRefused("the Profound agent executor is not available", "executor_unavailable")
+        if approval is None or _v(getattr(approval, "status", None)) != ApprovalStatus.APPROVED.value:
+            raise ExecutionRefused("Profound agent runs require an approved intervention", "approval_required")
+
+        pc = getattr(intervention, "proposed_change", None) or {}
+        if not isinstance(pc, dict):
+            pc = {}
+        requested = list(pc.get("profound_agent_ids") or [])
+        if pc.get("profound_agent_id"):
+            requested.insert(0, str(pc["profound_agent_id"]))
+
+        from app.services.profound_agents import list_profound_agents
+
+        catalog = (await list_profound_agents(limit=50)).get("agents") or []
+        agent_ids = resolve_agent_ids(requested, catalog)
+        if not agent_ids:
+            raise ExecutionRefused("no published Profound agents available to run", "no_agents")
+
+        ctx = {
+            "name": getattr(intervention, "title", None),
+            "hypothesis": getattr(intervention, "rationale", None),
+            "target_url": pc.get("target_url"),
+            "experiment_id": pc.get("experiment_id"),
+            "campaign_id": pc.get("campaign_id"),
+        }
+        inputs = build_run_inputs("intervention", ctx)
+        client = ProfoundClient()
+        logs: list[str] = []
+        run_refs: list[str] = []
+        try:
+            for aid in agent_ids[:3]:
+                resp = await client.run_agent(aid, inputs=inputs or None)
+                data = resp.data if isinstance(resp.data, dict) else {}
+                rid = data.get("id")
+                if rid:
+                    run_refs.append(f"profound:{aid}:{rid}")
+                    logs.append(f"started Profound agent {aid} run {rid}")
+        except ProfoundError as exc:
+            raise ExecutionRefused(f"Profound agent run failed: {type(exc).__name__}", "profound_run_failed") from exc
+        finally:
+            await client.aclose()
+
+        started = datetime.now(UTC)
+        ref = run_refs[0] if run_refs else None
+        return ExecutionResult(
+            status=ExecutionStatus.SUCCEEDED,
+            reference=ref,
+            artifact={"profound_runs": run_refs, "agent_ids": agent_ids},
+            log=logs or ["Profound agent run accepted"],
+            started_at=started,
+            finished_at=datetime.now(UTC),
+            executor=self.name,
+            dry_run=False,
+            approval_status=_v(approval.status),
+            approver=getattr(approval, "decided_by", None),
+        )
 
 
 def executor_capabilities(settings: Any = None) -> dict[str, ExecutorCapability]:
@@ -252,7 +346,7 @@ def executor_capabilities(settings: Any = None) -> dict[str, ExecutorCapability]
 
     return {c.name: c for c in (ManualExecutor().capability(),
                                 GitHubPRExecutor(settings=settings).capability(),
-                                ProfoundAgentExecutor().capability())}
+                                ProfoundAgentExecutor(settings=settings).capability())}
 
 
 # ---------------------------------------------------------------------------------------------------------

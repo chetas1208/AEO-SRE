@@ -460,6 +460,24 @@ async def create_experiment(
         except Exception as exc:  # noqa: BLE001 — queue optional; worker sweep still picks it up
             log.warning("experiment.verify_enqueue_failed", experiment_id=str(exp.id), error=str(exc))
 
+    if data.run_profound_agents and run_mode == "live":
+        from app.services.profound_agents import enqueue_profound_generation
+
+        await enqueue_profound_generation(
+            scope="experiment",
+            entity_id=str(exp.id),
+            agent_ids=data.profound_agent_ids or [],
+            context={
+                "experiment_id": str(exp.id),
+                "campaign_id": data.campaign_id,
+                "name": data.name,
+                "hypothesis": data.hypothesis,
+                "primary_metric": data.primary_metric,
+                "target_url": data.target_url,
+                "notes": data.notes,
+            },
+        )
+
     return await get_experiment(str(exp.id), session)
 
 

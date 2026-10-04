@@ -514,7 +514,7 @@ def select_executor(action: ActionType | str, *, choice: str | None = None, dry_
     if which == "manual":
         return ManualExecutor()
     if which == "profound_agent":
-        return ProfoundAgentExecutor()
+        return ProfoundAgentExecutor(settings=get_settings())
     if action not in GITHUB_ACTIONS:
         raise ExecutionRefused(f"the GitHub executor cannot execute {action.value}; use the manual executor",
                                "wrong_executor")

@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sse_starlette.sse import EventSourceResponse
 
 from app.api.deps import BusDep, SessionDep
-from app.api.routes.campaigns import CAMPAIGNS_DB
+from app.api.routes.campaigns import CAMPAIGNS_DB, _sync_custom_from_disk
 from app.domain.enums import ExperimentStatus
 from app.graph.sse import graph_projected_events, merge_streams
 from app.models.core import Incident
@@ -28,6 +28,13 @@ from app.schemas.control_plane import (
     DecisionCard,
     ExperimentControlCard,
 )
+from app.services.campaign_profound import live_profound_overlay
+from app.services.control_plane_live import (
+    build_live_agent_registry,
+    build_live_control_graph,
+    build_live_decisions,
+)
+from app.services.live_surface import iter_public_campaigns, live_surface_enabled
 
 log = structlog.get_logger()
 router = APIRouter(prefix="/api/control-plane", tags=["control-plane"])
@@ -167,13 +174,21 @@ DECISIONS_REGISTRY: list[dict[str, Any]] = [
 async def get_control_plane(session: SessionDep):
     """Aggregated flight deck state: summary KPIs, active agents, campaign financial health, decisions, and 3D topology."""
     now = datetime.now(UTC)
+    _sync_custom_from_disk()
+    live_surface = live_surface_enabled()
+    agents_registry = (
+        await build_live_agent_registry(session)
+        if live_surface
+        else AGENTS_REGISTRY
+    )
+    profound_live = await live_profound_overlay(session)
 
     # 1. Campaigns summary & financial cards
     campaign_cards: list[CampaignFinancialCard] = []
     tot_cost = 0.0
     tot_return = 0.0
 
-    for c in CAMPAIGNS_DB:
+    for c in iter_public_campaigns(CAMPAIGNS_DB):
         cost = float(c.get("total_cost", 0.0))
         ret = c.get("attributed_return")
         ret_val = float(ret) if ret is not None else None
@@ -208,7 +223,7 @@ async def get_control_plane(session: SessionDep):
             measurement_confidence=c.get("measurement_confidence", "MEDIUM"),
             return_source="ATTRIBUTED",
             primary_channel=c.get("primary_channel", "Search LLMs & Docs"),
-            active_agents_count=len([a for a in AGENTS_REGISTRY if a["campaign_id"] == c["id"]]),
+            active_agents_count=len([a for a in agents_registry if a.get("campaign_id") == c["id"]]),
             active_experiments_count=0,  # filled below from DB
         ))
 
@@ -265,44 +280,66 @@ async def get_control_plane(session: SessionDep):
         ))
 
     # 3. Model cost today
-    model_cost_today = sum(a["model_cost"] for a in AGENTS_REGISTRY)
+    model_cost_today = sum(a.get("model_cost", 0) for a in agents_registry)
 
     # 4. Decisions with Laya non-autoregressive evaluation
     from app.intelligence.laya.runtime import get_laya_runtime
     laya_rt = get_laya_runtime()
 
     enriched_decisions: list[DecisionCard] = []
-    for d in DECISIONS_REGISTRY:
-        # Context based on decision characteristics
-        ctx = {
-            "action_type": d.get("action_type", "update"),
-            "risk": "low" if d["id"] == "dec-saml-canonical" else ("medium" if d["id"] == "dec-scim-jsonld" else "high"),
-            "claims_count": 3 if d["id"] == "dec-saml-canonical" else 1,
-            "campaign_roi": 1.76 if d["id"] == "dec-saml-canonical" else 0.8,
-            "active_experiment_collision": d["id"] == "dec-legacy-deprecate",
-        }
-        laya_eval = laya_rt.evaluate_decision(action_name=d["title"], context=ctx)
+    if live_surface:
+        for card in await build_live_decisions(session):
+            ctx = {
+                "action_type": card.action_type,
+                "risk": "medium",
+                "claims_count": 1,
+                "campaign_roi": 0.0,
+                "active_experiment_collision": False,
+            }
+            laya_eval = laya_rt.evaluate_decision(action_name=card.title, context=ctx)
+            enriched_decisions.append(
+                card.model_copy(
+                    update={
+                        "decision_source": "LAYA",
+                        "laya_distribution": laya_eval["distribution"],
+                        "laya_calibrated_confidence": laya_eval["calibrated_confidence"],
+                        "laya_model": laya_eval["model_version"],
+                        "policy_mode": laya_eval["policy_mode"],
+                        "risk_score": laya_eval["risk_score"],
+                    }
+                )
+            )
+    else:
+        for d in DECISIONS_REGISTRY:
+            ctx = {
+                "action_type": d.get("action_type", "update"),
+                "risk": "low" if d["id"] == "dec-saml-canonical" else ("medium" if d["id"] == "dec-scim-jsonld" else "high"),
+                "claims_count": 3 if d["id"] == "dec-saml-canonical" else 1,
+                "campaign_roi": 1.76 if d["id"] == "dec-saml-canonical" else 0.8,
+                "active_experiment_collision": d["id"] == "dec-legacy-deprecate",
+            }
+            laya_eval = laya_rt.evaluate_decision(action_name=d["title"], context=ctx)
 
-        enriched_decisions.append(DecisionCard(
-            id=d["id"],
-            title=d["title"],
-            recommended_by=d["recommended_by"],
-            campaign_id=d["campaign_id"],
-            campaign_name=d["campaign_name"],
-            action_type=d["action_type"],
-            policy_version=d["policy_version"],
-            status=d["status"],
-            observed_outcome=d["observed_outcome"],
-            context=d["context"],
-            cost=d["cost"],
-            created_at=d["created_at"],
-            decision_source="LAYA",
-            laya_distribution=laya_eval["distribution"],
-            laya_calibrated_confidence=laya_eval["calibrated_confidence"],
-            laya_model=laya_eval["model_version"],
-            policy_mode=laya_eval["policy_mode"],
-            risk_score=laya_eval["risk_score"],
-        ))
+            enriched_decisions.append(DecisionCard(
+                id=d["id"],
+                title=d["title"],
+                recommended_by=d["recommended_by"],
+                campaign_id=d["campaign_id"],
+                campaign_name=d["campaign_name"],
+                action_type=d["action_type"],
+                policy_version=d["policy_version"],
+                status=d["status"],
+                observed_outcome=d["observed_outcome"],
+                context=d["context"],
+                cost=d["cost"],
+                created_at=d["created_at"],
+                decision_source="LAYA",
+                laya_distribution=laya_eval["distribution"],
+                laya_calibrated_confidence=laya_eval["calibrated_confidence"],
+                laya_model=laya_eval["model_version"],
+                policy_mode=laya_eval["policy_mode"],
+                risk_score=laya_eval["risk_score"],
+            ))
 
     pending_decisions = len([d for d in enriched_decisions if d.status == "PENDING_REVIEW"])
 
@@ -316,7 +353,7 @@ async def get_control_plane(session: SessionDep):
     measuring_exps = len([e for e in exp_cards if e.status in measuring_statuses])
 
     summary = ControlPlaneSummary(
-        active_agents=len([a for a in AGENTS_REGISTRY if a["state"] in ("RUNNING", "REVIEW")]),
+        active_agents=len([a for a in agents_registry if a.get("state") in ("RUNNING", "REVIEW")]),
         running_campaigns=len([c for c in campaign_cards if c.status == "ACTIVE"]),
         model_cost_today=round(model_cost_today, 2),
         attributed_return=round(tot_return, 2),
@@ -324,7 +361,27 @@ async def get_control_plane(session: SessionDep):
         experiments_measuring=measuring_exps,
     )
 
-    # 6. Build the 3D Flight Deck Topology
+    if live_surface:
+        graph = build_live_control_graph(
+            agents=agents_registry,
+            campaigns=campaign_cards,
+            decisions=enriched_decisions,
+            experiments=exp_cards,
+            profound_live=profound_live,
+        )
+        return ControlPlaneResponse(
+            generated_at=now.isoformat(),
+            source_mode="LIVE",
+            data_provenance="LIVE",
+            summary=summary,
+            agents=[AgentActivity(**a) for a in agents_registry],
+            campaigns=campaign_cards,
+            decisions=enriched_decisions,
+            experiments=exp_cards,
+            graph=graph,
+        )
+
+    # 6. Build the 3D Flight Deck Topology (fixture demo — only without PROFOUND_API_KEY)
     # Semantic 3D coordinate space:
     # Signals: left / back (x ~ -11.0, z ~ -4.0)
     # Agents: left / mid-back (x ~ -7.0, z ~ -2.5)
@@ -361,7 +418,7 @@ async def get_control_plane(session: SessionDep):
     ))
 
     # 6.2 Agent Nodes
-    for idx, a in enumerate(AGENTS_REGISTRY[:4]):
+    for idx, a in enumerate(agents_registry[:4]):
         y_pos = (idx - 1.5) * 2.6
         a_status = "running" if a["state"] == "RUNNING" else ("positive" if a["attributed_outcome"] == "POSITIVE" else "neutral")
         nodes.append(ControlPlaneGraphNode(
@@ -407,7 +464,7 @@ async def get_control_plane(session: SessionDep):
         ))
 
     # Edges: Agents -> Campaigns
-    for a in AGENTS_REGISTRY[:4]:
+    for a in agents_registry[:4]:
         if any(c.id == a["campaign_id"] for c in campaign_cards):
             edges.append(ControlPlaneGraphEdge(
                 id=f"e-{a['id']}-{a['campaign_id']}",
@@ -595,8 +652,9 @@ async def get_control_plane(session: SessionDep):
     return ControlPlaneResponse(
         generated_at=now.isoformat(),
         source_mode="LIVE",
+        data_provenance="FIXTURE",
         summary=summary,
-        agents=[AgentActivity(**a) for a in AGENTS_REGISTRY],
+        agents=[AgentActivity(**a) for a in agents_registry],
         campaigns=campaign_cards,
         decisions=enriched_decisions,
         experiments=exp_cards,

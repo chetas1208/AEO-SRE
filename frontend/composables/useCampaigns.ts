@@ -457,8 +457,9 @@ const FALLBACK_CAMPAIGNS: Campaign[] = [
 ]
 
 export function useCampaigns() {
-  const campaigns = ref<Campaign[]>(FALLBACK_CAMPAIGNS)
-  const selectedCampaignId = ref<string>(FALLBACK_CAMPAIGNS[0]?.id || '')
+  const campaigns = ref<Campaign[]>([])
+  const selectedCampaignId = ref<string>('')
+  const usingOfflineFixture = ref(false)
   const graphData = ref<CampaignGraphData | null>(null)
   const highlightedPathNodeIds = ref<string[]>([])
   const highlightedPathEdgeIds = ref<string[]>([])
@@ -479,12 +480,21 @@ export function useCampaigns() {
   const loadCampaignsFromApi = async () => {
     try {
       const apiBase = useApiBase()
-      const res = await $fetch<{ campaigns: Campaign[] }>(`${apiBase}/api/campaigns`)
-      if (res && res.campaigns && res.campaigns.length > 0) {
+      const res = await $fetch<{ campaigns: Campaign[]; source_mode?: string }>(`${apiBase}/api/campaigns`)
+      if (res?.campaigns?.length) {
         campaigns.value = res.campaigns
+        usingOfflineFixture.value = false
+        if (!selectedCampaignId.value || !campaigns.value.some(c => c.id === selectedCampaignId.value)) {
+          selectedCampaignId.value = campaigns.value[0]!.id
+        }
+      } else {
+        campaigns.value = []
+        selectedCampaignId.value = ''
       }
     } catch {
-      // Use resilient fallback data
+      usingOfflineFixture.value = true
+      campaigns.value = FALLBACK_CAMPAIGNS
+      selectedCampaignId.value = FALLBACK_CAMPAIGNS[0]?.id || ''
     }
   }
 
@@ -501,17 +511,56 @@ export function useCampaigns() {
     }
   }
 
+  const agentRunsSyncing = ref(false)
+
+  const syncAgentRuns = async (campaignId?: string) => {
+    agentRunsSyncing.value = true
+    try {
+      const apiBase = useApiBase()
+      const id = campaignId || selectedCampaignId.value
+      if (id) {
+        await $fetch(`${apiBase}/api/campaigns/${id}/profound/sync-runs`, { method: 'POST' })
+      } else {
+        await $fetch(`${apiBase}/api/campaigns/profound/sync-runs`, { method: 'POST' })
+      }
+      await loadCampaignsFromApi()
+    } catch {
+      // ignore
+    } finally {
+      agentRunsSyncing.value = false
+    }
+  }
+
+  const rerunAgentGeneration = async (campaignId?: string) => {
+    agentRunsSyncing.value = true
+    try {
+      const apiBase = useApiBase()
+      const id = campaignId || selectedCampaignId.value
+      if (!id) return
+      await $fetch(`${apiBase}/api/campaigns/${id}/profound/rerun`, { method: 'POST' })
+      await loadCampaignsFromApi()
+    } catch {
+      // ignore
+    } finally {
+      agentRunsSyncing.value = false
+    }
+  }
+
   const loadCampaignGraph = async (campaignId: string) => {
     try {
-      const config = useRuntimeConfig()
       const apiBase = useApiBase()
       const res = await $fetch<CampaignGraphData>(`${apiBase}/api/campaigns/${campaignId}/graph`)
-      if (res && res.nodes && res.edges) {
+      if (res?.nodes?.length && res?.edges?.length) {
         graphData.value = res
         return
       }
     } catch {
-      // Build local fallback graph
+      graphData.value = null
+    }
+
+    if (!usingOfflineFixture.value) {
+      graphData.value = null
+      return
     }
 
     const c = selectedCampaign.value
@@ -628,9 +677,11 @@ export function useCampaigns() {
     highlightedPathEdgeIds.value = []
   }
 
-  onMounted(() => {
-    loadCampaignsFromApi()
-    loadCampaignGraph(selectedCampaignId.value)
+  onMounted(async () => {
+    await loadCampaignsFromApi()
+    if (selectedCampaignId.value) {
+      await loadCampaignGraph(selectedCampaignId.value)
+    }
   })
 
   return {
@@ -646,6 +697,10 @@ export function useCampaigns() {
     highlightCostPath,
     clearHighlights,
     refreshProfoundLive,
-    profoundRefreshing
+    profoundRefreshing,
+    syncAgentRuns,
+    rerunAgentGeneration,
+    agentRunsSyncing,
+    usingOfflineFixture,
   }
 }

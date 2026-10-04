@@ -77,7 +77,11 @@ function formatCost(val?: number | null): string {
           <h1 class="page-title">Agent Control Plane</h1>
           <span :class="['mode-badge', data?.sourceMode === 'TEST' || data?.source_mode === 'TEST' ? 'mode-test' : 'mode-live']">
             <span class="live-dot" aria-hidden="true" />
-            {{ data?.sourceMode === 'TEST' || data?.source_mode === 'TEST' ? 'TEST SCENARIO' : 'LIVE TOPOLOGY' }}
+            {{
+              data?.sourceMode === 'TEST' || data?.source_mode === 'TEST'
+                ? 'TEST SCENARIO'
+                : (data?.dataProvenance === 'FIXTURE' || data?.data_provenance === 'FIXTURE' ? 'FIXTURE DEMO' : 'LIVE TOPOLOGY')
+            }}
           </span>
           <span v-if="isLoading" class="sync-indicator">Syncing...</span>
         </div>
