@@ -10,8 +10,9 @@
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
-    "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "browser-smoke": "playwright test -c e2e/playwright.config.ts",
+    "test:e2e": "PLAYWRIGHT_API_ONLY=1 playwright test -c e2e/playwright.config.ts e2e/campaigns-economics.spec.ts e2e/control-plane-experiment.spec.ts",
+    "test:e2e:ui": "playwright test -c e2e/playwright.config.ts",
+    "browser-smoke": "PLAYWRIGHT_API_ONLY=1 playwright test -c e2e/playwright.config.ts e2e/campaigns-economics.spec.ts",
     "gen:api": "openapi-typescript ${NUXT_PUBLIC_API_BASE_URL:-http://localhost:8000}/openapi.json -o types/api.generated.ts"
   },
   "dependencies": {

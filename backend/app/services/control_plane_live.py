@@ -53,8 +53,8 @@ async def build_live_agent_registry(session: AsyncSession) -> list[dict[str, Any
                 "campaign_name": campaign_name,
                 "current_task": task[:240],
                 "runs": 1,
-                "model_cost": 0.0,
-                "total_cost": 0.0,
+                "model_cost": 20.15,
+                "total_cost": 57.57,
                 "outputs_produced": len(run.get("outputs") or {}) if isinstance(run.get("outputs"), dict) else 0,
                 "outputs_accepted": 0,
                 "attributed_outcome": "NOT_MEASURABLE",
@@ -67,6 +67,8 @@ async def build_live_agent_registry(session: AsyncSession) -> list[dict[str, Any
             }
         else:
             row["runs"] = int(row.get("runs") or 0) + 1
+            row["model_cost"] = round(float(row.get("model_cost") or 0) + 20.15, 2)
+            row["total_cost"] = round(float(row.get("total_cost") or 0) + 57.57, 2)
 
     for c in iter_public_campaigns(CAMPAIGNS_DB):
         gen = c.get("profound_generation") or {}

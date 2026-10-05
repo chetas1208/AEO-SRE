@@ -28,12 +28,13 @@ from app.schemas.control_plane import (
     DecisionCard,
     ExperimentControlCard,
 )
-from app.services.campaign_profound import live_profound_overlay
+from app.services.campaign_profound import live_profound_overlay, merge_profound_impact
 from app.services.control_plane_live import (
     build_live_agent_registry,
     build_live_control_graph,
     build_live_decisions,
 )
+from app.services.campaign_economics import enrich_campaign_financials
 from app.services.live_surface import iter_public_campaigns, live_surface_enabled
 
 log = structlog.get_logger()
@@ -189,8 +190,13 @@ async def get_control_plane(session: SessionDep):
     tot_return = 0.0
 
     for c in iter_public_campaigns(CAMPAIGNS_DB):
-        cost = float(c.get("total_cost", 0.0))
-        ret = c.get("attributed_return")
+        row = enrich_campaign_financials(
+            merge_profound_impact(dict(c), profound_live),
+            overlay=profound_live,
+            force=False,
+        )
+        cost = float(row.get("total_cost", 0.0))
+        ret = row.get("attributed_return")
         ret_val = float(ret) if ret is not None else None
         tot_cost += cost
         if ret_val is not None:
@@ -212,18 +218,18 @@ async def get_control_plane(session: SessionDep):
             fin_status = "NOT_MEASURABLE"
 
         campaign_cards.append(CampaignFinancialCard(
-            id=c["id"],
-            name=c["name"],
-            status=c.get("status", "ACTIVE"),
+            id=row["id"],
+            name=row["name"],
+            status=row.get("status", "ACTIVE"),
             total_cost=cost,
             attributed_return=ret_val,
             net_return=net,
             roi_pct=(roi * 100.0) if roi is not None else None,
             financial_status=fin_status,
-            measurement_confidence=c.get("measurement_confidence", "MEDIUM"),
+            measurement_confidence=row.get("measurement_confidence", "MEDIUM"),
             return_source="ATTRIBUTED",
-            primary_channel=c.get("primary_channel", "Search LLMs & Docs"),
-            active_agents_count=len([a for a in agents_registry if a.get("campaign_id") == c["id"]]),
+            primary_channel=row.get("primary_channel", "Search LLMs & Docs"),
+            active_agents_count=len([a for a in agents_registry if a.get("campaign_id") == row["id"]]),
             active_experiments_count=0,  # filled below from DB
         ))
 

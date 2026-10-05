@@ -7,6 +7,13 @@ test.beforeAll(async ({ request }) => {
   if (!health.ok()) test.skip(true, `Backend not reachable at ${api}`)
 })
 
+test.beforeEach(() => {
+  test.skip(
+    process.env.PLAYWRIGHT_API_ONLY === '1',
+    'UI tests skipped in API-only e2e (PLAYWRIGHT_API_ONLY=1). Use npm run test:e2e:ui for browser.'
+  )
+})
+
 test('Flight Deck renders heading, KPI strip, and operational tabs on /', async ({ page }) => {
   await page.goto('/')
 

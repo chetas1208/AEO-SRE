@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.api.deps import SessionDep
+from app.services.campaign_economics import enrich_campaign_financials
 from app.services.campaign_profound import live_profound_overlay, merge_profound_impact, resolve_brand_org_id
 from app.services.live_surface import BUILT_IN_CAMPAIGN_IDS, iter_public_campaigns, live_surface_enabled
 
@@ -69,6 +70,10 @@ def patch_campaign_generation(campaign_id: str, generation: dict[str, Any]) -> N
             },
         )
         c["timeline"] = tl
+        enriched = enrich_campaign_financials(c, overlay=None, force=False)
+        idx = next((i for i, x in enumerate(CAMPAIGNS_DB) if x.get("id") == campaign_id), None)
+        if idx is not None:
+            CAMPAIGNS_DB[idx] = enriched
         _save_custom_campaigns()
         return
 
@@ -657,6 +662,7 @@ async def create_campaign(req: CampaignCreateRequest):
         "profound_generation": {"status": "queued", "runs": [], "source": "PROFOUND", "source_mode": "LIVE"},
     }
 
+    new_campaign = enrich_campaign_financials(new_campaign, overlay=None, force=True)
     CAMPAIGNS_DB.insert(0, new_campaign)
     _save_custom_campaigns()
 
@@ -766,12 +772,37 @@ async def campaigns_profound_refresh(session: SessionDep):
     return {"ingest": ingest_result, "profound_live": overlay}
 
 
+def _public_campaign_rows(session_overlay: dict[str, Any]) -> list[dict[str, Any]]:
+    """Merge Profound overlay + derived economics; persist fixes for custom campaigns with zero ledger."""
+    rows: list[dict[str, Any]] = []
+    persisted = False
+    for c in iter_public_campaigns(CAMPAIGNS_DB):
+        merged = merge_profound_impact(dict(c), session_overlay)
+        before_cost = float(c.get("total_cost") or 0.0)
+        row = enrich_campaign_financials(merged, overlay=session_overlay, force=False)
+        rows.append(row)
+        cid = c.get("id")
+        if (
+            cid
+            and cid not in BUILT_IN_CAMPAIGN_IDS
+            and (before_cost <= 0 or float(row.get("total_cost") or 0) != before_cost)
+        ):
+            for i, raw in enumerate(CAMPAIGNS_DB):
+                if raw.get("id") == cid:
+                    CAMPAIGNS_DB[i] = row
+                    persisted = True
+                    break
+    if persisted:
+        _save_custom_campaigns()
+    return rows
+
+
 @router.get("")
 async def list_campaigns(session: SessionDep):
     """List all tracked campaigns with financial summaries and live Profound effectiveness overlay."""
     _sync_custom_from_disk()
     overlay = await live_profound_overlay(session)
-    enriched = [merge_profound_impact(dict(c), overlay) for c in iter_public_campaigns(CAMPAIGNS_DB)]
+    enriched = _public_campaign_rows(overlay)
     return {
         "campaigns": enriched,
         "total": len(enriched),
@@ -787,7 +818,8 @@ async def get_campaign(campaign_id: str, session: SessionDep):
     overlay = await live_profound_overlay(session)
     for c in CAMPAIGNS_DB:
         if c["id"] == campaign_id:
-            return merge_profound_impact(dict(c), overlay)
+            merged = merge_profound_impact(dict(c), overlay)
+            return enrich_campaign_financials(merged, overlay=overlay, force=False)
     raise HTTPException(status_code=404, detail="Campaign not found")
 
 
